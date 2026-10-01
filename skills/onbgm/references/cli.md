@@ -70,7 +70,8 @@
   "loudness": {"integrated_lufs": -16.9, "follows_energy": true, "issues": [],
                "sections": [{"section": "climax", "energy": 1.0, "lufs": -12.9}]},
   "balance": [{"section": "climax", "tracks": [{"track": "lead", "lufs": -14.6}, {"track": "piano", "lufs": -18.1}]}],
-  "warnings": []
+  "warnings": [],
+  "sfx": [{"type": "riser", "at_s": 8.0, "start_s": 4.0, "end_s": 8.0, "path": "sfx.0"}]
 }
 ```
 
@@ -78,6 +79,7 @@
 - `automix` 里的 `gain_db` 是相对原始渲染电平的增益，数值大（比如 +20）也正常。
 - `balance` 列出每一段里各声部的响度，从响到轻排列，可以检查旋律有没有被伴奏盖住。
 - `timeline --at` 查到乐谱结束后的余音（`meta.tail`）里时，返回 `{"in_tail": true, "note": …}`。
+- `timeline` 和 `render` 都会列出 `sfx`：每个音效的对准点 `at_s` 和实际起止 `start_s` / `end_s`。`timeline` 里还有 `anchor`，表示怎么对准：`end` 在 at 结束，`start` 从 at 开始，`center` 最响处在 at。
 
 ## 错误码
 
@@ -87,6 +89,7 @@
 | 段落和时间 | `no_sections` `duplicate_section` `unknown_section` `missing_bpm` `no_time_constraint` `time_constraint_mismatch` `tail_with_loop` |
 | 和声 | `missing_harmony` `harmony_bar_count` `unknown_chord` |
 | 旋律 | `melody_bar_count` `bar_length` `bad_note` `missing_notes` |
+| 音效 | `sfx_out_of_range`（起点早于开头或超出结尾，`fix.length` 给出能放下的最大长度） `field_not_for_sfx` |
 | 声部和织体 | `missing_texture` `field_not_for_texture` `not_overridable` `missing_pattern` `unknown_drum` `pattern_bar_count` `pattern_step_count` `pattern_bad_char` |
 | 渲染时的警告 | `note_out_of_range` `automix_outlier` `heavy_limiting` |
 | 环境和文件 | `missing_dependency` `file_not_found` `file_exists` |

@@ -156,3 +156,14 @@ tracks:
           open-hat: ".... .... .... ...."
           snare:    ".... .... .... ...."
           crash:    "X... .... .... ...."
+
+# 音效时间线：和音乐共用一个时钟（音乐部分一个音没改）
+sfx:
+  - { type: riser, at: drop, length: 8 }            # 0:04–0:08 往上冲，在产品出现的一刻戛然而止
+  - { type: impact, at: drop, duck: 4 }             # 0:08 产品出现：冲击，同时把音乐压低 4 dB
+  - { type: sub-drop, at: drop, level: 0.7 }        # 下坠低音托底，自动从当时和弦的根音往下滑
+  - { type: whoosh, at: drive }                     # 0:16 镜头切换
+  - { type: reverse-cymbal, at: ending, length: 4 } # 0:28–0:30 推进到收尾
+  - { type: impact, at: ending, level: 0.6 }        # 0:30 切到 logo
+  - { type: downlifter, at: logo, length: 8, level: 0.5 }
+  - { type: ding, at: logo, level: 0.5 }            # logo 出现的提示音，和当时的和弦同调

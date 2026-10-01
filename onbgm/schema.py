@@ -57,6 +57,7 @@ STEPS = {
 @lru_cache(maxsize=None)
 def score_schema() -> dict:
     from .arrange import DRUM_KEYS, SOUNDS, TEXTURES  # 延迟导入，避免循环依赖
+    from .sfx import SFX_TYPES
 
     option_schemas = {
         "notes": {
@@ -167,6 +168,26 @@ def score_schema() -> dict:
                 "examples": [{"verse": "G | D/F# | Em | C"}],
             },
             "tracks": {"type": "object", "additionalProperties": track},
+            "sfx": {
+                "type": "array",
+                "description": "音效时间线：和音乐共用一个时钟的合成音效",
+                "examples": [[{"type": "riser", "at": "drop", "length": 8}, {"type": "impact", "at": "drop", "duck": 4}]],
+                "items": {
+                    "type": "object",
+                    "additionalProperties": False,
+                    "required": ["type", "at"],
+                    "properties": {
+                        "type": {"enum": list(SFX_TYPES), "description": "音效类型"},
+                        "at": {"anyOf": [{"type": "number", "minimum": 0}, {"type": "string"}],
+                               "description": "对准点：段落名（该段开头）或时间", "x-format": "段落名，或秒数 / \"分:秒\"",
+                               "examples": ["drop", "0:08.5"]},
+                        "length": {"type": "number", "exclusiveMinimum": 0, "description": "长度（拍）"},
+                        "level": {"type": "number", "minimum": 0, "maximum": 1, "description": "音量 0~1，默认 0.8"},
+                        "duck": {"type": "number", "minimum": 0, "maximum": 24,
+                                 "description": "发生时把音乐压低多少 dB，约 0.35 秒内恢复"},
+                    },
+                },
+            },
         },
     }
 

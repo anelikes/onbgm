@@ -124,6 +124,7 @@ def cmd_render(args) -> None:
         "balance": [{"section": s.name, "tracks": balance_data(score, result.stems, parts, s.name)}
                     for s in score.sections],
         "warnings": [w.to_dict() for w in all_warnings],
+        "sfx": result.sfx,
     }
     lines = [timeline(score), "", "音源:"] + [f"  {k:<8} {v}" for k, v in result.sources.items()]
     if result.mix:
