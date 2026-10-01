@@ -5,11 +5,13 @@ import argparse
 import sys
 from pathlib import Path
 
+import pyloudnorm as pyln
+
 from .analyze import balance_report, loudness_report, pianoroll, timeline
 from .arrange import arrange
-from .render import render
 from .fetch import fetch_all
 from .library import SOUNDS_DIR
+from .render import SR, render
 from .score import ScoreError, load
 
 
@@ -48,8 +50,13 @@ def main() -> None:
     print("\n音源:")
     for name, src in result.sources.items():
         print(f"  {name:<8} {src}")
-    if result.automix:
-        print("自动混音: " + "，".join(result.automix))
+    gains = [x for x in result.notes if not x.startswith("⚠")]
+    if gains:
+        print("自动混音: " + "，".join(gains))
+    for x in result.notes:
+        if x.startswith("⚠"):
+            print(x)
+    print(f"整体响度: {pyln.Meter(SR).integrated_loudness(result.main):.1f} LUFS，时长 {len(result.main) / SR:.3f} 秒")
     print()
     print(loudness_report(score, result.main))
     loudest = max(score.sections, key=lambda s: sum(s.energy))

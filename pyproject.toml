@@ -14,6 +14,9 @@ dependencies = [
     "soxr",
 ]
 
+[project.optional-dependencies]
+dev = ["pytest"]
+
 [project.scripts]
 onbgm = "onbgm.cli:main"
 
@@ -23,3 +26,7 @@ build-backend = "setuptools.build_meta"
 
 [tool.setuptools]
 packages = ["onbgm"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["tests"]
