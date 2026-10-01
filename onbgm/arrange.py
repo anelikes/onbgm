@@ -10,7 +10,7 @@ from dataclasses import dataclass, field
 
 import math
 
-from .score import BEATS_PER_BAR, ChordSpan, Problem, Score, ScoreError, Section, Track
+from .score import ChordSpan, Problem, Score, ScoreError, Section, Track
 from .theory import Chord, guitar_voicing, pitch_name, place, voice_lead
 
 
@@ -75,7 +75,7 @@ DRUM_KEYS = {
     "tom-low": 45, "tom-mid": 47, "tom-high": 50, "crash": 49, "ride": 51, "ride-bell": 53,
     "tambourine": 54, "cowbell": 56, "conga-high": 62, "conga-low": 64, "cabasa": 69, "shaker": 70,
 }
-STEP_COUNTS = (8, 12, 16, 24, 32)
+STEP_COUNTS = (2, 3, 4, 6, 8, 9, 12, 16, 18, 24, 32)  # 一个字符一拍（3/4 写 3 个、4/4 写 4 个）到三十二分音符；9/18 是 3/4 拍里的三连音
 
 
 @dataclass
@@ -116,8 +116,7 @@ class Performer:
         return max(0.0, beat + self._rng(beat, pitch, "t").gauss(0, spread))
 
     def vel(self, base: float, beat: float, pitch: int, spread: float = 4.0, accent: bool = True) -> int:
-        pos = round(beat % BEATS_PER_BAR, 3)
-        bonus = {0: 8, 2: 4}.get(pos, 0 if pos == int(pos) else -5) if accent else 0
+        bonus = self.score.accent(beat) if accent else 0
         return int(min(127, max(1, round(base + bonus + self._rng(beat, pitch, "v").gauss(0, spread)))))
 
 
@@ -221,7 +220,10 @@ def t_bass_pizz(score: Score, track: Track, part: Part, perf: Performer) -> None
         e = score.energy_at(span.start)
         r = place(c.bass, lo)
         second = r + c.fifth if c.bass == c.root else place(c.root, r + 1)
-        hits = [(0, r), (1.5, r), (2, second), (3, r + 12)] if span.dur >= 4 else [(0, r), (1, second)]
+        if score.pulse > 1:  # 复合拍子（6/8、12/8）：每个附点四分大拍一下，根音和五音交替
+            hits = [(k * score.pulse, r if k % 2 == 0 else second) for k in range(int(span.dur / score.pulse))] or [(0, r)]
+        else:
+            hits = [(0, r), (1.5, r), (2, second), (3, r + 12)] if span.dur >= 4 else [(0, r), (1, second)]
         for off, p in hits:
             b = span.start + off
             part.notes.append(Note(perf.time(b, p, 0.008), 0.6, p, perf.vel(58 + 50 * e, b, p)))
@@ -231,11 +233,15 @@ def t_timpani(score: Score, track: Track, part: Part, perf: Performer) -> None:
     """定音鼓：每小节重拍敲根音；roll_into 指定段落前一小节做渐强滚奏。"""
     lo = track.options.get("low", 38)
     for span in score.spans_in(track.sections):
-        if span.start % BEATS_PER_BAR:
+        if span.start % score.beats_per_bar:
             continue
         e = score.energy_at(span.start)
         p = place(span.chord.root, lo)
-        for off, base in ((0, 85 + 35 * e), (2, 60 + 25 * e))[: 2 if e >= 0.8 else 1]:
+        # 第二击落在小节的中间大拍上（4/4 的第三拍、6/8 的第二个大拍）；3/4 没有中间大拍，只敲第一拍
+        half = score.beats_per_bar / 2
+        second = half if abs(half / score.pulse - round(half / score.pulse)) < 1e-6 else None
+        hits = [(0, 85 + 35 * e)] + ([(second, 60 + 25 * e)] if second is not None and e >= 0.8 else [])
+        for off, base in hits:
             b = span.start + off
             part.notes.append(Note(perf.time(b, p, 0.005), 1.5, p, perf.vel(base, b, p, spread=3, accent=False)))
     target = track.options.get("roll_into")
@@ -245,12 +251,13 @@ def t_timpani(score: Score, track: Track, part: Part, perf: Performer) -> None:
         if before:
             # 一个滚奏音符 + CC11 渐强；高潮第一拍把表情拉回满值
             p = place(before[-1].chord.root, lo)
-            start = sec.start - BEATS_PER_BAR
-            part.notes.append(Note(start, BEATS_PER_BAR, p, 100, art="roll"))
+            bar = score.beats_per_bar
+            start = sec.start - bar
+            part.notes.append(Note(start, bar, p, 100, art="roll"))
             part.ccs.append((0.0, 11, 127))
             steps = 32
             for i in range(steps):
-                part.ccs.append((start + i * BEATS_PER_BAR / steps, 11, int(22 + 105 * (i / (steps - 1)) ** 1.6)))
+                part.ccs.append((start + i * bar / steps, 11, int(22 + 105 * (i / (steps - 1)) ** 1.6)))
             part.ccs.append((sec.start, 11, 127))
 
 
@@ -315,8 +322,8 @@ def steps(section: Section, text: str, allowed: str, where: str) -> list[tuple[f
         if bad := set(bar) - set(allowed):
             raise ScoreError([Problem("pattern_bad_char", where,
                                       f"第 {i + 1} 小节有不认识的字符 {''.join(sorted(bad))}（可用: {allowed}）")])
-        step = BEATS_PER_BAR / len(bar)
-        out += [(section.start + i * BEATS_PER_BAR + j * step, step, c) for j, c in enumerate(bar)]
+        step = section.bpb / len(bar)
+        out += [(section.start + i * section.bpb + j * step, step, c) for j, c in enumerate(bar)]
     return out
 
 
@@ -542,6 +549,6 @@ def arrange(score: Score) -> tuple[list[Part], list[str]]:
                 n = bad[0]
                 warnings.append(Problem("note_out_of_range", f"tracks.{t.name}",
                                         f"{len(bad)} 个音超出 {t.sound} 音域 {pitch_name(sound.lo)}–{pitch_name(sound.hi)}"
-                                        f"（例如 {pitch_name(n.pitch)}，第 {int((n.start + 0.05) // BEATS_PER_BAR) + 1} 小节）"))
+                                        f"（例如 {pitch_name(n.pitch)}，第 {int((n.start + 0.05) // score.beats_per_bar) + 1} 小节）"))
         parts.append(part)
     return parts, warnings

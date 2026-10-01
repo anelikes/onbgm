@@ -67,6 +67,16 @@
           "type": "integer",
           "description": "人性化随机种子"
         },
+        "meter": {
+          "enum": [
+            "4/4",
+            "3/4",
+            "2/4",
+            "6/8",
+            "12/8"
+          ],
+          "description": "拍号，默认 4/4。速度一律按四分音符计：6/8 拍附点四分音符 = 60 时 bpm 写 90"
+        },
         "swing": {
           "type": "number",
           "minimum": 0.5,

@@ -12,7 +12,7 @@ import pyloudnorm as pyln
 
 from .arrange import DRUM_KEYS, Part
 from .render import SR
-from .score import BEATS_PER_BAR, Score, fmt_time
+from .score import Score, fmt_time
 
 
 def _r(x: float, nd: int = 2) -> float:
@@ -26,9 +26,9 @@ def timeline_data(score: Score) -> dict:
         "bpm": _r(score.bpm, 3),
         "key": score.key,
         "loop": score.loop,
-        "bars": int(score.total_beats // BEATS_PER_BAR),
+        "bars": int(score.total_beats // score.beats_per_bar),
         "duration_s": _r(score.seconds(score.total_beats), 3),
-        "seconds_per_bar": _r(score.seconds(BEATS_PER_BAR), 4),
+        "seconds_per_bar": _r(score.seconds(score.beats_per_bar), 4),
         "sections": [
             {"name": s.name, "bars": [s.start_bar + 1, s.start_bar + s.bars],
              "start_s": _r(score.seconds(s.start), 3), "end_s": _r(score.seconds(s.end), 3),
@@ -37,7 +37,7 @@ def timeline_data(score: Score) -> dict:
             for s in score.sections
         ],
         "chords": [
-            {"bar": int(c.start // BEATS_PER_BAR) + 1, "beat": _r(c.start % BEATS_PER_BAR + 1, 3),
+            {"bar": int(c.start // score.beats_per_bar) + 1, "beat": _r(c.start % score.beats_per_bar + 1, 3),
              "start_s": _r(score.seconds(c.start), 3), "chord": c.chord.symbol, "section": c.section}
             for c in score.chords
         ],
@@ -68,8 +68,8 @@ def locate(score: Score, seconds: float) -> dict:
     if abs(beat - round(beat)) * 60 / score.bpm_at(beat) < 0.005:  # 离拍点不到 5ms 就算正好在拍点上
         beat = float(round(beat))
     sec, chord = score.section_at(beat), score.chord_at(beat)
-    return {"time_s": _r(seconds, 3), "bar": int(beat // BEATS_PER_BAR) + 1, "beat": _r(beat % BEATS_PER_BAR + 1, 3),
-            "section": sec.name, "bar_in_section": int((beat - sec.start) // BEATS_PER_BAR) + 1,
+    return {"time_s": _r(seconds, 3), "bar": int(beat // score.beats_per_bar) + 1, "beat": _r(beat % score.beats_per_bar + 1, 3),
+            "section": sec.name, "bar_in_section": int((beat - sec.start) // score.beats_per_bar) + 1,
             "chord": chord.chord.symbol, "energy": _r(score.energy_at(beat), 3)}
 
 

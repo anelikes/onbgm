@@ -359,3 +359,56 @@
     - { type: pop, at: "0:02" }
     - { type: pop, at: "0:02.5" }
     - { type: pop, at: "0:03" }
+
+- name: waltz-drums
+  kind: drums
+  tags: [waltz, 华尔兹, "3/4", 三拍子, 圆舞曲, 优雅, 复古, 舞会]
+  description: 3/4 拍华尔兹的轻鼓（需要 meta.meter "3/4"）：底鼓落在第 1 拍，刷子军鼓和踩镲落在第 2、3 拍，"嘭—嚓—嚓"
+  snippet: |
+    sound: drums-brush
+    texture: groove
+    pattern:
+      kick:      "x... .... ...."
+      snare:     ".... g... g..."
+      pedal-hat: ".... x... x..."
+
+- name: waltz-oom-pah-pah
+  kind: comp
+  tags: [waltz, 华尔兹, "3/4", 三拍子, 圆舞曲, 伴奏, oom-pah]
+  description: 3/4 拍华尔兹伴奏（需要 meta.meter "3/4"）：第 1 拍空出来留给低音，第 2、3 拍弹短和弦。配一个只在第 1 拍弹根音的低音声部
+  snippet: |
+    sound: piano
+    texture: comp
+    range: [55, 72]
+    rhythm: ". x x"
+
+- name: waltz-bass
+  kind: bassline
+  tags: [waltz, 华尔兹, "3/4", 三拍子, 低音]
+  description: 3/4 拍华尔兹低音（需要 meta.meter "3/4"）：每小节第 1 拍一个根音，隔小节换成五音，和 waltz-oom-pah-pah 搭配
+  snippet: |
+    sound: contrabass
+    texture: bassline
+    articulation: staccato
+    rhythm: "1.. | 5.."
+
+- name: six-eight-ballad-drums
+  kind: drums
+  tags: ["6/8", 复合拍子, 抒情, ballad, 摇篮, 民谣, 摇曳, lilt]
+  description: 6/8 拍抒情鼓型（需要 meta.meter "6/8"）：底鼓在第一个大拍，军鼓在第二个大拍，踩镲打满六个八分音符，有摇曳感
+  snippet: |
+    sound: drums
+    texture: groove
+    pattern:
+      kick:  "x..... ..x..."
+      snare: "...x.. ...x.."
+      hat:   "xgxxgx xgxxgx"
+
+- name: six-eight-strum
+  kind: strum
+  tags: ["6/8", 复合拍子, 民谣, folk, 扫弦, 摇曳, 凯尔特]
+  description: 6/8 拍木吉他扫弦（需要 meta.meter "6/8"）：每个附点四分大拍"下—上—上"，摇摆的三连音感
+  snippet: |
+    sound: guitar-steel
+    texture: strum
+    pattern: "D.uDuu"
