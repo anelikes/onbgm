@@ -1,0 +1,25 @@
+[project]
+name = "onbgm"
+version = "0.0.1"
+description = "让 LLM 通过文本乐谱精确控制每个音符来生成 BGM"
+requires-python = ">=3.10"
+dependencies = [
+    "mido",
+    "pyyaml",
+    "numpy",
+    "soundfile",
+    "pedalboard",
+    "pyloudnorm",
+    "matplotlib",
+    "soxr",
+]
+
+[project.scripts]
+onbgm = "onbgm.cli:main"
+
+[build-system]
+requires = ["setuptools>=64"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools]
+packages = ["onbgm"]

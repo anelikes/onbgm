@@ -1,0 +1,12 @@
+.venv/
+__pycache__/
+*.egg-info/
+.DS_Store
+.pytest_cache/
+
+# 渲染输出与音源（音源用 `onbgm fetch` 下载）
+out/
+sounds/
+experiments/**/out*/
+*.wav
+*.m4a

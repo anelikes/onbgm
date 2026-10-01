@@ -1,0 +1,68 @@
+# 晴天散步 —— 木吉他 vlog 配乐
+# 吉他按法由引擎在真实的六弦吉他上自动选（G = 320003，D/F# = 200232 …）。
+title: Sunny Walk
+meta:
+  bpm: 112
+  key: G major
+  loop: true
+  seed: 5
+
+sections:
+  - { name: intro,  bars: 4, energy: 0.4 }
+  - { name: verse,  bars: 8, energy: 0.6 }
+  - { name: chorus, bars: 8, energy: 0.9 }
+
+harmony:
+  intro:  "G | Cadd9 | G | Cadd9"
+  verse:  "G | D/F# | Em | C | G | D/F# | C | D"
+  chorus: "C | D | Bm7 | Em | Am7 | D | G | D"
+
+tracks:
+  guitar:             # D 下扫、U 上扫、x 闷音切音（打在二、四拍上，很有弹性）
+    sound: guitar-steel
+    texture: strum
+    pattern: "D... x.U. D.U. x.U."
+    by_section:
+      intro:  { pattern: "D... .... D.U. D.U." }
+      chorus: { pattern: "D... D.U. D.U. D.U." }
+
+  bass:
+    sound: electric-bass
+    texture: bassline
+    in: [verse, chorus]
+    rhythm: "1--- --1- 5--- --5-"
+    by_section:
+      chorus: { rhythm: "1-1- 1-1- 1-1- 5-8-" }
+
+  perc:
+    sound: drums
+    texture: groove
+    pattern:
+      shaker: "gxgx gxgx gxgx gxgx"
+    by_section:
+      verse:
+        pattern:
+          kick:   "x... .... x.x. ...."
+          clap:   ".... x... .... x..."
+          shaker: "gxgx gxgx gxgx gxgx"
+      chorus:
+        pattern:
+          kick:       "x... x... x... x..."
+          clap:       ".... x... .... x..."
+          tambourine: "..x. ..x. ..x. ..x."
+          shaker:     "gxgx gxgx gxgx gxgx"
+
+  glock:              # 副歌的钟琴旋律
+    sound: glockenspiel
+    texture: melody
+    notes:
+      chorus: >
+        G6/4 E6/8 G6/8 r/8 E6/8 D6/4 | F#6/4 D6/8 F#6/8 r/8 A6/8 G6/4 |
+        F#6/4 D6/8 F#6/8 r/8 D6/8 B5/4 | E6/2. r/4 |
+        C7/4 B6/8 A6/8 r/8 G6/8 E6/4 | F#6/4 G6/8 A6/8 r/8 B6/8 A6/4 |
+        G6/2. r/4 | r/2 D6/8 E6/8 F#6/8 A6/8
+
+  cymbal:
+    sound: drums
+    texture: crash
+    in: [chorus]

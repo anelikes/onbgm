@@ -1,0 +1,61 @@
+# 夜雨 —— onbgm 示例乐谱
+# 这份文件由 LLM 编写和修改：结构、和声、旋律都在这里精确指定；
+# 演奏细节（力度、踏板、表情、人性化）和混音由引擎负责。
+title: Night Rain
+meta:
+  bpm: 90
+  key: D minor
+  loop: true          # 结尾接回开头，输出可无缝循环的 loop.wav
+  seed: 7
+
+sections:
+  - { name: intro,  bars: 4, energy: 0.25 }
+  - { name: build,  bars: 8, energy: 0.4->0.85 }
+  - { name: climax, bars: 8, energy: 1.0, at: "0:32" }   # 时间约束，引擎会校验
+  - { name: outro,  bars: 4, energy: 0.5->0.25 }
+
+harmony:
+  intro:  "Dm9 | Bbmaj7 | Gm9 | A7sus4 A7"
+  build:  "Dm9 | Bbmaj7 | Fmaj7 | C | Gm9 | Bbmaj7 | Gm7 | A7sus4 A7"
+  climax: "Bb | C | Dm | Dm/C | Gm | Bb | A7sus4 | A7"
+  outro:  "Dm9 | Bbmaj7 | Gm9 | A7sus4"
+
+tracks:
+  piano:
+    sound: piano
+    texture: arpeggio
+
+  motif:              # 开头用钢琴轻轻预告主题
+    sound: piano
+    texture: melody
+    notes:
+      intro: "F5/4. A5/8 A5/2 | F5/4. A5/8 A5/2 | D5/4. F5/8 F5/2 | E5/2 C#5/2"
+
+  pad:
+    sound: strings-slow
+    texture: pad
+    in: [build, climax, outro]
+
+  bass:
+    sound: contrabass
+    texture: bass-sustain
+    in: [build, climax, outro]
+
+  lead:               # 高潮主旋律：前三小节是逐级上行的模进
+    sound: strings
+    texture: melody
+    notes:
+      climax: >
+        D5/4. F5/8 F5/2 | E5/4. G5/8 G5/2 | F5/4. A5/8 A5/2 | G5/4. F5/8 E5/4 D5/4 |
+        D5/4 G5/4 A5/4 Bb5/4 | D6/2 C6/4 Bb5/4 | A5/2 G5/4 E5/4 | C#5/2. E5/4
+
+  timpani:
+    sound: timpani
+    texture: timpani
+    in: [climax]
+    roll_into: climax   # 高潮前一小节渐强滚奏
+
+  cymbal:
+    sound: drums
+    texture: crash
+    in: [climax]
