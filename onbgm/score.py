@@ -58,6 +58,8 @@ class MelodyNote:
     start: float
     dur: float
     pitch: int
+    art: str = ""  # "staccato" 或空
+    accent: bool = False
 
 
 @dataclass
@@ -187,12 +189,13 @@ def _solve_bpm(meta: dict, sections: list[Section], problems: list[str]) -> floa
     return bpm
 
 
-_NOTE_RE = re.compile(r"(r|[A-Ga-g][#b]*-?\d)/(1|2|4|8|16)(\.?)(~?)")
+_NOTE_RE = re.compile(r"(r|[A-Ga-g][#b]*-?\d)/(1|2|4|8|16)(\.?)([>']*)(~?)")
 _VALUE_BEATS = {"1": 4.0, "2": 2.0, "4": 1.0, "8": 0.5, "16": 0.25}
 
 
 def _parse_melody(text: str, section: Section, where: str, problems: list[str]) -> list[MelodyNote]:
-    """旋律记法：D5/4 = 四分音符，F#4/8. = 附点八分，r/2 = 二分休止，A4/2~ = 连到下一个同音。"""
+    """旋律记法：D5/4 = 四分音符，F#4/8. = 附点八分，r/2 = 二分休止，A4/2~ = 连到下一个同音，
+    D5/16' = 断奏，D5/8> = 重音（可以合写成 D5/8'>）。"""
     bars = [b.strip() for b in str(text).split("|") if b.strip()]
     if section.bars % len(bars):
         problems.append(f"{where}: 写了 {len(bars)} 小节，但段落 {section.name} 有 {section.bars} 小节")
@@ -205,7 +208,7 @@ def _parse_melody(text: str, section: Section, where: str, problems: list[str]) 
         for tok in bar.split():
             m = _NOTE_RE.fullmatch(tok)
             if not m:
-                problems.append(f"{where} 第 {i + 1} 小节: 无法解析 {tok!r}（格式如 D5/4、F#4/8.、r/2）")
+                problems.append(f"{where} 第 {i + 1} 小节: 无法解析 {tok!r}（格式如 D5/4、F#4/8.、r/2、D5/16'、D5/8>）")
                 return []
             dur = _VALUE_BEATS[m.group(2)] * (1.5 if m.group(3) else 1.0)
             start = section.start + i * BEATS_PER_BAR + pos
@@ -215,8 +218,9 @@ def _parse_melody(text: str, section: Section, where: str, problems: list[str]) 
                 if tie and prev and prev.pitch == pitch and abs(prev.start + prev.dur - start) < 1e-6:
                     prev.dur += dur
                 else:
-                    notes.append(MelodyNote(start, dur, pitch))
-            tie = bool(m.group(4))
+                    notes.append(MelodyNote(start, dur, pitch, "staccato" if "'" in m.group(4) else "",
+                                            ">" in m.group(4)))
+            tie = bool(m.group(5))
             pos += dur
         if abs(pos - BEATS_PER_BAR) > 1e-6:
             problems.append(f"{where} 第 {i + 1} 小节时值合计 {pos:g} 拍，应为 {BEATS_PER_BAR} 拍: \"{bar}\"")

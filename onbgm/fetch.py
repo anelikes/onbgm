@@ -25,6 +25,10 @@ VSCO_PARTS = [
     "Strings/Cello Section/pizzT/",
     "Strings/Solo Contrabass/SusVib/",
     "Strings/Solo Contrabass/Pizz/",
+    "Strings/Violin Section/Spic/",
+    "Strings/Viola Section/spic/",
+    "Strings/Cello Section/spic/",
+    "Strings/Solo Contrabass/Spic/",
     "Percussion/Timpani/",
     "Percussion/cymbal-crash1_",
     "Percussion/Glock/",
@@ -121,6 +125,10 @@ def fetch_vsco(root: Path) -> None:
 
     with ThreadPoolExecutor(8) as pool:
         list(pool.map(get, todo))
+    missing = [x["path"] for x in files if not (root / "vsco2" / x["path"]).exists()
+               or (root / "vsco2" / x["path"]).stat().st_size != x["size"]]
+    if missing:
+        raise OSError(f"VSCO 有 {len(missing)} 个采样没下载完整（例如 {missing[0]}），请重新运行 onbgm fetch")
 
 
 def fetch_all(root: Path) -> None:

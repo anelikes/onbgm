@@ -44,6 +44,7 @@ class Instrument:
     pan: float = 0.0  # -1 左 … 1 右
     align_peak: bool = False  # 让采样的最响点对齐音符起点（渐强镲、上扬音效）
     legato_skip: float = 0.07  # 连奏时跳过新音符起音的秒数，减少重复运弓感
+    line_choke: bool = False  # 演奏单声部旋律线时，下一个音出来就收掉上一个（同一组乐手换弓）
     articulations: dict | None = None  # 演奏法 → 另一件乐器，如 {"roll": 定音鼓滚奏}
 
     def pick(self, pitch: int, vel: int, rr_state: dict) -> Zone:
@@ -218,12 +219,18 @@ def render_part(score: Score, part: Part, route, n: int) -> np.ndarray:
     out = np.zeros((n, 2), np.float32)
     rr_state: dict = defaultdict(int)
     ends = sorted(round(score.seconds(x.start + x.dur), 3) for x in part.notes)
-    # 非持续音（拨弦、鼓）：同音高再次发声时压住上一个的余音，避免能量无限堆积
+    starts = sorted(round(score.seconds(x.start), 3) for x in part.notes)
+    # 非持续音（拨弦、鼓）：同音高再次发声时压住上一个的余音，避免能量无限堆积；
+    # 单声部旋律线上的跳弓之类（line_choke），任何下一个音都会收掉上一个
+    line = part.texture in ("melody", "line", "bassline")
     next_same: dict[int, float] = {}
-    choke_at = {}
+    choke_at, next_any = {}, {}
+    upcoming = None
     for x in sorted(part.notes, key=lambda x: -x.start):
         choke_at[id(x)] = next_same.get(x.pitch)
+        next_any[id(x)] = upcoming
         next_same[x.pitch] = score.seconds(x.start)
+        upcoming = score.seconds(x.start)
     for note in part.notes:
         inst: Instrument = route(note.pitch)
         if note.art and inst.articulations and note.art in inst.articulations:
@@ -238,14 +245,28 @@ def render_part(score: Score, part: Part, route, n: int) -> np.ndarray:
             if i < len(ends) and abs(ends[i] - t0) <= 0.03:  # 紧接着上一个音：当作连奏
                 skip = int(inst.legato_skip * SR * ratio)
             hold = score.seconds(note.dur)
-            length = int((hold + inst.release) * SR)
+            release = inst.release
+            end = round(t0 + hold, 3)
+            j = bisect_left(starts, end - 0.03)
+            if not (j < len(starts) and abs(starts[j] - end) <= 0.03):
+                # 后面有空隙的短音（断奏）：释音也要短，否则会拖住后面的音；连奏的音保留长释音做平滑衔接
+                release = min(inst.release, max(0.08, 0.5 * hold))
+            length = int((hold + release) * SR)
             src = _extend(data[skip:], int(length * ratio) + 64)
         else:
             src = data
-            if choke_at[id(note)] is not None and not inst.align_peak:
-                keep = int((choke_at[id(note)] - t0 + 0.12) * SR * ratio)
+            cut, fade_s = choke_at[id(note)], 0.12
+            if inst.line_choke:
+                # 跳弓这类短音：最多响到谱面写的长度（至少 0.12 秒），旋律线上下一个音出来也立刻收掉
+                limits = [t0 + max(score.seconds(note.dur), 0.12)]
+                if line and next_any[id(note)] is not None:
+                    limits.append(next_any[id(note)])
+                if cut is None or min(limits) < cut:
+                    cut, fade_s = min(limits), 0.03
+            if cut is not None and not inst.align_peak:
+                keep = int((cut - t0 + fade_s) * SR * ratio)
                 if keep < len(src):
-                    fade = min(keep, int(0.12 * SR * ratio))
+                    fade = min(keep, int(fade_s * SR * ratio))
                     src = src[:keep].copy()
                     src[keep - fade:] *= np.linspace(1, 0, fade)[:, None]
         y = soxr.resample(src, SR * ratio, SR, quality="HQ") if ratio != 1.0 else src.copy()
