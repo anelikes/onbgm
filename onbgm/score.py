@@ -331,6 +331,11 @@ def load(path: str | Path) -> Score:
         raw = yaml.safe_load(Path(path).read_text(encoding="utf-8")) or {}
     except yaml.YAMLError as e:
         raise ScoreError([Problem("yaml_syntax", "", f"YAML 语法错误: {e}")]) from None
+    return from_dict(raw, Path(path).stem)
+
+
+def from_dict(raw: dict, default_title: str = "untitled") -> Score:
+    """从已经解析好的数据构造乐谱（load 读文件后调用它；引擎内部也用它生成参考片段）。"""
     from .schema import validate
 
     if problems := validate(raw):
@@ -442,7 +447,7 @@ def load(path: str | Path) -> Score:
     if problems:
         raise ScoreError(problems)
     return Score(
-        title=raw.get("title", Path(path).stem),
+        title=raw.get("title", default_title),
         bpm=bpm,
         key=meta.get("key", ""),
         loop=bool(meta.get("loop", False)),

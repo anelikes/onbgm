@@ -52,3 +52,33 @@ def test_changing_melody_sound_leaves_earlier_sections_untouched(write_score, tm
     assert np.abs(r1.main[:cut] - r2.main[:cut]).max() < 1e-6
     for name in ["keys", "bass"]:
         assert np.array_equal(r1.stems[name], r2.stems[name])
+
+
+def test_editing_one_section_of_an_accompaniment_track_leaves_its_other_sections_untouched(write_score, tmp_path):
+    """回归测试：伴奏曾按"声部实际出现的段落"测响度定整轨增益，蒙太奇里钢琴变密，整条钢琴轨在其他段落也被压低。
+    现在按声部配置（音色 + 织体 + 标准节奏型）的参考片段定增益，改某一段的节奏型不影响其他段落。"""
+    base = """
+        meta: {{bpm: 120}}
+        sections: [{{name: a, bars: 2}}, {{name: b, bars: 2}}]
+        harmony: {{a: "C | Am", b: "F | G"}}
+        tracks:
+          keys:
+            sound: synth-pad
+            texture: comp
+            rhythm: "x--- ---- ---- ----"
+            by_section: {{b: {{rhythm: "{keys_b}"}}}}
+          drums:
+            sound: drums-synth
+            texture: groove
+            pattern: {{kick: "x... .... x... ....", hat: "x.x. x.x. x.x. x.x."}}
+            by_section: {{b: {{pattern: {{kick: "{kick_b}", hat: "xxxx xxxx xxxx xxxx", snare: ".... x... .... x..."}}}}}}
+    """
+    results = []
+    for i, (keys_b, kick_b) in enumerate([("x--- ---- ---- ----", "x... .... x... ...."),
+                                         ("x-x- x-x- x-x- x-x-", "x.x. x.x. x.x. x.xx")]):
+        score = load(write_score(base.format(keys_b=keys_b, kick_b=kick_b), f"v{i}.yaml"))
+        parts, _ = arrange(score)
+        results.append(render(score, parts, tmp_path / f"v{i}", soundset="gm"))
+    a_end = round(3.9 * SR)  # a 段到第 4 秒
+    for name in ["keys", "drums"]:
+        assert np.array_equal(results[0].stems[name][:a_end], results[1].stems[name][:a_end]), name

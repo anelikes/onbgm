@@ -1,6 +1,7 @@
 """渲染：逐声部渲染分轨（SF2 用 FluidSynth，采样乐器用内置采样器），再混音、母带处理。"""
 from __future__ import annotations
 
+import os
 import shutil
 import subprocess
 import tempfile
@@ -26,12 +27,14 @@ TAIL_SEC = 4.0  # 渲染时在乐谱结束后多渲染的秒数（混响和释�
 MASTER_GAIN_DB = 1.0
 PEAK_CEILING_DB = -1.0
 LIMIT_WARN_DB = 6.0  # 限幅器需要压掉超过这么多时提醒：多半是某个声部太响或叠得太厚
-# 每种伴奏角色在自己出现的段落里的目标响度（LUFS）。按实际渲染结果测量后对齐，
-# 所以换音源、换织体密度（扫弦一下 6 根弦、鼓一下一下）都不会打乱平衡。数值从《夜雨》认可的混音反推。
+# 每种伴奏角色的目标响度（LUFS）：指这个声部的参考片段（4 小节固定和弦、能量 0.7，见 _reference_config）应有的响度。
+# 按配置而不是按乐谱内容定音量，改某一段的内容不会让这个声部在其他段落变响或变轻。
+# 数值的校准方法：在所有示例和测试乐谱里，取平均能量 0.5~0.85 的伴奏声部，让新方法给出的增益平均和旧方法
+# （按声部实际出现的段落测量）一致，这样已经认可过的混音基本不变。
 ROLE_LUFS = {
-    "arpeggio": -21.0, "pad": -21.0, "comp": -21.0, "arp": -21.0, "strum": -19.0, "line": -21.0,
-    "bass-sustain": -22.0, "bass-pizz": -21.0, "bassline": -20.0,
-    "groove": -19.0, "timpani": -22.0, "crash": -29.0,
+    "arpeggio": -21.8, "pad": -23.5, "comp": -20.3, "arp": -24.1, "strum": -18.8, "line": -24.1,
+    "bass-sustain": -25.2, "bass-pizz": -21.5, "bassline": -18.2,
+    "groove": -21.3, "timpani": -23.1, "crash": -29.6,
 }
 
 
@@ -79,12 +82,13 @@ def _describe(impl) -> str:
 
 def render_stems(score: Score, parts: list[Part], soundset: str):
     n = round((score.seconds(score.total_beats) + _tail_sec(score)) * SR)
-    stems, sources = {}, {}
+    stems, sources, impls = {}, {}, {}
     for part in parts:
         impl = library.resolve(part.sound_name, soundset, {n.pitch for n in part.notes})
         stems[part.name] = _render_raw(score, part, impl, n)
         sources[part.name] = _describe(impl)
-    return stems, sources
+        impls[part.name] = impl
+    return stems, sources, impls
 
 
 def _tail_sec(score: Score) -> float:
@@ -102,13 +106,77 @@ def _active(score: Score, part: Part, audio: np.ndarray) -> np.ndarray:
     return np.concatenate([audio[round(score.seconds(s.start) * SR): round(score.seconds(s.end) * SR)] for s in secs])
 
 
-def level_parts(score: Score, parts: list[Part], stems: dict[str, np.ndarray]) -> None:
-    """伴奏声部按角色定音量：整轨一个固定增益，段落之间的强弱变化原样保留。"""
-    meter = pyln.Meter(SR)
+LEVEL_CACHE = Path(os.environ.get("ONBGM_CACHE", Path.home() / ".cache" / "onbgm")) / "levels.json"
+LEVEL_VERSION = 2  # 参考片段或测量方式改变时加一，旧缓存自动作废
+REF_HARMONY = "C | Am | F | G"
+_level_memo: dict[str, float] = {}
+
+
+# 参考片段里各织体用的标准节奏型：增益只取决于音色和织体，不取决于这首曲子写的节奏型，
+# 所以节奏型写得稀就自然轻、写得密就自然响，改哪一段的节奏型都不会影响整轨音量。
+REF_PATTERNS = {
+    "groove": {"pattern": {"kick": "x... .... x... ....", "snare": ".... x... .... x...", "hat": "x.x. x.x. x.x. x.x."}},
+    "bassline": {"rhythm": "1--- 5--- 1--- 5---"},
+    "comp": {"rhythm": "x--- x--- x--- x---"},
+    "arp": {"rhythm": "x.x. x.x. x.x. x.x."},
+    "strum": {"pattern": "D... D.U. ..U. D.U."},
+}
+
+
+def _reference_config(score: Score, track) -> dict:
+    """这个声部的参考片段：同样的音色、织体和音区设置，用这种织体的标准节奏型，放在 4 小节固定和弦、能量 0.7 上。
+    不取乐谱里实际写的内容和节奏型，所以改任何一段都不会改变整轨的音量。"""
+    from .arrange import SOUNDS
+    from .theory import pitch_name
+
+    keep = ("range", "low", "mode", "articulation", "roll", "spread", "gate")
+    cfg = {"sound": track.sound, "texture": track.texture,
+           **{k: v for k, v in track.options.items() if k in keep}, **REF_PATTERNS.get(track.texture, {})}
+    if track.texture == "line":  # 逐音写的伴奏线：用这件乐器音域中间的标准琶音
+        s = SOUNDS[track.sound]
+        mid = min(max((s.lo + s.hi) // 2, 40), 76)
+        bar = " ".join(f"{pitch_name(mid + k)}/4" for k in (0, 4, 7, 12))
+        cfg["notes"] = {"ref": " | ".join([bar] * 4)}
+    return {"title": "reference", "meta": {"bpm": round(score.bpm, 3), "swing": score.swing,
+                                           "swing_unit": score.swing_unit, "seed": 0},
+            "sections": [{"name": "ref", "bars": 4, "energy": 0.7}], "harmony": {"ref": REF_HARMONY},
+            "tracks": {"ref": cfg}}
+
+
+def _reference_level(score: Score, track, impl) -> float | None:
+    """参考片段的响度（LUFS），按配置缓存：同样的声部配置只渲染一次。"""
+    import hashlib
+    import json
+
+    from .arrange import arrange
+    from .score import from_dict
+
+    cfg = _reference_config(score, track)
+    key = hashlib.sha1(json.dumps([LEVEL_VERSION, cfg, _describe(impl), getattr(impl, "file", None)],
+                                  sort_keys=True, ensure_ascii=False, default=str).encode()).hexdigest()
+    if key in _level_memo:
+        return _level_memo[key]
+    disk = json.loads(LEVEL_CACHE.read_text()) if LEVEL_CACHE.exists() else {}
+    if key not in disk:
+        ref = from_dict(cfg, "reference")
+        part = arrange(ref)[0][0]
+        bar_end = round(ref.seconds(ref.total_beats) * SR)
+        audio = _render_raw(ref, part, impl, bar_end + 2 * SR)[:bar_end]
+        lufs = pyln.Meter(SR).integrated_loudness(audio)
+        disk[key] = float(lufs) if np.isfinite(lufs) else None
+        LEVEL_CACHE.parent.mkdir(parents=True, exist_ok=True)
+        LEVEL_CACHE.write_text(json.dumps(disk))
+    _level_memo[key] = disk[key]
+    return disk[key]
+
+
+def level_parts(score: Score, parts: list[Part], stems: dict[str, np.ndarray], impls: dict) -> None:
+    """伴奏声部按角色定音量：整轨一个固定增益，由声部配置的参考片段决定，段落之间的强弱变化原样保留。"""
+    tracks = {t.name: t for t in score.tracks}
     for p in parts:
         if p.texture in ROLE_LUFS and p.notes:
-            lufs = meter.integrated_loudness(_active(score, p, stems[p.name]))
-            if np.isfinite(lufs):
+            lufs = _reference_level(score, tracks[p.name], impls[p.name])
+            if lufs is not None:
                 stems[p.name] = stems[p.name] * _db(ROLE_LUFS[p.texture] - lufs)
 
 
@@ -280,8 +348,8 @@ class Rendered:
 
 def render(score: Score, parts: list[Part], out: Path, soundset: str = "hq") -> Rendered:
     (out / "stems").mkdir(parents=True, exist_ok=True)
-    stems, sources = render_stems(score, parts, soundset)
-    level_parts(score, parts, stems)
+    stems, sources, impls = render_stems(score, parts, soundset)
+    level_parts(score, parts, stems, impls)
     mix_log, warnings = automix(score, parts, stems)
     for name, audio in stems.items():
         sf.write(out / "stems" / f"{name}.wav", audio, SR, subtype="PCM_24")
