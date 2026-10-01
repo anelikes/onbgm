@@ -1,9 +1,10 @@
-"""轻量采样器：直接读 WAV 采样，用 soxr 高质量重采样变调，不依赖 SFZ 播放器。
+"""轻量采样器：直接读 WAV 采样，用 soxr 高质量重采样变调，不依赖外部播放器。
 
-加载时会做三件让声音更干净的事：
-- 裁掉采样开头的静音，保证音符准时；
-- 把各音高、各力度层的采样响度对齐，避免"有的音突然很响"；
-- 用频谱检测每个采样的真实音高，不完全相信文件名（不同音源的八度记法不一样）。
+乐器有两种来源：
+- 一个文件夹的采样，音高写在文件名里（VSCO）。加载时会裁掉开头静音、把各采样的响度对齐、
+  用频谱检测真实音高（不同音源的八度记法不一样，不完全相信文件名）；
+- SFZ 文件（大多数免费采样库的格式）。区域、力度层、轮替、音量、调音和互斥组都按文件里写的来，
+  采样原样使用：作者已经把它们调好了。
 """
 from __future__ import annotations
 
@@ -33,6 +34,17 @@ class Zone:
     key: float | None  # 采样实际音高（MIDI，可带小数）；None 表示不变调（镲等）
     layer: int  # 力度层，0 最轻
     group: int  # 同一个音的几个轮替采样属于同一组
+    # 以下只有 SFZ 区域用
+    keys: tuple[int, int] = (0, 127)  # 负责的音高范围
+    vels: tuple[int, int] = (0, 127)  # 负责的力度范围
+    seq: float = 1  # 轮替位置：同一位置的几个区域一起发声（叠层），不同位置轮流
+    gain_db: float = 0.0
+    offset: float = 0.0  # 从采样的第几秒开始播放
+    keytrack: float = 1.0  # 0 表示不随音高变调（鼓）
+    shift: float = 0.0  # 额外的音高偏移（半音）
+    veltrack: float = 1.0  # 力度对音量的影响：1 表示 (力度/127)² 的标准曲线
+    choke: str | None = None  # 互斥组：这个组发声时，切断 off_by 指向它的区域（闭镲切断开镲）
+    off_by: str | None = None
 
 
 @dataclass
@@ -46,6 +58,24 @@ class Instrument:
     legato_skip: float = 0.07  # 连奏时跳过新音符起音的秒数，减少重复运弓感
     line_choke: bool = False  # 演奏单声部旋律线时，下一个音出来就收掉上一个（同一组乐手换弓）
     articulations: dict | None = None  # 演奏法 → 另一件乐器，如 {"roll": 定音鼓滚奏}
+    sfz: bool = False  # 采样原样使用（不裁静音、不对齐响度），音量按区域的 volume 和力度曲线
+    loop: bool = True  # 持续音比采样长时循环中段延长；自然衰减的乐器（电钢琴、吉他）不循环
+
+    def voices(self, pitch: int, vel: int, rr_state: dict) -> list[Zone]:
+        """这个音要发声的区域。SFZ 乐器可能叠好几层（同一轮替位置的区域一起发声）。"""
+        if not self.sfz:
+            return [self.pick(pitch, vel, rr_state)]
+        vel = max(1, min(127, vel))
+        cands = [z for z in self.zones if z.keys[0] <= pitch <= z.keys[1] and z.vels[0] <= vel <= z.vels[1]]
+        if not cands:  # 超出采样音域：用最近的区域移调
+            near = min(self.zones, key=lambda z: (max(z.keys[0] - pitch, pitch - z.keys[1], 0),
+                                                  max(z.vels[0] - vel, vel - z.vels[1], 0)))
+            cands = [z for z in self.zones if z.keys == near.keys and z.vels == near.vels]
+        slots = sorted({z.seq for z in cands})
+        k = ("sfz", cands[0].keys, cands[0].vels)
+        slot = slots[rr_state[k] % len(slots)]
+        rr_state[k] += 1
+        return [z for z in cands if z.seq == slot]
 
     def pick(self, pitch: int, vel: int, rr_state: dict) -> Zone:
         zones = self.zones
@@ -123,6 +153,19 @@ def _load(path: Path) -> tuple[np.ndarray, float]:
     return np.ascontiguousarray(audio), float(np.argmax(np.abs(audio).max(axis=1)) / SR)
 
 
+@lru_cache(maxsize=None)
+def _load_raw(path: Path) -> tuple[np.ndarray, float]:
+    """SFZ 的采样原样读入，只转成 44.1k 立体声：起点和音量关系由 SFZ 文件决定。"""
+    audio, sr = sf.read(path, dtype="float32", always_2d=True)
+    if audio.shape[1] == 1:
+        audio = np.repeat(audio, 2, axis=1)
+    audio = audio[:, :2]
+    if sr != SR:
+        audio = soxr.resample(audio, sr, SR)
+    audio = np.ascontiguousarray(audio)
+    return audio, float(np.argmax(np.abs(audio).max(axis=1)) / SR)
+
+
 def _extend(audio: np.ndarray, needed: int) -> np.ndarray:
     """持续音采样不够长时，用等功率交叉淡化循环中段来延长。"""
     if len(audio) >= needed:
@@ -162,6 +205,43 @@ def load_instrument(name: str, folder: Path, **kwargs) -> Instrument | None:
     layers = sorted({v for _, v in named.values()})
     zones = [Zone(f, cache[f.name], layers.index(v), n) for f, (n, v) in named.items()]
     return Instrument(name, zones, **kwargs)
+
+
+def load_sfz(name: str, path: Path, **kwargs) -> Instrument | None:
+    """从 SFZ 文件建乐器。kwargs 可以覆盖从文件推断出的设置（sustain、release、pan 等）。"""
+    from . import sfz
+
+    if not path.exists():
+        return None
+    zones, releases, one_shot = [], [], []
+    for r in sfz.playable(sfz.parse(path)):
+        sample = Path(r["_sample"])
+        if not sample.exists():
+            continue
+        key = r.get("key")
+        lo = sfz.note_number(r.get("lokey", key if key is not None else 0))
+        hi = sfz.note_number(r.get("hikey", key if key is not None else 127))
+        center = sfz.note_number(r.get("pitch_keycenter", key if key is not None else 60))
+        gain = float(r.get("volume", 0)) + (20 * np.log10(max(float(r["amplitude"]), 1e-3) / 100)
+                                            if "amplitude" in r else 0.0)
+        offset = int(r.get("offset", 0))
+        zones.append(Zone(
+            sample, float(center), 0, center,
+            keys=(lo, hi), vels=(int(r.get("lovel", 0)), int(r.get("hivel", 127))),
+            seq=float(r["lorand"]) if "lorand" in r else float(r.get("seq_position", 1)),
+            gain_db=gain, offset=offset / sf.info(sample).samplerate if offset else 0.0,
+            keytrack=float(r.get("pitch_keytrack", 100)) / 100,
+            shift=float(r.get("transpose", 0)) + float(r.get("tune", 0)) / 100,
+            veltrack=float(r.get("amp_veltrack", 100)) / 100,
+            choke=r.get("group"), off_by=r.get("off_by"),
+        ))
+        releases.append(float(r.get("ampeg_release", 0.3)))
+        one_shot.append(r.get("loop_mode") == "one_shot")
+    if not zones:
+        return None
+    settings = {"sustain": not all(one_shot), "release": max(0.05, float(np.median(releases))),
+                "legato_skip": 0.0, "loop": False, **kwargs}
+    return Instrument(name, zones, sfz=True, **settings)
 
 
 def unpitched(name: str, files: list[Path], layer_of=lambda p: 0, **kwargs) -> Instrument | None:
@@ -231,64 +311,100 @@ def render_part(score: Score, part: Part, route, n: int) -> np.ndarray:
         next_any[id(x)] = upcoming
         next_same[x.pitch] = score.seconds(x.start)
         upcoming = score.seconds(x.start)
+    picked = []
     for note in part.notes:
         inst: Instrument = route(note.pitch)
         if note.art and inst.articulations and note.art in inst.articulations:
             inst = inst.articulations[note.art]
-        zone = inst.pick(note.pitch, note.vel, rr_state)
-        data, peak_t = _load(zone.path)
-        ratio = 2 ** ((note.pitch - zone.key) / 12) if zone.key is not None else 1.0
-        t0 = score.seconds(note.start)
-        skip = 0
-        if inst.sustain:
-            i = bisect_left(ends, round(t0, 3) - 0.03)
-            if i < len(ends) and abs(ends[i] - t0) <= 0.03:  # 紧接着上一个音：当作连奏
-                skip = int(inst.legato_skip * SR * ratio)
-            hold = score.duration(note.start, note.dur)
-            release = inst.release
-            end = round(t0 + hold, 3)
-            j = bisect_left(starts, end - 0.03)
-            if not (j < len(starts) and abs(starts[j] - end) <= 0.03):
-                # 后面有空隙的短音（断奏）：释音也要短，否则会拖住后面的音；连奏的音保留长释音做平滑衔接
-                release = min(inst.release, max(0.08, 0.5 * hold))
-            length = int((hold + release) * SR)
-            src = _extend(data[skip:], int(length * ratio) + 64)
-        else:
-            src = data
-            cut, fade_s = choke_at[id(note)], 0.12
-            if inst.line_choke:
-                # 跳弓这类短音：最多响到谱面写的长度（至少 0.12 秒），旋律线上下一个音出来也立刻收掉
-                limits = [t0 + max(score.duration(note.start, note.dur), 0.12)]
-                if line and next_any[id(note)] is not None:
-                    limits.append(next_any[id(note)])
-                if cut is None or min(limits) < cut:
-                    cut, fade_s = min(limits), 0.03
-            if cut is not None and not inst.align_peak:
-                keep = int((cut - t0 + fade_s) * SR * ratio)
-                if keep < len(src):
-                    fade = min(keep, int(fade_s * SR * ratio))
-                    src = src[:keep].copy()
-                    src[keep - fade:] *= np.linspace(1, 0, fade)[:, None]
-        y = soxr.resample(src, SR * ratio, SR, quality="HQ") if ratio != 1.0 else src.copy()
-        if not inst.sustain:
-            tail = min(len(y), int(0.03 * SR))  # 有的采样文件结尾没衰减干净，硬切会有咔哒
-            y[-tail:] *= np.linspace(1, 0, tail, dtype=np.float32)[:, None]
-        if inst.sustain:
-            y = y[:length]
-            env = np.ones(len(y), np.float32)
-            rel_start = int(hold * SR)
-            rel = np.cos(np.linspace(0, np.pi / 2, len(y) - rel_start)) ** 2 if len(y) > rel_start else []
-            env[rel_start:] = rel
-            if skip:
-                fade = min(len(env), int(0.04 * SR))
-                env[:fade] *= np.linspace(0, 1, fade)
-            y = y * env[:, None]
-        gain = 10 ** (0.6 * 40 * np.log10(note.vel / 127) / 20)
-        start = round(t0 * SR) - (round(peak_t / ratio * SR) if inst.align_peak else 0)
-        a, b = max(0, start), min(n, start + len(y))
-        if b > a:
-            out[a:b] += _pan(y[a - start: b - start], inst.pan) * gain
+        picked.append((note, inst, inst.voices(note.pitch, note.vel, rr_state)))
+    # SFZ 互斥组：某个组发声时，切断 off_by 指向它的、还在响的区域（闭镲切断开镲）
+    group_starts: dict[str, list[float]] = defaultdict(list)
+    for note, _, zones in picked:
+        for z in zones:
+            if z.choke is not None:
+                group_starts[z.choke].append(score.seconds(note.start))
+    for times in group_starts.values():
+        times.sort()
+    for note, inst, zones in picked:
+        for zone in zones:
+            _voice(out, score, note, inst, zone, ends, starts, choke_at, next_any, group_starts, line, n)
     curve = _expression_curve(score, part, n)
     if curve is not None:
         out *= curve[:, None]
     return out
+
+
+def _voice(out, score, note, inst: Instrument, zone: Zone, ends, starts, choke_at, next_any, group_starts, line, n):
+    """把一个区域的声音叠加到 out 上。"""
+    if inst.sfz:
+        data, peak_t = _load_raw(zone.path)
+        if zone.offset:
+            data = data[round(zone.offset * SR):]
+    else:
+        data, peak_t = _load(zone.path)
+    ratio = 2 ** (((note.pitch - zone.key) * zone.keytrack + zone.shift) / 12) if zone.key is not None else 1.0
+    t0 = score.seconds(note.start)
+    skip = 0
+    if inst.sustain:
+        i = bisect_left(ends, round(t0, 3) - 0.03)
+        if i < len(ends) and abs(ends[i] - t0) <= 0.03:  # 紧接着上一个音：当作连奏
+            skip = int(inst.legato_skip * SR * ratio)
+        hold = score.duration(note.start, note.dur)
+        release = inst.release
+        end = round(t0 + hold, 3)
+        j = bisect_left(starts, end - 0.03)
+        if not (j < len(starts) and abs(starts[j] - end) <= 0.03):
+            # 后面有空隙的短音（断奏）：释音也要短，否则会拖住后面的音；连奏的音保留长释音做平滑衔接
+            release = min(inst.release, max(0.08, 0.5 * hold))
+        length = int((hold + release) * SR)
+        needed = int(length * ratio) + 64
+        if inst.loop:
+            src = _extend(data[skip:], needed)
+        else:
+            src = data[skip:skip + needed]
+            if len(src) < needed:
+                src = np.pad(src, ((0, needed - len(src)), (0, 0)))
+    else:
+        src = data
+        cut, fade_s = choke_at[id(note)], 0.12
+        if zone.off_by is not None:
+            times = group_starts.get(zone.off_by, [])
+            i = bisect_left(times, t0 + 1e-6)
+            if i < len(times) and (cut is None or times[i] < cut):
+                cut, fade_s = times[i], 0.02
+        if inst.line_choke:
+            # 跳弓这类短音：最多响到谱面写的长度（至少 0.12 秒），旋律线上下一个音出来也立刻收掉
+            limits = [t0 + max(score.duration(note.start, note.dur), 0.12)]
+            if line and next_any[id(note)] is not None:
+                limits.append(next_any[id(note)])
+            if cut is None or min(limits) < cut:
+                cut, fade_s = min(limits), 0.03
+        if cut is not None and not inst.align_peak:
+            keep = int((cut - t0 + fade_s) * SR * ratio)
+            if keep < len(src):
+                fade = min(keep, int(fade_s * SR * ratio))
+                src = src[:keep].copy()
+                src[keep - fade:] *= np.linspace(1, 0, fade)[:, None]
+    y = soxr.resample(src, SR * ratio, SR, quality="HQ") if ratio != 1.0 else src.copy()
+    if not inst.sustain:
+        tail = min(len(y), int(0.03 * SR))  # 有的采样文件结尾没衰减干净，硬切会有咔哒
+        y[-tail:] *= np.linspace(1, 0, tail, dtype=np.float32)[:, None]
+    if inst.sustain:
+        y = y[:length]
+        env = np.ones(len(y), np.float32)
+        rel_start = int(hold * SR)
+        rel = np.cos(np.linspace(0, np.pi / 2, len(y) - rel_start)) ** 2 if len(y) > rel_start else []
+        env[rel_start:] = rel
+        if skip:
+            fade = min(len(env), int(0.04 * SR))
+            env[:fade] *= np.linspace(0, 1, fade)
+        y = y * env[:, None]
+    if inst.sfz:
+        v = max(1, note.vel) / 127
+        gain = (1 - zone.veltrack + zone.veltrack * v * v) * 10 ** (zone.gain_db / 20)
+    else:
+        gain = 10 ** (0.6 * 40 * np.log10(note.vel / 127) / 20)
+    start = round(t0 * SR) - (round(peak_t / ratio * SR) if inst.align_peak else 0)
+    a, b = max(0, start), min(n, start + len(y))
+    if b > a:
+        out[a:b] += _pan(y[a - start: b - start], inst.pan) * gain
