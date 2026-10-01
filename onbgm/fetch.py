@@ -12,6 +12,7 @@ import lzma
 import re
 import shutil
 import tarfile
+import time
 import urllib.parse
 import urllib.request
 import zipfile
@@ -130,6 +131,18 @@ SAMPLE_LIBS = [
     SampleLib("vcsl-marimba", "VCSL Marimba", "Versilian Studios", "CC0", "https://github.com/sgossner/VCSL",
               "马林巴（三个力度层）", "Marimba",
               select=r"Idiophones/Struck Idiophones/Marimba/.*\.wav$", **VCSL),
+    SampleLib("vcsl-harp", "VCSL Concert Harp", "Versilian Studios", "CC0", "https://github.com/sgossner/VCSL",
+              "竖琴", "Concert Harp", repo=VCSL["repo"], sha=VCSL["sha"],
+              select=r"Chordophones/Composite Chordophones/Concert Harp/.*\.wav$",
+              strip="Chordophones/Composite Chordophones/"),
+    SampleLib("vcsl-sax", "VCSL Tenor Saxophone", "Versilian Studios", "CC0", "https://github.com/sgossner/VCSL",
+              "次中音萨克斯（颤音长音、断奏）", "Vibrato", repo=VCSL["repo"], sha=VCSL["sha"],
+              select=r"Aerophones/Reed Aerophones/Tenor Saxophone/(Vibrato|Staccato)/.*\.wav$",
+              strip="Aerophones/Reed Aerophones/Tenor Saxophone/"),
+    SampleLib("vcsl-zither", "VCSL Dan Tranh", "Versilian Studios", "CC0", "https://github.com/sgossner/VCSL",
+              "越南筝（音色接近古筝）", "Normal", repo=VCSL["repo"], sha=VCSL["sha"],
+              select=r"Chordophones/Zithers/Dan Tranh/Normal/[A-Ga-g]#?\d_(mf|f|ff)_\d\.wav$",
+              strip="Chordophones/Zithers/Dan Tranh/"),
 ]
 
 
@@ -188,9 +201,16 @@ def _download(url: str, dest: Path, parallel: int = 16) -> None:
         ranged = r.headers.get("Accept-Ranges") == "bytes"
     if not ranged or size < 50_000_000:
         tmp = dest.with_suffix(dest.suffix + ".part")
-        with urllib.request.urlopen(urllib.request.Request(url, headers={"User-Agent": "onbgm"}), timeout=60) as r, \
-                open(tmp, "wb") as f:
-            shutil.copyfileobj(r, f, length=1 << 20)
+        for attempt in range(6):  # 网络偶尔中断（SSL EOF 等）：重试几次
+            try:
+                with urllib.request.urlopen(urllib.request.Request(url, headers={"User-Agent": "onbgm"}), timeout=60) as r, \
+                        open(tmp, "wb") as f:
+                    shutil.copyfileobj(r, f, length=1 << 20)
+                break
+            except OSError:
+                if attempt == 5:
+                    raise
+                time.sleep(2 * (attempt + 1))
         tmp.rename(dest)
         return
 
