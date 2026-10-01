@@ -4,6 +4,7 @@ from __future__ import annotations
 import os
 import shutil
 import subprocess
+from contextlib import contextmanager
 import tempfile
 from dataclasses import dataclass, replace
 from functools import lru_cache
@@ -347,13 +348,53 @@ class Rendered:
     files: dict[str, Path]  # audio / preview / midi / stems
 
 
-def render(score: Score, parts: list[Part], out: Path, soundset: str = "hq") -> Rendered:
-    (out / "stems").mkdir(parents=True, exist_ok=True)
+ALL_OUTPUTS = frozenset({"stems", "audio", "preview", "midi"})
+
+
+@contextmanager
+def render_slot():
+    """跨进程限制同时渲染的数量：环境变量 ONBGM_MAX_RENDERS=N 时，最多 N 个渲染同时进行，其余排队。
+    批量生成时几十个 agent 可能同时渲染，不限制的话 CPU 和内存都会被占满。没设这个变量就不限制。"""
+    limit = int(os.environ.get("ONBGM_MAX_RENDERS", "0") or 0)
+    if limit <= 0:
+        yield
+        return
+    import fcntl
+    import random
+    import time
+
+    folder = Path(os.environ.get("ONBGM_CACHE", Path.home() / ".cache" / "onbgm")) / "render-slots"
+    folder.mkdir(parents=True, exist_ok=True)
+    while True:
+        for i in random.sample(range(limit), limit):
+            handle = open(folder / f"slot{i}.lock", "w")
+            try:
+                fcntl.flock(handle, fcntl.LOCK_EX | fcntl.LOCK_NB)
+            except OSError:
+                handle.close()
+                continue
+            try:
+                yield
+            finally:
+                fcntl.flock(handle, fcntl.LOCK_UN)
+                handle.close()
+            return
+        time.sleep(0.5)
+
+
+def render(score: Score, parts: list[Part], out: Path, soundset: str = "hq",
+           outputs: frozenset = ALL_OUTPUTS, mp3_quality: str = "V2") -> Rendered:
+    """outputs 选择写出哪些文件：stems（分轨）、audio（WAV）、preview（MP3）、midi。
+    agent 反复修改时可以什么都不写（只要报告），批量建曲库时只写 MP3 和 MIDI。"""
+    out.mkdir(parents=True, exist_ok=True)
+    if "stems" in outputs:
+        (out / "stems").mkdir(parents=True, exist_ok=True)
     stems, sources, impls = render_stems(score, parts, soundset)
     level_parts(score, parts, stems, impls)
     mix_log, warnings = automix(score, parts, stems)
-    for name, audio in stems.items():
-        sf.write(out / "stems" / f"{name}.wav", audio, SR, subtype="PCM_24")
+    if "stems" in outputs:
+        for name, audio in stems.items():
+            sf.write(out / "stems" / f"{name}.wav", audio, SR, subtype="PCM_24")
     full = mix(stems, parts, score.bpm)
     length = round(score.seconds(score.total_beats) * SR)
     if (score.fx or {}).get("lofi"):
@@ -371,7 +412,8 @@ def render(score: Score, parts: list[Part], out: Path, soundset: str = "hq") -> 
             row["vs_music_db"] = round(row["level_db"] - sfx.average_level(music[a:b]), 1)
         full = music + sfx_audio + _convolve(wet, hall_ir()) * 0.25
         stems["sfx"] = sfx_audio
-        sf.write(out / "stems" / "sfx.wav", sfx_audio, SR, subtype="PCM_24")
+        if "stems" in outputs:
+            sf.write(out / "stems" / "sfx.wav", sfx_audio, SR, subtype="PCM_24")
     files: dict[str, Path] = {}
     if score.loop:
         # 把结尾溢出的混响尾巴叠回开头，循环播放时接缝处就是连续的
@@ -388,11 +430,17 @@ def render(score: Score, parts: list[Part], out: Path, soundset: str = "hq") -> 
         body[-fade:] *= np.linspace(1.0, 0.0, fade, dtype=np.float32)[:, None]
         main = preview = _master(body, warnings)
         files["audio"] = out / "song.wav"
-    sf.write(files["audio"], main, SR, subtype="PCM_24")
-    files["preview"] = out / "preview.mp3"
-    with AudioFile(str(files["preview"]), "w", SR, 2, quality="V2") as f:
-        f.write(np.ascontiguousarray(preview.T))
-    files["midi"] = out / "song.mid"
-    write_midi(files["midi"], score, parts)
-    files["stems"] = out / "stems"
+    if "audio" in outputs:
+        sf.write(files["audio"], main, SR, subtype="PCM_24")
+    else:
+        del files["audio"]
+    if "preview" in outputs:
+        files["preview"] = out / "preview.mp3"
+        with AudioFile(str(files["preview"]), "w", SR, 2, quality=mp3_quality) as f:
+            f.write(np.ascontiguousarray(preview.T))
+    if "midi" in outputs:
+        files["midi"] = out / "song.mid"
+        write_midi(files["midi"], score, parts)
+    if "stems" in outputs:
+        files["stems"] = out / "stems"
     return Rendered(main, stems, sources, mix_log, warnings, placed_sfx, files)
