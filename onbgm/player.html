@@ -187,7 +187,7 @@ const BOOT = /*__ONBGM_BOOT__*/null;
   }
   const http = location.protocol.startsWith("http");
   const urls = {};
-  for (const v of versions) urls[v] = http ? `/${v}/${BOOT[v].audio}` : BOOT[v].audio;
+  for (const v of versions) urls[v] = BOOT.server ? `/${v}/${BOOT[v].audio}` : BOOT[v].audio;  // 静态服务器或本地文件：音频和页面在同一目录
   const player = http ? new WebAudioPlayer(urls) : new ElementPlayer(urls);
 
   // ---------- 头部 ----------
