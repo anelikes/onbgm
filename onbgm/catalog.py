@@ -11,7 +11,7 @@ from pathlib import Path
 import yaml
 
 HERE = Path(__file__).resolve().parent
-KINDS = ["drums", "strum", "bassline", "comp", "progression", "texture", "sound", "drum", "chord", "example"]
+KINDS = ["drums", "strum", "bassline", "comp", "arp", "progression", "texture", "sound", "drum", "chord", "example"]
 
 
 @lru_cache(maxsize=None)
@@ -21,7 +21,8 @@ def items() -> list[dict]:
     from .schema import COMMON_TRACK_FIELDS, TEXTURE_FIELDS
     from .theory import QUALITIES, pitch_name
 
-    out = [dict(x) for x in yaml.safe_load((HERE / "catalog.yaml").read_text(encoding="utf-8"))]
+    out = [dict(x) | {"tags": [str(t) for t in x.get("tags", [])]}  # YAML 会把 808 这类标签读成数字
+           for x in yaml.safe_load((HERE / "catalog.yaml").read_text(encoding="utf-8"))]
     for name, fn in TEXTURES.items():
         doc = (fn.__doc__ or "").strip().splitlines()
         fields = ", ".join(sorted(TEXTURE_FIELDS[name] - COMMON_TRACK_FIELDS)) or "（无）"

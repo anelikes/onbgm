@@ -121,6 +121,7 @@ notes:
 | `groove` 鼓组 | `pattern: {鼓件: 节奏型}` | `X` 重音，`x` 普通，`g` 轻声（ghost note），`.` 不打 |
 | `bassline` 低音 | `rhythm` | `1 3 5 7 8`：当前和弦的级数（1 是低音，落在 `[low, low+11]` 这个八度内，斜杠和弦取斜杠后的音；3/5/7 在它上方；8 是高八度；没有七音时 7 弹高八度根音），`-` 延长，`.` 休止 |
 | `comp` 和弦伴奏 | `rhythm` | `X`/`x` 弹和弦（X 更重），`-` 延长，`.` 休止 |
+| `arp` 琶音器 | `rhythm` | 每个 `X`/`x` 弹当前和弦的下一个音，`-` 延长，`.` 休止；`mode` 是 `up` / `down` / `updown`，`range` 是取音的音区（默认 `[60, 84]`）；换和弦时从头开始 |
 | `strum` 吉他扫弦 | `pattern` | `D`/`U` 下扫/上扫（上扫只扫高音 4 根弦），`d`/`u` 轻扫，`x` 闷音切音，`.` 让弦继续响 |
 
 和弦变化的规则：
@@ -140,6 +141,7 @@ notes:
 | `arpeggio` | 抒情钢琴分解和弦（1-5-8-9-10…），能量低于 0.35 时只弹四分音符，自动换踏板 | `low`（左手最低音区，默认 36） |
 | `pad` | 四声部持续和弦，段内就近进行 | `range`（默认 `[48, 72]`） |
 | `comp` | 按节奏型弹和弦，四声部就近进行 | `rhythm`，`range`（默认 `[48, 67]`，垫在旋律下面），`roll`（从低到高拨开的间隔，拍） |
+| `arp` | 琶音器：按节奏型、按和弦音自动上下走，科技、电子风格的核心 | `rhythm`，`mode`，`range`，`articulation` |
 | `strum` | 吉他扫弦 | `pattern`，`spread`（相邻弦的时间差，秒，默认 0.012） |
 | `bassline` | 按级数走的节奏型低音 | `rhythm`，`low`（默认 28），`articulation` |
 | `bass-sustain` | 每个和弦一个长音根音 | `low`（默认 28） |
@@ -176,6 +178,20 @@ notes:
 | `guitar-nylon` | E2–E6 | 衰减音 | GM |
 | `guitar-steel` | E2–E6 | 衰减音 | GM |
 
-鼓组：`drums`（标准）、`drums-room`、`drums-jazz`、`drums-brush`（刷子）、`drums-808`、`drums-electronic`。
+合成器音色（由引擎直接合成，不需要下载音源，任何档位都可用）：
+
+| 音色 | 用途 |
+|---|---|
+| `synth-pluck` | 科技感的拨弦，琶音的首选；自带附点八分延迟 |
+| `synth-pad` | 宽厚的合成铺底，慢起慢收 |
+| `supersaw` | 电子舞曲的"超级锯齿"和弦，适合高潮的重击 |
+| `synth-lead` | 合成器主旋律，带延迟颤音 |
+| `synth-bass` | 有起音"嗒"声的合成贝斯 |
+| `sub-bass` | 纯净的超低音 |
+| `bass-808` | 808 低音：起音时音高下滑，长衰减 |
+| `synth-bell` | FM 钟声，适合高音区的旋律或点缀 |
+| `fm-epiano` | FM 电钢琴（DX7 风格） |
+
+鼓组：`drums`（标准）、`drums-room`、`drums-jazz`、`drums-brush`（刷子）、`drums-808`、`drums-electronic`、`drums-synth`（合成鼓组，电子风格首选）。
 
 超出音域的音会在报告里给出警告。

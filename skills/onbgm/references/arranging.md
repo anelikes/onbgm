@@ -50,7 +50,7 @@ BGM 的任务是托住画面，而不是抢戏。好的 BGM 段落清楚、起�
 | 咖啡馆爵士 | `cafe_jazz` | `swing: 0.62` 加 `swing_unit: 8`，每小节 8 步的节奏型；ii–V–I 和弦进行；`drums-brush` 的 ride 加 pedal-hat；`contrabass` 低音 |
 | 片头 / 不循环 | `vlog_intro` | `bpm: auto` + `length` + `at`；收尾段落用长音和吊镲收住 |
 | 紧张 / 追逐 | 无完整示例 | 140–170 BPM，小调；弦乐用 `strings` 的 `line` 写十六分音符音型，加 `articulation: staccato`（会用跳弓采样）；大提琴的快速节奏型同样标断奏；定音鼓另开 `line` 写 3+3+2 之类的切分；升级前用 `roll_into` 和 `crash` |
-| 科技 / 现代 / 产品宣传 | 无完整示例 | 110–125 BPM，大调；`drums-electronic` 或 `drums-808` 的四拍底鼓加十六分音符踩镲；`electric-bass` 八分音符律动；用 `marimba` 或 `glockenspiel` 的十六分音符琶音代替合成器琶音；`strings-slow` 铺底。目前还没有合成器音色，所以出来的效果更接近"企业宣传片"，做不出电子乐那种合成器质感 |
+| 科技 / 现代 / 产品宣传 | `product_video` | 110–125 BPM，大调；`drums-synth` 四拍底鼓加十六分音符踩镲；`synth-bass` 或 `sub-bass`；`synth-pluck` 的 `arp` 琶音（`mode: updown`）；`synth-pad` 铺底；高潮用 `supersaw` 重击、`bass-808` 下滑。`onbgm catalog -q "科技 琶音"` 有现成片段 |
 | 安静的钢琴独奏 | 无完整示例 | 60–75 BPM；`arpeggio` 铺底，`piano` 写 `melody`；最后一两小节拆出一个 `comp` 声部弹柱式和弦，让节奏自然放慢 |
 
 ## 常见的坑

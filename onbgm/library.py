@@ -41,6 +41,9 @@ class Mix:
     pan: float = 0.0  # -1 左 … 1 右（乐团座位）
     width: float = 1.0  # 立体声宽度，0 为单声道
     eq: list = field(default_factory=list)
+    delay_beats: float | None = None  # 跟着速度走的延迟（拍），如 0.75 = 附点八分
+    delay_feedback: float = 0.3
+    delay_mix: float = 0.2
 
 
 # 乐团座位：小提琴在左，中提琴居中偏右，大提琴和低音提琴在右，打击乐在后方
@@ -53,6 +56,16 @@ MIX = {
     "pizzicato": Mix(0.3, 0.5, [HighpassFilter(40)]),
     "timpani": Mix(-0.15, 0.6, [HighpassFilter(35)]),
     "drums": Mix(0.15, 0.8, [HighpassFilter(250)]),
+    "synth-pluck": Mix(0.0, 0.8, [HighpassFilter(120)], delay_beats=0.75, delay_feedback=0.35, delay_mix=0.25),
+    "synth-pad": Mix(0.0, 1.0, [HighpassFilter(150), PeakFilter(400, -2, 0.8)]),
+    "supersaw": Mix(0.0, 1.0, [HighpassFilter(150)]),
+    "synth-lead": Mix(0.0, 0.5, [HighpassFilter(150)], delay_beats=0.75, delay_feedback=0.25, delay_mix=0.15),
+    "synth-bass": Mix(0.0, 0.2, [HighpassFilter(30)]),
+    "sub-bass": Mix(0.0, 0.0, [HighpassFilter(25)]),
+    "bass-808": Mix(0.0, 0.0, [HighpassFilter(25)]),
+    "synth-bell": Mix(0.1, 0.8, [HighpassFilter(200)], delay_beats=0.75, delay_feedback=0.3, delay_mix=0.2),
+    "fm-epiano": Mix(0.0, 0.7, [HighpassFilter(60)]),
+    "drums-synth": Mix(0.0, 1.0, [HighpassFilter(25)]),
 }
 
 
@@ -113,7 +126,14 @@ HQ = {
 
 
 def resolve(sound: str, soundset: str, pitches: set[int] = frozenset(), root: Path = SOUNDS_DIR):
-    """返回 SF2(...)，或 route(pitch) -> Instrument。鼓组只有用到的每件鼓都有采样时才用采样。"""
+    """返回 SF2(...)、合成器音色（synth.Preset / synth.Kit），或 route(pitch) -> Instrument。
+    合成器音色不需要下载，任何档位都直接合成；鼓组只有用到的每件鼓都有采样时才用采样。"""
+    from . import synth
+
+    if sound in synth.PRESETS:
+        return synth.PRESETS[sound]
+    if sound == synth.KIT.name:
+        return synth.KIT
     if soundset == "hq" and sound in HQ:
         spec = HQ[sound]
         if isinstance(spec, SF2):

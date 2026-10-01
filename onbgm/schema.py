@@ -26,9 +26,11 @@ TEXTURE_FIELDS = {
     "groove": {"pattern", "laid_back"},
     "bassline": {"rhythm", "low", "articulation"},
     "comp": {"rhythm", "range", "roll"},
+    "arp": {"rhythm", "range", "mode", "articulation"},
     "strum": {"pattern", "spread"},
 }
-SECTION_OVERRIDES = {"groove": {"pattern"}, "bassline": {"rhythm"}, "comp": {"rhythm"}, "strum": {"pattern"}}
+SECTION_OVERRIDES = {"groove": {"pattern"}, "bassline": {"rhythm"}, "comp": {"rhythm"}, "arp": {"rhythm"},
+                     "strum": {"pattern"}}
 
 TIME = {
     "anyOf": [{"type": "number", "minimum": 0}, {"type": "string", "pattern": r"^\s*(\d+:)?\d+(\.\d+)?\s*$"}],
@@ -82,6 +84,7 @@ def score_schema() -> dict:
                          "description": "整个声部默认的演奏法；staccato 为断奏（弦乐会改用跳弓采样）。单个音也可以用 ' 标断奏"},
         "laid_back": {"type": "number", "description": "军鼓/拍手往后拖的拍数"},
         "spread": {"type": "number", "minimum": 0, "description": "扫弦相邻两根弦的时间差（秒）"},
+        "mode": {"enum": ["up", "down", "updown"], "description": "琶音顺序：上行、下行、上下往返"},
     }
     track_props = {
         "sound": {"enum": sorted(SOUNDS), "description": "音色"},
@@ -250,6 +253,9 @@ def _friendly(err, raw: dict) -> list[Problem]:
                         + (f"。{schema['description']}" if "description" in schema else "") + _example(schema))]
     if v == "enum" or v == "const":
         options = err.validator_value if v == "enum" else [err.validator_value]
+        if not isinstance(err.instance, str) and str(err.instance) in [str(o) for o in options]:
+            return [Problem("unknown_value", path, f"YAML 把 {err.instance} 读成了数字，这里需要字符串，请加引号：\"{err.instance}\"",
+                            {"replace_with": str(err.instance)})]
         guess = difflib.get_close_matches(str(err.instance), [str(o) for o in options], n=1)
         return [Problem("unknown_value", path, f"不认识 {_dump(err.instance)}"
                         + (f"，是不是想写 {guess[0]}？" if guess else "")

@@ -63,7 +63,7 @@ def test_field_from_another_texture_names_the_right_textures(write_score):
     tracks:
       drums: {sound: drums, texture: groove, rhythm: "x... ...."}
     """)
-    assert problems == ["tracks.drums.rhythm: groove 织体不使用这个字段（bassline、comp 才用）；"
+    assert problems == ["tracks.drums.rhythm: groove 织体不使用这个字段（bassline、comp、arp 才用）；"
                         "groove 可用: by_section, gain, in, laid_back, pattern, sound, texture"]
 
 

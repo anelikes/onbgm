@@ -61,6 +61,7 @@ onbgm render my_bgm/score.yaml -o my_bgm/out/v1 --soundset gm # 只用 GM 音源
 | `sunny_walk` | 木吉他 vlog：扫弦、拍手、钟琴 |
 | `cafe_jazz` | 咖啡馆爵士钢琴三重奏 |
 | `vlog_intro` | 20 秒不循环片头 |
+| `product_video` | 45 秒产品宣传片配乐，全部合成器音色，按视频时间点对齐 |
 
 `cafe_jazz` 和 `vlog_intro` 是两个只读过文档的全新 agent 写的。`experiments/` 里存着这类可用性测试的原始记录。
 
@@ -70,7 +71,8 @@ onbgm render my_bgm/score.yaml -o my_bgm/out/v1 --soundset gm # 只用 GM 音源
 |---|---|---|
 | [GeneralUser GS](https://github.com/mrbumpy409/GeneralUser-GS) | 自由使用 | 所有音色的保底实现（`--soundset gm`） |
 | [Salamander Grand Piano](https://freepats.zenvoid.org/Piano/acoustic-grand-piano.html) | CC-BY 3.0 | 钢琴 |
-| [VSCO 2 Community Edition](https://github.com/sgossner/VSCO-2-CE) | CC0 | 弦乐分部、低音提琴、拨弦、定音鼓、镲、钟琴 |
+| [VSCO 2 Community Edition](https://github.com/sgossner/VSCO-2-CE) | CC0 | 弦乐分部（含跳弓）、低音提琴、拨弦、定音鼓、镲、钟琴 |
+| 内置合成器（`onbgm/synth.py`） | — | 合成器音色（pluck、pad、supersaw、lead、bass、808、FM 钟声和电钢琴）和合成鼓组，不需要下载 |
 
 VSCO 的采样由内置采样器（`onbgm/sampler.py`）直接读取：
 - 用 soxr 做高质量重采样来变调；

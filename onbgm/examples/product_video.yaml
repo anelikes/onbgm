@@ -1,0 +1,158 @@
+# 产品宣传片 —— 45 秒、不循环、0:08 产品出现时"打开"、0:30 收尾停在 logo；全部合成器音色
+# 音符由一个只读过 skill 的全新 agent 编写（2026-10-01 第三轮测试），音色后来换成合成器
+# 产品宣传片 BGM v2 —— 只加强 0:08 的冲击（改动限于第 4 小节 0:06–0:08 与第 5 小节 0:08–0:10）
+# 0:00 开场空镜（克制、期待） → 0:08 产品出现（打开） → 0:30 logo（终止式落在主和弦） → 0:45 结束
+title: Product Launch
+meta:
+  bpm: auto
+  length: "0:44"        # 乐谱 44 秒 + tail 1 秒 = 输出 45 秒
+  tail: 1
+  key: D major
+  seed: 0
+
+# 120 BPM 下 1 小节 = 2 秒
+sections:
+  - { name: intro,  bars: 4, energy: "0.2->0.45" }            # 0:00–0:08
+  - { name: drop,   bars: 4, energy: 0.85, at: "0:08" }       # 0:08–0:16 产品出现
+  - { name: drive,  bars: 4, energy: 0.9 }                    # 0:16–0:24
+  - { name: lift,   bars: 3, energy: "0.9->1.0" }             # 0:24–0:30 ii–IV–V 引向主和弦
+  - { name: ending, bars: 1, energy: 1.0, at: "0:30" }        # 0:30 最后一击
+  - { name: logo,   bars: 6, energy: "0.35->0.05" }           # 0:32–0:44 主和弦长音托住 logo
+
+harmony:
+  intro:  "Bm7 | Gmaj7 | Em7 | Asus4 A"
+  drop:   "D | A/C# | Bm7 | G"
+  drive:  "D | A/C# | Bm7 | G"
+  lift:   "Em7 | G | Asus4 A"
+  ending: "D"
+  logo:   "D"
+
+tracks:
+  pad:
+    sound: synth-pad
+    texture: pad
+    in: all
+
+  arp:
+    sound: synth-pluck
+    texture: line
+    in: [intro, drop, drive, lift, ending]
+    notes:
+      intro: >-
+        B3/8 F#4/8 A4/8 D5/8 F#5/8 D5/8 A4/8 F#4/8 |
+        G3/8 D4/8 F#4/8 B4/8 D5/8 B4/8 F#4/8 D4/8 |
+        E4/8 B4/8 D5/8 G5/8 B5/8 G5/8 D5/8 B4/8 |
+        A3/8 E4/8 A4/8 D5/8 A4/16 C#5/16 E5/16 A5/16 C#6/16 E6/16 A6/16 r/16
+      drop: >-
+        D5/16 A4/16 F#5/16 D5/16 A4/16 F#5/16 D5/16 A4/16 F#5/16 D5/16 A4/16 F#5/16 D5/16 A4/16 F#5/16 D5/16 |
+        C#5/16 A4/16 E5/16 C#5/16 A4/16 E5/16 C#5/16 A4/16 E5/16 C#5/16 A4/16 E5/16 C#5/16 A4/16 E5/16 C#5/16 |
+        D5/16 B4/16 F#5/16 D5/16 B4/16 F#5/16 D5/16 B4/16 F#5/16 D5/16 B4/16 F#5/16 D5/16 B4/16 F#5/16 D5/16 |
+        D5/16 B4/16 G5/16 D5/16 B4/16 G5/16 D5/16 B4/16 G5/16 D5/16 B4/16 G5/16 D5/16 B4/16 G5/16 D5/16
+      drive: >-
+        D5/16 A4/16 F#5/16 D5/16 A4/16 F#5/16 D5/16 A4/16 F#5/16 D5/16 A4/16 F#5/16 D5/16 A4/16 F#5/16 D5/16 |
+        C#5/16 A4/16 E5/16 C#5/16 A4/16 E5/16 C#5/16 A4/16 E5/16 C#5/16 A4/16 E5/16 C#5/16 A4/16 E5/16 C#5/16 |
+        D5/16 B4/16 F#5/16 D5/16 B4/16 F#5/16 D5/16 B4/16 F#5/16 D5/16 B4/16 F#5/16 D5/16 B4/16 F#5/16 D5/16 |
+        D5/16 B4/16 G5/16 D5/16 B4/16 G5/16 D5/16 B4/16 G5/16 D5/16 B4/16 G5/16 D5/16 B4/16 G5/16 D5/16
+      lift: >-
+        E5/16 B4/16 G5/16 E5/16 B4/16 G5/16 E5/16 B4/16 G5/16 E5/16 B4/16 G5/16 E5/16 B4/16 G5/16 E5/16 |
+        D5/16 B4/16 G5/16 D5/16 B4/16 G5/16 D5/16 B4/16 G5/16 D5/16 B4/16 G5/16 D5/16 B4/16 G5/16 D5/16 |
+        D5/16 A4/16 E5/16 D5/16 A4/16 E5/16 D5/16 A4/16 C#5/16 A4/16 E5/16 C#5/16 A4/16 E5/16 C#5/16 A4/16
+      ending: "D5/1"
+
+  lead:
+    sound: synth-bell
+    texture: melody
+    in: [drop, drive, lift, ending]
+    notes:
+      drop: >-
+        F#6/8> A6/8 r/8 A6/8 B6/8 A6/8 F#6/4 |
+        E6/8 E6/8 r/8 E6/8 F#6/8 E6/8 C#6/4 |
+        D6/8 F#6/8 r/8 F#6/8 A6/8 F#6/8 D6/4 |
+        G6/4. F#6/8 D6/4 r/4
+      drive: >-
+        F#6/8 A6/8 r/8 A6/8 B6/8 A6/8 D7/4 |
+        C#7/8 B6/8 r/8 A6/8 B6/8 A6/8 E6/4 |
+        D7/8 C#7/8 r/8 B6/8 A6/8 F#6/8 B6/4 |
+        G6/4. A6/8 B6/4 r/4
+      lift: >-
+        G6/8 B6/8 r/8 B6/8 D7/8 B6/8 G6/4 |
+        B6/8 D7/8 r/8 D7/8 E7/8 D7/8 B6/4 |
+        A6/8 B6/8 D7/8 E7/8 E7/4 C#7/4
+      ending: "D7/1>"
+
+  bass:
+    sound: synth-bass
+    texture: bassline
+    in: [drop, drive, lift, ending]
+    rhythm: "1.1. 1.1. 1.1. 1.8."
+    by_section:
+      ending: {rhythm: "1--- ---- ---- ----"}
+
+  sub:
+    sound: sub-bass
+    texture: bass-sustain
+    in: [logo]
+
+  hit:
+    sound: supersaw
+    texture: comp
+    in: [drop, ending]
+    rhythm: "X--- ---- ---- ----"
+    by_section:
+      drop: {rhythm: "X--- ---- ---- ---- | .... .... .... .... | .... .... .... .... | .... .... .... ...."}
+
+  boom:
+    sound: bass-808
+    texture: line
+    in: [intro, drop]
+    notes:
+      intro: "r/1 | r/1 | r/1 | r/2 A2/16 A2/16 A2/16 A2/16 A2/16 A2/16> A2/16> r/16"
+      drop:  "D2/1> | r/1 | r/1 | r/1"
+
+  drums:
+    sound: drums-synth
+    texture: groove
+    in: [intro, drop, drive, lift, ending]
+    pattern:
+      kick:     "x... x... x... x..."
+      clap:     ".... x... .... x..."
+      hat:      "xg.g xg.g xg.g xg.g"
+      open-hat: "..x. ..x. ..x. ..x."
+      snare:    ".... .... .... ...."
+      crash:    ".... .... .... ...."
+    by_section:
+      intro:
+        pattern:
+          kick:     ".... .... .... .... | .... .... .... .... | .... .... .... .... | .... .... .... ...."
+          clap:     ".... .... .... .... | .... .... .... .... | .... .... .... .... | .... .... .... ...."
+          hat:      ".... .... .... .... | .... .... .... .... | g.g. g.g. g.g. g.g. | g.g. g.g. xxxx ...."
+          open-hat: ".... .... .... .... | .... .... .... .... | .... .... .... .... | .... .... .... ...."
+          snare:    ".... .... .... .... | .... .... .... .... | .... .... .... .... | g.g. x.x. xxxx ...."
+          tom-high: ".... .... .... .... | .... .... .... .... | .... .... .... .... | .... .... .... X..."
+          tom-mid:  ".... .... .... .... | .... .... .... .... | .... .... .... .... | .... .... .... .X.."
+          tom-low:  ".... .... .... .... | .... .... .... .... | .... .... .... .... | .... .... .... ..X."
+          crash:    ".... .... .... .... | .... .... .... .... | .... .... .... .... | .... .... .... ...."
+      drop:
+        pattern:
+          kick:     "X... x... x... x..."
+          clap:     "X... x... .... x... | .... x... .... x... | .... x... .... x... | .... x... .... x..."
+          hat:      "xg.g xg.g xg.g xg.g"
+          open-hat: "..x. ..x. ..x. ..x."
+          snare:    ".... .... .... ...."
+          crash:    "X... .... .... .... | .... .... .... .... | .... .... .... .... | .... .... .... ...."
+      lift:
+        pattern:
+          kick:     "x... x... x... x... | x... x... x... x... | x... x... x... ...."
+          clap:     ".... x... .... x... | .... x... .... x... | .... x... .... ...."
+          hat:      "xg.g xg.g xg.g xg.g | xg.g xg.g xg.g xg.g | xxxx xxxx xxxx ...."
+          open-hat: "..x. ..x. ..x. ..x. | ..x. ..x. ..x. ..x. | .... .... .... ...."
+          snare:    ".... .... .... .... | .... .... .... .... | x.x. x.x. xxxx XXXX"
+          crash:    ".... .... .... .... | .... .... .... .... | .... .... .... ...."
+      ending:
+        pattern:
+          kick:     "X... .... .... ...."
+          clap:     "X... .... .... ...."
+          hat:      ".... .... .... ...."
+          open-hat: ".... .... .... ...."
+          snare:    ".... .... .... ...."
+          crash:    "X... .... .... ...."

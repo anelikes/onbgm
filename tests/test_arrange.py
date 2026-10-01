@@ -88,3 +88,17 @@ def test_adding_notes_in_one_section_keeps_velocities_elsewhere(write_score):
         lead = next(p for p in arrange(score)[0] if p.name == "lead")
         return [n.vel for n in sorted(lead.notes, key=lambda n: n.start) if score.section_of(n.start).name == "a"]
     assert vels("C5/1") == vels("C6/8 E6/8 G6/8 C7/8 E7/8 G7/8 C7/4")
+
+
+def test_arp_walks_chord_tones_and_restarts_on_chord_change(write_score):
+    score = load(write_score("""
+        meta: {bpm: 120}
+        sections: [{name: a, bars: 2}]
+        harmony: {a: "C | Am"}
+        tracks:
+          arp: {sound: synth-pluck, texture: arp, range: [60, 72], mode: updown, rhythm: "xxxx xxxx xxxx xxxx"}
+    """))
+    arp = next(p for p in arrange(score)[0] if p.name == "arp")
+    pitches = [n.pitch for n in sorted(arp.notes, key=lambda n: n.start)]
+    assert pitches[:6] == [60, 64, 67, 72, 67, 64]       # C 和弦：上行再下行
+    assert pitches[16:20] == [60, 64, 69, 72]             # 换成 Am：从头开始，用 Am 的音

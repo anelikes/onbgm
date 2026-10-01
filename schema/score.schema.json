@@ -210,6 +210,7 @@
           "sound": {
             "enum": [
               "acoustic-bass",
+              "bass-808",
               "brass",
               "cello",
               "choir",
@@ -220,9 +221,11 @@
               "drums-electronic",
               "drums-jazz",
               "drums-room",
+              "drums-synth",
               "electric-bass",
               "epiano",
               "flute",
+              "fm-epiano",
               "glockenspiel",
               "guitar-nylon",
               "guitar-steel",
@@ -234,6 +237,13 @@
               "pizzicato",
               "strings",
               "strings-slow",
+              "sub-bass",
+              "supersaw",
+              "synth-bass",
+              "synth-bell",
+              "synth-lead",
+              "synth-pad",
+              "synth-pluck",
               "timpani",
               "tremolo",
               "vibraphone",
@@ -243,6 +253,7 @@
           },
           "texture": {
             "enum": [
+              "arp",
               "arpeggio",
               "bass-pizz",
               "bass-sustain",
@@ -421,6 +432,14 @@
             "type": "number",
             "minimum": 0,
             "description": "扫弦相邻两根弦的时间差（秒）"
+          },
+          "mode": {
+            "enum": [
+              "up",
+              "down",
+              "updown"
+            ],
+            "description": "琶音顺序：上行、下行、上下往返"
           }
         },
         "allOf": [
@@ -691,6 +710,33 @@
                   "range",
                   "rhythm",
                   "roll",
+                  "sound",
+                  "texture"
+                ]
+              }
+            }
+          },
+          {
+            "if": {
+              "required": [
+                "texture"
+              ],
+              "properties": {
+                "texture": {
+                  "const": "arp"
+                }
+              }
+            },
+            "then": {
+              "propertyNames": {
+                "enum": [
+                  "articulation",
+                  "by_section",
+                  "gain",
+                  "in",
+                  "mode",
+                  "range",
+                  "rhythm",
                   "sound",
                   "texture"
                 ]

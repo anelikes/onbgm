@@ -11,10 +11,10 @@ from pathlib import Path
 import numpy as np
 import pyloudnorm as pyln
 import soundfile as sf
-from pedalboard import Compressor, Distortion, Gain, HighpassFilter, LowpassFilter, Pedalboard
+from pedalboard import Compressor, Delay, Distortion, Gain, HighpassFilter, LowpassFilter, Pedalboard
 from pedalboard.io import AudioFile
 
-from . import library, sampler
+from . import library, sampler, synth
 from .arrange import Part
 from .midi_io import write_midi
 from .score import Problem, Score
@@ -29,7 +29,7 @@ LIMIT_WARN_DB = 6.0  # 限幅器需要压掉超过这么多时提醒：多半是
 # 每种伴奏角色在自己出现的段落里的目标响度（LUFS）。按实际渲染结果测量后对齐，
 # 所以换音源、换织体密度（扫弦一下 6 根弦、鼓一下一下）都不会打乱平衡。数值从《夜雨》认可的混音反推。
 ROLE_LUFS = {
-    "arpeggio": -21.0, "pad": -21.0, "comp": -21.0, "strum": -19.0, "line": -21.0,
+    "arpeggio": -21.0, "pad": -21.0, "comp": -21.0, "arp": -21.0, "strum": -19.0, "line": -21.0,
     "bass-sustain": -22.0, "bass-pizz": -21.0, "bassline": -20.0,
     "groove": -19.0, "timpani": -22.0, "crash": -29.0,
 }
@@ -44,6 +44,8 @@ def _fit(audio: np.ndarray, n: int) -> np.ndarray:
 
 
 def _fluidsynth(score: Score, part: Part, sf2: Path, n: int) -> np.ndarray:
+    if not shutil.which("fluidsynth"):
+        raise RuntimeError("找不到 fluidsynth，请先安装：brew install fluid-synth（全部用合成器音色的乐谱不需要它）")
     with tempfile.TemporaryDirectory() as tmp:
         mid, wav = Path(tmp) / "part.mid", Path(tmp) / "part.wav"
         write_midi(mid, score, [part], _tail_sec(score) * score.bpm / 60)
@@ -57,6 +59,8 @@ def _fluidsynth(score: Score, part: Part, sf2: Path, n: int) -> np.ndarray:
 
 
 def _render_raw(score: Score, part: Part, impl, n: int) -> np.ndarray:
+    if isinstance(impl, (synth.Preset, synth.Kit)):
+        return synth.render_part(score, part, impl, n)
     if isinstance(impl, library.SF2):
         if impl.program is not None:
             part = replace(part, sound=replace(part.sound, program=impl.program))
@@ -65,6 +69,8 @@ def _render_raw(score: Score, part: Part, impl, n: int) -> np.ndarray:
 
 
 def _describe(impl) -> str:
+    if isinstance(impl, (synth.Preset, synth.Kit)):
+        return f"synth: {impl.name}"
     if isinstance(impl, library.SF2):
         return impl.file
     names = sorted({impl(p).name for p in range(21, 109)})
@@ -72,8 +78,6 @@ def _describe(impl) -> str:
 
 
 def render_stems(score: Score, parts: list[Part], soundset: str):
-    if not shutil.which("fluidsynth"):
-        raise RuntimeError("找不到 fluidsynth，请先安装：brew install fluid-synth")
     n = round((score.seconds(score.total_beats) + _tail_sec(score)) * SR)
     stems, sources = {}, {}
     for part in parts:
@@ -177,18 +181,21 @@ def _convolve(x: np.ndarray, ir: np.ndarray) -> np.ndarray:
     return y[: len(x)].astype(np.float32)
 
 
-def _place(audio: np.ndarray, m: library.Mix) -> np.ndarray:
-    """EQ → 立体声宽度 → 声像。"""
-    if m.eq:
-        audio = Pedalboard(m.eq)(np.ascontiguousarray(audio.T), SR).T
+def _place(audio: np.ndarray, m: library.Mix, bpm: float) -> np.ndarray:
+    """EQ → 延迟 → 立体声宽度 → 声像。"""
+    fx = list(m.eq)
+    if m.delay_beats:
+        fx.append(Delay(delay_seconds=m.delay_beats * 60 / bpm, feedback=m.delay_feedback, mix=m.delay_mix))
+    if fx:
+        audio = Pedalboard(fx)(np.ascontiguousarray(audio.T), SR).T
     mid, side = (audio[:, 0] + audio[:, 1]) / 2, (audio[:, 0] - audio[:, 1]) / 2 * m.width
     audio = np.stack([mid + side, mid - side], axis=1)
     theta = (m.pan + 1) * np.pi / 4
     return (audio * np.array([np.cos(theta), np.sin(theta)]) * np.sqrt(2)).astype(np.float32)
 
 
-def mix(stems: dict[str, np.ndarray], parts: list[Part]) -> np.ndarray:
-    placed = {p.name: _place(stems[p.name], library.mix_for(p.sound_name)) * _db(p.gain_db) for p in parts}
+def mix(stems: dict[str, np.ndarray], parts: list[Part], bpm: float) -> np.ndarray:
+    placed = {p.name: _place(stems[p.name], library.mix_for(p.sound_name), bpm) * _db(p.gain_db) for p in parts}
     dry = sum(placed.values())
     send = sum(placed[p.name] * p.sound.reverb for p in parts)
     send = Pedalboard([HighpassFilter(200), LowpassFilter(9000)])(np.ascontiguousarray(send.T), SR).T
@@ -277,7 +284,7 @@ def render(score: Score, parts: list[Part], out: Path, soundset: str = "hq") -> 
     mix_log, warnings = automix(score, parts, stems)
     for name, audio in stems.items():
         sf.write(out / "stems" / f"{name}.wav", audio, SR, subtype="PCM_24")
-    full = mix(stems, parts)
+    full = mix(stems, parts, score.bpm)
     length = round(score.seconds(score.total_beats) * SR)
     if (score.fx or {}).get("lofi"):
         full = lofi(full, score.fx["lofi"], length if score.loop else None)
