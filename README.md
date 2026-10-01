@@ -19,6 +19,7 @@ agent ──写/改──▶ 乐谱 YAML ──▶ 严格校验 + 时间轴求�
 
 agent 用的说明在 [`skills/onbgm/`](skills/onbgm/SKILL.md)，按 skill 格式组织：
 - 入口 [`SKILL.md`](skills/onbgm/SKILL.md)：工作流程、怎么读报告、规则
+- [`references/cli.md`](skills/onbgm/references/cli.md)：命令、`--json` 的输出结构、错误码
 - [`references/score-format.md`](skills/onbgm/references/score-format.md)：完整的乐谱格式
 - [`references/arranging.md`](skills/onbgm/references/arranging.md)：怎么把 BGM 写好，以及各风格的配方
 
@@ -27,20 +28,26 @@ agent 用的说明在 [`skills/onbgm/`](skills/onbgm/SKILL.md)，按 skill 格�
 ## 快速开始
 
 ```bash
-brew install fluid-synth ffmpeg
-uv venv && uv pip install -e ".[dev]"
-.venv/bin/onbgm fetch                                   # 下载音源到 sounds/（约 650MB）
+brew install fluid-synth                  # Debian/Ubuntu: sudo apt install fluidsynth
+uv tool install git+https://github.com/anelikes/onbgm
+onbgm fetch                               # 下载音源到 ~/.onbgm/sounds（约 700MB；可用 ONBGM_SOUNDS 指定位置）
+onbgm doctor                              # 检查环境
 
-.venv/bin/onbgm example                                 # 列出示例
-.venv/bin/onbgm example late_study > my.yaml            # 取一份示例当起点
-.venv/bin/onbgm check my.yaml                           # 校验、打印时间轴
-.venv/bin/onbgm render my.yaml -o out/my                # 渲染
-.venv/bin/onbgm render my.yaml -o out/my --soundset gm  # 只用 GM 音源（快、轻量）
+onbgm init my_bgm --example late_study    # 从示例起步
+onbgm catalog -q "慵懒的 lo-fi 鼓"          # 搜现成的写法
+onbgm check my_bgm/score.yaml             # 校验、打印时间轴
+onbgm timeline my_bgm/score.yaml --at 0:20
+onbgm render my_bgm/score.yaml -o my_bgm/out/v1               # 渲染
+onbgm render my_bgm/score.yaml -o my_bgm/out/v1 --soundset gm # 只用 GM 音源（快、轻量）
 ```
+
+每个命令都支持 `--json`。
+
+开发时：`uv venv && uv pip install -e ".[dev]"`。在源码仓库里，音源会下载到仓库下的 `sounds/`。
 
 输出文件：
 - `loop.wav`：循环曲的精确循环段，首尾无缝；不循环的曲子输出 `song.wav`，时长精确等于乐谱时长；
-- `preview.m4a`：试听；
+- `preview.mp3`：试听；
 - `song.mid`：MIDI；
 - `stems/`：分轨；
 - `pianoroll.png`：卷帘图。
