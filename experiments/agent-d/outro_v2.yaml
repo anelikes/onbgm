@@ -1,0 +1,56 @@
+# 播客片尾：温暖、安静的钢琴独奏，约 30 秒，不循环，慢速，结尾有明确的终止感
+# 设计：F 大调，8 小节 = 前奏 2 + 主题 4 + 终止式 1 + 结束和弦 1
+#       和声 IV - ii - V - I 收到主和弦；最后一小节停掉分解和弦，只在第一拍按一个 F 大三和弦 + 低音 F，
+#       旋律 G-E-F 经导音解决到主音全音符；乐谱 28 秒 + tail 2.5 秒余音 ≈ 30 秒
+title: Podcast Outro
+meta:
+  bpm: auto
+  length: "0:28"
+  key: F major
+  tail: 2
+  seed: 3
+
+sections:
+  - { name: intro,   bars: 2, energy: 0.25 }
+  - { name: theme,   bars: 4, energy: "0.3->0.45" }
+  - { name: cadence, bars: 1, energy: 0.32 }   # <0.35：分解和弦改弹四分音符，写出来的渐慢
+  - { name: final,   bars: 1, energy: 0.38 }
+
+harmony:
+  intro:   "Fadd9 | Bbmaj7"
+  theme:   "Fmaj7 | Am7 | Dm7 | Bbmaj7"
+  cadence: "Gm7 C7"
+  final:   "F"
+
+tracks:
+  # 左手 + 中音区：抒情分解和弦，最后一小节不弹
+  piano:
+    sound: piano
+    texture: arpeggio
+    in: [intro, theme, cadence]
+
+  # 右手旋律
+  melody:
+    sound: piano
+    texture: melody
+    notes:
+      intro:   "r/1 | r/2. C5/4"
+      theme:   "F5/4. G5/8 A5/2 | G5/4. F5/8 E5/2 | D5/4. E5/8 F5/4 A5/4 | Bb5/4. A5/8 G5/4 F5/4"
+      cadence: "G5/2 E5/2"
+      final:   "F5/1"
+
+  # 结束和弦：只在第一拍按下，之后保持
+  final_chord:
+    sound: piano
+    texture: comp
+    in: [final]
+    rhythm: "x--- ---- ---- ----"
+    roll: 0.05
+
+  # 结束和弦的低音 F
+  final_bass:
+    sound: piano
+    texture: bassline
+    in: [final]
+    low: 36
+    rhythm: "1--- ---- ---- ----"

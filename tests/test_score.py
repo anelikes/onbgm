@@ -58,3 +58,16 @@ def test_tail_is_rejected_for_loops(write_score):
             harmony: {a: "C"}
         """))
     assert "tail" in str(err.value)
+
+
+def test_time_constraint_error_offers_bar_count_for_the_requested_tempo(write_score):
+    """回归测试：用户要"更快但时间点不变"时，报错只建议把 bpm 改回去，没说要几小节。"""
+    with pytest.raises(ScoreError) as err:
+        load(write_score("""
+            meta: {bpm: 168}
+            sections:
+              - {name: run, bars: 12}
+              - {name: surge, bars: 8, at: "0:20"}
+            harmony: {run: "Am", surge: "Am"}
+        """))
+    assert "保持 168 BPM，让它之前一共 14 小节（现在是 12）" in str(err.value)

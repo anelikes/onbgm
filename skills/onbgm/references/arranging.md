@@ -23,6 +23,7 @@ BGM 的任务是托住画面，而不是抢戏。好的 BGM 段落清楚、起�
   - 鼓在最后一拍的第一下用重音，加 `crash`，之后不再打；
   - 前面一两个和弦用 IV–V 或 ii–V 引到 I，结束感会更强；
   - 设置 `meta.tail: 1.5`~`2`，给余音留出时间。
+  - 引擎还没有渐慢（ritardando）。想要"放慢下来"的感觉，可以把最后几小节的节奏写稀：分解和弦换成二分音符的柱式和弦，旋律换成长音。
 
 ## 旋律和伴奏的分工
 
@@ -43,6 +44,8 @@ BGM 的任务是托住画面，而不是抢戏。好的 BGM 段落清楚、起�
 | 木吉他 vlog | `sunny_walk` | 105–120 BPM，大调 I–V–vi–IV，`strum` 主歌加闷音切音（`x`），副歌扫满；拍手打二、四拍；`shaker` 十六分音符；`glockenspiel` 旋律 |
 | 咖啡馆爵士 | `cafe_jazz` | `swing: 0.62` 加 `swing_unit: 8`，每小节 8 步的节奏型；ii–V–I 和弦进行；`drums-brush` 的 ride 加 pedal-hat；`contrabass` 低音 |
 | 片头 / 不循环 | `vlog_intro` | `bpm: auto` + `length` + `at`；收尾段落用长音和吊镲收住 |
+| 紧张 / 追逐 | 无完整示例 | 140–170 BPM，小调；弦乐断奏用 `strings` 的 `line` 写十六分音符、`gate: 0.5`，再用 `pizzicato` 同音叠一层加强起音；定音鼓另开 `line` 写 3+3+2 之类的切分；升级前用 `roll_into` 和 `crash` |
+| 安静的钢琴独奏 | 无完整示例 | 60–75 BPM；`arpeggio` 铺底，`piano` 写 `melody`；最后一两小节拆出一个 `comp` 声部弹柱式和弦，让节奏自然放慢 |
 
 ## 常见的坑
 

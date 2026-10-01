@@ -4,6 +4,7 @@
 """
 from __future__ import annotations
 
+import math
 import re
 from dataclasses import dataclass
 from pathlib import Path
@@ -167,10 +168,22 @@ def _solve_bpm(meta: dict, sections: list[Section], problems: list[str]) -> floa
     for where, beats, secs in constraints:
         actual = beats * 60 / bpm
         if abs(actual - secs) > 0.01:
-            msg = f"{where} 要求 {fmt_time(secs)}，但在 {bpm:g} BPM 下实际是 {fmt_time(actual)}。"
+            msg = f"{where} 要求 {fmt_time(secs)}，但在 {bpm:g} BPM 下实际是 {fmt_time(actual)}。可以："
+            options = []
             if secs > 0:
-                msg += f"可以把 bpm 改为 {beats * 60 / secs:.2f}（或 auto），或调整它之前的小节数，或删掉这个约束。"
-            problems.append(msg)
+                options.append(f"把 bpm 改为 {beats * 60 / secs:.2f}（或 auto）")
+                # 保持这个速度：需要多少小节
+                span = "总共" if where == "meta.length" else "它之前一共"
+                need = secs * bpm / 60 / BEATS_PER_BAR
+                now = beats / BEATS_PER_BAR
+                if abs(need - round(need)) < 0.02 and round(need) > 0:
+                    options.append(f"保持 {bpm:g} BPM，让{span} {round(need)} 小节（现在是 {now:g}）")
+                else:
+                    lo, hi = math.floor(need), math.ceil(need)
+                    near = "、".join(f"{n} 小节（{fmt_time(n * BEATS_PER_BAR * 60 / bpm)}）" for n in (lo, hi) if n > 0)
+                    options.append(f"保持 {bpm:g} BPM 的话，{span}需要 {need:.2f} 小节，不是整数；最接近的是 {near}")
+            options.append("删掉这个约束")
+            problems.append(msg + "；".join(f"({i + 1}) {o}" for i, o in enumerate(options)))
     return bpm
 
 

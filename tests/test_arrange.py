@@ -63,3 +63,12 @@ def test_roll_expands_to_repeated_hits_for_midi():
     rolls = [n for n in timpani.notes if n.art == "roll"]
     assert len(rolls) == 1
     assert len(_expand(rolls)) == 32
+
+
+def test_arpeggio_notes_do_not_ring_into_the_next_chord():
+    """回归测试：分解和弦最后一个音曾拖进下一个和弦（G2 压在 F 和弦上）。"""
+    score = load(EXAMPLES / "night_rain_v1.yaml")
+    piano = next(p for p in arrange(score)[0] if p.name == "piano")
+    for n in piano.notes:
+        span = score.chord_at(n.start + 0.05)
+        assert n.start + n.dur <= span.end + 0.05, f"{n} 拖过了 {span.chord.symbol} 的结尾"

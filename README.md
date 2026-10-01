@@ -92,4 +92,4 @@ VSCO 的采样由内置采样器（`onbgm/sampler.py`）直接读取：
 .venv/bin/python -m pytest      # 需要音频的测试在没装 fluidsynth 或音源时会自动跳过
 ```
 
-当前状态：阶段 1（打地基）。下一步是阶段 2：围绕 CLI 和 skill 的 agent 接口（`--json` 输出、`init` / `catalog` / `timeline` 命令、降低安装门槛）。
+当前状态：阶段 1（打地基）。定位、范围决策和后续阶段见 [ROADMAP.md](ROADMAP.md)。

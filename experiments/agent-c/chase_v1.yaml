@@ -1,0 +1,120 @@
+# 追逐 —— 紧张、压迫感，D 小调，约 40 秒无缝循环，0:20 紧张度升级
+# 结构：intro 4 + run 8 = 12 小节（0:00–0:20），surge 8 + tail 4 = 12 小节（0:20–0:40）
+# 弦乐断奏：引擎没有断奏音色，用 strings 的 line 织体 + 短 gate 做"短弓"，再用 pizzicato 同音加强起音
+title: Chase
+meta:
+  bpm: auto
+  length: "0:40"
+  key: D minor
+  loop: true
+  seed: 11
+
+sections:
+  - { name: intro, bars: 4, energy: 0.55 }
+  - { name: run,   bars: 8, energy: "0.6->0.8" }
+  - { name: surge, bars: 8, energy: 0.95, at: "0:20" }
+  - { name: tail,  bars: 4, energy: "0.85->0.6" }
+
+harmony:
+  intro: "Dm | Eb/D"
+  run:   "Dm | Eb/D | Dm | Eb/D | Bb | Gm | Eb | A7"
+  surge: "Dm | Bb | Gm | A | Dm | Bb | Eb | A7"
+  tail:  "Dm | Eb/D | Dm | A7"
+
+tracks:
+  stacc:              # 十六分音符断奏音型，3+3+2 重音轮廓（高音落在第 1、4、7 个十六分音符）
+    sound: strings
+    texture: melody
+    gate: 0.5
+    notes: &ostinato
+      intro: >
+        D5/16 A4/16 F4/16 D5/16 A4/16 F4/16 D5/16 A4/16 D5/16 A4/16 F4/16 D5/16 A4/16 F4/16 E5/16 F5/16 |
+        Eb5/16 Bb4/16 G4/16 Eb5/16 Bb4/16 G4/16 Eb5/16 Bb4/16 Eb5/16 Bb4/16 G4/16 Eb5/16 Bb4/16 G4/16 D5/16 C#5/16
+      run: >
+        D5/16 A4/16 F4/16 D5/16 A4/16 F4/16 D5/16 A4/16 F5/16 D5/16 A4/16 F5/16 D5/16 A4/16 E5/16 F5/16 |
+        Eb5/16 Bb4/16 G4/16 Eb5/16 Bb4/16 G4/16 Eb5/16 Bb4/16 G5/16 Eb5/16 Bb4/16 G5/16 Eb5/16 Bb4/16 D5/16 C#5/16 |
+        D5/16 A4/16 F4/16 D5/16 A4/16 F4/16 D5/16 A4/16 F5/16 D5/16 A4/16 F5/16 D5/16 A4/16 E5/16 F5/16 |
+        Eb5/16 Bb4/16 G4/16 Eb5/16 Bb4/16 G4/16 Eb5/16 Bb4/16 G5/16 Eb5/16 Bb4/16 G5/16 Eb5/16 Bb4/16 D5/16 C#5/16 |
+        D5/16 Bb4/16 F4/16 D5/16 Bb4/16 F4/16 D5/16 Bb4/16 F5/16 D5/16 Bb4/16 F5/16 D5/16 Bb4/16 D5/16 Bb4/16 |
+        D5/16 Bb4/16 G4/16 D5/16 Bb4/16 G4/16 D5/16 Bb4/16 G5/16 D5/16 Bb4/16 G5/16 D5/16 Bb4/16 D5/16 Bb4/16 |
+        Eb5/16 Bb4/16 G4/16 Eb5/16 Bb4/16 G4/16 Eb5/16 Bb4/16 G5/16 Eb5/16 Bb4/16 G5/16 Eb5/16 Bb4/16 Eb5/16 Bb4/16 |
+        E5/16 C#5/16 A4/16 E5/16 C#5/16 A4/16 E5/16 C#5/16 G5/16 E5/16 C#5/16 G5/16 E5/16 C#5/16 A5/16 C#6/16
+      surge: >
+        D6/16 A5/16 F5/16 D6/16 A5/16 F5/16 D6/16 A5/16 F6/16 D6/16 A5/16 F6/16 D6/16 A5/16 E6/16 D6/16 |
+        D6/16 Bb5/16 F5/16 D6/16 Bb5/16 F5/16 D6/16 Bb5/16 F6/16 D6/16 Bb5/16 F6/16 D6/16 Bb5/16 D6/16 Bb5/16 |
+        D6/16 Bb5/16 G5/16 D6/16 Bb5/16 G5/16 D6/16 Bb5/16 G6/16 D6/16 Bb5/16 G6/16 D6/16 Bb5/16 D6/16 Bb5/16 |
+        C#6/16 A5/16 E5/16 C#6/16 A5/16 E5/16 C#6/16 A5/16 E6/16 C#6/16 A5/16 E6/16 C#6/16 A5/16 C#6/16 A5/16 |
+        D6/16 A5/16 F5/16 D6/16 A5/16 F5/16 D6/16 A5/16 F6/16 D6/16 A5/16 F6/16 D6/16 A5/16 E6/16 D6/16 |
+        D6/16 Bb5/16 F5/16 D6/16 Bb5/16 F5/16 D6/16 Bb5/16 F6/16 D6/16 Bb5/16 F6/16 D6/16 Bb5/16 D6/16 Bb5/16 |
+        Eb6/16 Bb5/16 G5/16 Eb6/16 Bb5/16 G5/16 Eb6/16 Bb5/16 G6/16 Eb6/16 Bb5/16 G6/16 Eb6/16 Bb5/16 Eb6/16 Bb5/16 |
+        C#6/16 A5/16 E5/16 C#6/16 A5/16 E5/16 C#6/16 A5/16 G6/16 E6/16 C#6/16 G6/16 E6/16 C#6/16 A5/16 G5/16
+      tail: >
+        D5/16 A4/16 F4/16 D5/16 A4/16 F4/16 D5/16 A4/16 D5/16 A4/16 F4/16 D5/16 A4/16 F4/16 E5/16 F5/16 |
+        Eb5/16 Bb4/16 G4/16 Eb5/16 Bb4/16 G4/16 Eb5/16 Bb4/16 Eb5/16 Bb4/16 G4/16 Eb5/16 Bb4/16 G4/16 D5/16 C#5/16 |
+        D5/16 A4/16 F4/16 D5/16 A4/16 F4/16 D5/16 A4/16 D5/16 A4/16 F4/16 D5/16 A4/16 F4/16 E5/16 F5/16 |
+        E5/16 C#5/16 A4/16 E5/16 C#5/16 A4/16 E5/16 C#5/16 E5/16 C#5/16 A4/16 E5/16 C#5/16 A4/16 E5/16 C#5/16
+
+  pizz:               # 拨弦同音重叠，给短弓补上清楚的起音
+    sound: pizzicato
+    texture: line
+    notes: *ostinato
+
+  cello:              # 大提琴"马蹄"节奏（八分 + 两个十六分），跟和弦根音走
+    sound: cello
+    texture: bassline
+    low: 43
+    in: [run, surge, tail]
+    rhythm: "1.11 1.11 1.11 1.11"
+
+  bass:               # 低音提琴 3+3+2 切分
+    sound: contrabass
+    texture: bassline
+    rhythm: "1..1 ..1. 1..1 ..1."
+    by_section:
+      surge: { rhythm: "1..1 ..1. 1..1 ..11" }
+
+  timp_drive:         # 定音鼓 3+3+2 驱动；run 最后一小节留给滚奏
+    sound: timpani
+    texture: line
+    in: [intro, run, surge, tail]
+    notes:
+      intro: "D2/8. D2/8. D2/8 r/2"
+      run: >
+        D2/8. D2/8. D2/8 D2/8. D2/8. D2/8 | D2/8. D2/8. D2/8 D2/8. D2/8. D2/8 |
+        D2/8. D2/8. D2/8 D2/8. D2/8. D2/8 | D2/8. D2/8. D2/8 D2/8. D2/8. D2/8 |
+        Bb2/8. Bb2/8. Bb2/8 Bb2/8. Bb2/8. Bb2/8 | G2/8. G2/8. G2/8 G2/8. G2/8. G2/8 |
+        Eb2/8. Eb2/8. Eb2/8 Eb2/8. Eb2/8. Eb2/8 | r/1
+      surge: >
+        D2/8. D2/8. D2/8 D2/8. D2/8. D2/8 | Bb2/8. Bb2/8. Bb2/8 Bb2/8. Bb2/8. Bb2/8 |
+        G2/8. G2/8. G2/8 G2/8. G2/8. G2/8 | A2/8. A2/8. A2/8 A2/8. A2/8. A2/8 |
+        D2/8. D2/8. D2/8 D2/8. D2/8. D2/8 | Bb2/8. Bb2/8. Bb2/8 Bb2/8. Bb2/8. Bb2/8 |
+        Eb2/8. Eb2/8. Eb2/8 Eb2/8. Eb2/8. Eb2/8 | A2/8. A2/8. A2/8 A2/8. A2/8. A2/8
+      tail: "D2/8. D2/8. D2/8 r/2 | D2/8. D2/8. D2/8 r/2 | D2/8. D2/8. D2/8 r/2 | A2/8. A2/8. A2/8 r/2"
+
+  timp:               # 升级点：前一小节渐强滚奏 + 重拍
+    sound: timpani
+    texture: timpani
+    in: [surge]
+    roll_into: surge
+
+  cymbal:
+    sound: drums
+    texture: crash
+    in: [surge]
+
+  horns:              # 升级段的低沉圆号长音
+    sound: horn
+    texture: line
+    in: [surge]
+    notes:
+      surge: >
+        D4/2. F4/4 | D4/2 Bb3/2 | G3/2. Bb3/4 | A3/1 |
+        D4/2. F4/4 | G4/2 F4/4 D4/4 | Eb4/2 G4/2 | A4/2 E4/4 C#4/4
+
+  toms:               # 升级段加低音通鼓，最后一小节加花
+    sound: drums-room
+    texture: groove
+    in: [surge]
+    pattern:
+      tom-low: "X..x ..x. X..x ..x. | X..x ..x. X..x ..x. | X..x ..x. X..x ..x. | X..x ..x. X.x. x.x."
+      tom-mid: ".... .... .... .... | .... .... .... .... | .... .... .... .... | .... .... ..x. x.xx"

@@ -152,7 +152,8 @@ def t_arpeggio(score: Score, track: Track, part: Part, perf: Performer) -> None:
         base = 44 + 42 * e
         for i in range(int(round(span.dur / step))):
             b, p = span.start + i * step, pattern[i % len(pattern)]
-            part.notes.append(Note(perf.time(b, p, 0.008), step * 1.6, p, perf.vel(base + (6 if i == 0 else 0), b, p)))
+            dur = min(step * 1.6, span.end - b)  # 允许同一和弦内的音互相叠响，但不拖进下一个和弦
+            part.notes.append(Note(perf.time(b, p, 0.008), dur, p, perf.vel(base + (6 if i == 0 else 0), b, p)))
         # 换和弦时抬踏板再踩下，避免和声糊在一起
         part.ccs.append((max(0.0, span.start - 0.03), 64, 0))
         part.ccs.append((span.start + 0.08, 64, 127))
