@@ -316,3 +316,46 @@
     texture: comp
     range: [48, 72]
     rhythm: "x--- ---- ---- ----"
+
+# 音效组合（kind: sfx）：snippet 是 sfx 列表里的几项，把 at 换成自己的段落名或时间
+- name: drop-hit
+  kind: sfx
+  tags: [音效, sfx, drop, 高潮, 产品出现, 亮相, 重点, 冲击, 上升音, 科技, 宣传]
+  description: 高潮或产品亮相的经典组合：上升音在那一刻戛然而止，紧接冲击和下坠低音，同时把音乐压低一点
+  snippet: |
+    - { type: riser, at: drop, length: 8 }
+    - { type: impact, at: drop, duck: 4 }
+    - { type: sub-drop, at: drop, level: 0.7 }
+
+- name: scene-transition
+  kind: sfx
+  tags: [音效, sfx, 转场, 切换, 镜头, whoosh, 过渡]
+  description: 镜头切换的 whoosh，最响处对准切点
+  snippet: |
+    - { type: whoosh, at: "0:16" }
+
+- name: logo-reveal
+  kind: sfx
+  tags: [音效, sfx, logo, 片尾, 收尾, 揭示, 标题, 结束, 提示音]
+  description: logo 或标题出现：反向镲推上去，冲击落下，再加一声和弦同调的提示音，之后下降音慢慢消失
+  snippet: |
+    - { type: reverse-cymbal, at: logo, length: 4 }
+    - { type: impact, at: logo, level: 0.6 }
+    - { type: ding, at: logo, level: 0.5 }
+    - { type: downlifter, at: logo, length: 8, level: 0.5 }
+
+- name: build-into-chorus
+  kind: sfx
+  tags: [音效, sfx, 推进, 副歌, 过门, 上升音, 渐强]
+  description: 只用上升音把段落推进到下一段，比冲击更克制
+  snippet: |
+    - { type: riser, at: drop, length: 4, level: 0.6 }
+
+- name: ui-pops
+  kind: sfx
+  tags: [音效, sfx, ui, 图标, 文字出现, 弹出, app, 界面, pop, 提示]
+  description: 图标或文字一个个弹出：短促的 pop，和当时的和弦同调
+  snippet: |
+    - { type: pop, at: "0:02" }
+    - { type: pop, at: "0:02.5" }
+    - { type: pop, at: "0:03" }

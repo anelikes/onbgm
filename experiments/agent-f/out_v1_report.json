@@ -1,0 +1,628 @@
+{
+  "ok": true,
+  "files": {
+    "audio": "experiments/agent-f/out/v1/song.wav",
+    "preview": "experiments/agent-f/out/v1/preview.mp3",
+    "midi": "experiments/agent-f/out/v1/song.mid",
+    "stems": "experiments/agent-f/out/v1/stems",
+    "pianoroll": "experiments/agent-f/out/v1/pianoroll.png"
+  },
+  "duration_s": 30.0,
+  "loop": false,
+  "lufs": -15.8,
+  "timeline": {
+    "title": "App Promo",
+    "bpm": 80.0,
+    "key": "D major",
+    "loop": false,
+    "bars": 10,
+    "duration_s": 30.0,
+    "seconds_per_bar": 3.0,
+    "sections": [
+      {
+        "name": "logo",
+        "bars": [
+          1,
+          1
+        ],
+        "start_s": 0.0,
+        "end_s": 3.0,
+        "energy": [
+          0.3,
+          0.3
+        ]
+      },
+      {
+        "name": "f1",
+        "bars": [
+          2,
+          2
+        ],
+        "start_s": 3.0,
+        "end_s": 6.0,
+        "energy": [
+          0.4,
+          0.4
+        ]
+      },
+      {
+        "name": "f2",
+        "bars": [
+          3,
+          3
+        ],
+        "start_s": 6.0,
+        "end_s": 9.0,
+        "energy": [
+          0.5,
+          0.5
+        ]
+      },
+      {
+        "name": "f3",
+        "bars": [
+          4,
+          4
+        ],
+        "start_s": 9.0,
+        "end_s": 12.0,
+        "energy": [
+          0.6,
+          0.6
+        ]
+      },
+      {
+        "name": "trans",
+        "bars": [
+          5,
+          5
+        ],
+        "start_s": 12.0,
+        "end_s": 15.0,
+        "energy": [
+          0.65,
+          0.9
+        ]
+      },
+      {
+        "name": "main",
+        "bars": [
+          6,
+          9
+        ],
+        "start_s": 15.0,
+        "end_s": 27.0,
+        "energy": [
+          0.95,
+          0.95
+        ]
+      },
+      {
+        "name": "outro",
+        "bars": [
+          10,
+          10
+        ],
+        "start_s": 27.0,
+        "end_s": 30.0,
+        "energy": [
+          0.4,
+          0.1
+        ]
+      }
+    ],
+    "chords": [
+      {
+        "bar": 1,
+        "beat": 1.0,
+        "start_s": 0.0,
+        "chord": "Dadd9",
+        "section": "logo"
+      },
+      {
+        "bar": 2,
+        "beat": 1.0,
+        "start_s": 3.0,
+        "chord": "Bm7",
+        "section": "f1"
+      },
+      {
+        "bar": 3,
+        "beat": 1.0,
+        "start_s": 6.0,
+        "chord": "Gmaj7",
+        "section": "f2"
+      },
+      {
+        "bar": 4,
+        "beat": 1.0,
+        "start_s": 9.0,
+        "chord": "Em7",
+        "section": "f3"
+      },
+      {
+        "bar": 5,
+        "beat": 1.0,
+        "start_s": 12.0,
+        "chord": "Asus4",
+        "section": "trans"
+      },
+      {
+        "bar": 5,
+        "beat": 3.0,
+        "start_s": 13.5,
+        "chord": "A",
+        "section": "trans"
+      },
+      {
+        "bar": 6,
+        "beat": 1.0,
+        "start_s": 15.0,
+        "chord": "D",
+        "section": "main"
+      },
+      {
+        "bar": 7,
+        "beat": 1.0,
+        "start_s": 18.0,
+        "chord": "A/C#",
+        "section": "main"
+      },
+      {
+        "bar": 8,
+        "beat": 1.0,
+        "start_s": 21.0,
+        "chord": "Bm7",
+        "section": "main"
+      },
+      {
+        "bar": 9,
+        "beat": 1.0,
+        "start_s": 24.0,
+        "chord": "G",
+        "section": "main"
+      },
+      {
+        "bar": 9,
+        "beat": 3.0,
+        "start_s": 25.5,
+        "chord": "A",
+        "section": "main"
+      },
+      {
+        "bar": 10,
+        "beat": 1.0,
+        "start_s": 27.0,
+        "chord": "D",
+        "section": "outro"
+      }
+    ],
+    "tracks": [
+      {
+        "name": "pad",
+        "sound": "synth-pad",
+        "texture": "comp",
+        "sections": [
+          "logo",
+          "f1",
+          "f2",
+          "f3",
+          "trans",
+          "main",
+          "outro"
+        ]
+      },
+      {
+        "name": "arp",
+        "sound": "synth-pluck",
+        "texture": "arp",
+        "sections": [
+          "f1",
+          "f2",
+          "f3",
+          "trans",
+          "main"
+        ]
+      },
+      {
+        "name": "bass",
+        "sound": "synth-bass",
+        "texture": "bassline",
+        "sections": [
+          "f2",
+          "f3",
+          "trans",
+          "main",
+          "outro"
+        ]
+      },
+      {
+        "name": "hit",
+        "sound": "supersaw",
+        "texture": "comp",
+        "sections": [
+          "main"
+        ]
+      },
+      {
+        "name": "lead",
+        "sound": "synth-bell",
+        "texture": "melody",
+        "sections": [
+          "main",
+          "outro"
+        ]
+      },
+      {
+        "name": "drums",
+        "sound": "drums-synth",
+        "texture": "groove",
+        "sections": [
+          "f2",
+          "f3",
+          "trans",
+          "main",
+          "outro"
+        ]
+      },
+      {
+        "name": "cymbal",
+        "sound": "drums-synth",
+        "texture": "crash",
+        "sections": [
+          "main",
+          "outro"
+        ]
+      }
+    ],
+    "sfx": [
+      {
+        "type": "ding",
+        "at_s": 0.0,
+        "start_s": 0.0,
+        "end_s": 0.9,
+        "anchor": "start",
+        "path": "sfx.0"
+      },
+      {
+        "type": "pop",
+        "at_s": 3.0,
+        "start_s": 3.0,
+        "end_s": 3.15,
+        "anchor": "start",
+        "path": "sfx.1"
+      },
+      {
+        "type": "pop",
+        "at_s": 6.0,
+        "start_s": 6.0,
+        "end_s": 6.15,
+        "anchor": "start",
+        "path": "sfx.2"
+      },
+      {
+        "type": "pop",
+        "at_s": 9.0,
+        "start_s": 9.0,
+        "end_s": 9.15,
+        "anchor": "start",
+        "path": "sfx.3"
+      },
+      {
+        "type": "whoosh",
+        "at_s": 12.0,
+        "start_s": 11.25,
+        "end_s": 12.75,
+        "anchor": "center",
+        "path": "sfx.4"
+      },
+      {
+        "type": "riser",
+        "at_s": 15.0,
+        "start_s": 13.5,
+        "end_s": 15.0,
+        "anchor": "end",
+        "path": "sfx.5"
+      },
+      {
+        "type": "impact",
+        "at_s": 15.0,
+        "start_s": 15.0,
+        "end_s": 18.0,
+        "anchor": "start",
+        "path": "sfx.6"
+      },
+      {
+        "type": "sub-drop",
+        "at_s": 15.0,
+        "start_s": 15.0,
+        "end_s": 18.0,
+        "anchor": "start",
+        "path": "sfx.7"
+      }
+    ]
+  },
+  "sources": {
+    "pad": "synth: synth-pad",
+    "arp": "synth: synth-pluck",
+    "bass": "synth: synth-bass",
+    "hit": "synth: supersaw",
+    "lead": "synth: synth-bell",
+    "drums": "synth: drums-synth",
+    "cymbal": "synth: drums-synth"
+  },
+  "automix": [
+    {
+      "track": "lead",
+      "section": "main",
+      "gain_db": -6.8
+    },
+    {
+      "track": "lead",
+      "section": "outro",
+      "gain_db": -3.0
+    }
+  ],
+  "loudness": {
+    "integrated_lufs": -15.8,
+    "sections": [
+      {
+        "section": "logo",
+        "energy": 0.3,
+        "lufs": -23.4
+      },
+      {
+        "section": "f1",
+        "energy": 0.4,
+        "lufs": -21.1
+      },
+      {
+        "section": "f2",
+        "energy": 0.5,
+        "lufs": -18.3
+      },
+      {
+        "section": "f3",
+        "energy": 0.6,
+        "lufs": -17.7
+      },
+      {
+        "section": "trans",
+        "energy": 0.775,
+        "lufs": -16.3
+      },
+      {
+        "section": "main",
+        "energy": 0.95,
+        "lufs": -13.7
+      },
+      {
+        "section": "outro",
+        "energy": 0.25,
+        "lufs": -18.3
+      }
+    ],
+    "follows_energy": true,
+    "issues": []
+  },
+  "balance": [
+    {
+      "section": "logo",
+      "tracks": [
+        {
+          "track": "pad",
+          "lufs": -23.8
+        }
+      ]
+    },
+    {
+      "section": "f1",
+      "tracks": [
+        {
+          "track": "pad",
+          "lufs": -22.7
+        },
+        {
+          "track": "arp",
+          "lufs": -24.2
+        },
+        {
+          "track": "drums",
+          "lufs": -36.8
+        }
+      ]
+    },
+    {
+      "section": "f2",
+      "tracks": [
+        {
+          "track": "bass",
+          "lufs": -19.7
+        },
+        {
+          "track": "pad",
+          "lufs": -22.9
+        },
+        {
+          "track": "arp",
+          "lufs": -23.3
+        },
+        {
+          "track": "drums",
+          "lufs": -32.4
+        }
+      ]
+    },
+    {
+      "section": "f3",
+      "tracks": [
+        {
+          "track": "pad",
+          "lufs": -21.7
+        },
+        {
+          "track": "arp",
+          "lufs": -21.9
+        },
+        {
+          "track": "bass",
+          "lufs": -23.5
+        },
+        {
+          "track": "drums",
+          "lufs": -23.7
+        }
+      ]
+    },
+    {
+      "section": "trans",
+      "tracks": [
+        {
+          "track": "drums",
+          "lufs": -20.9
+        },
+        {
+          "track": "arp",
+          "lufs": -21.0
+        },
+        {
+          "track": "pad",
+          "lufs": -21.1
+        },
+        {
+          "track": "bass",
+          "lufs": -21.3
+        },
+        {
+          "track": "lead",
+          "lufs": -21.9
+        },
+        {
+          "track": "hit",
+          "lufs": -67.6
+        }
+      ]
+    },
+    {
+      "section": "main",
+      "tracks": [
+        {
+          "track": "lead",
+          "lufs": -13.9
+        },
+        {
+          "track": "drums",
+          "lufs": -18.0
+        },
+        {
+          "track": "pad",
+          "lufs": -19.4
+        },
+        {
+          "track": "bass",
+          "lufs": -19.6
+        },
+        {
+          "track": "arp",
+          "lufs": -20.0
+        },
+        {
+          "track": "hit",
+          "lufs": -21.0
+        },
+        {
+          "track": "cymbal",
+          "lufs": -29.7
+        }
+      ]
+    },
+    {
+      "section": "outro",
+      "tracks": [
+        {
+          "track": "lead",
+          "lufs": -16.2
+        },
+        {
+          "track": "bass",
+          "lufs": -18.9
+        },
+        {
+          "track": "drums",
+          "lufs": -21.1
+        },
+        {
+          "track": "pad",
+          "lufs": -22.7
+        },
+        {
+          "track": "cymbal",
+          "lufs": -29.3
+        },
+        {
+          "track": "arp",
+          "lufs": -50.7
+        }
+      ]
+    }
+  ],
+  "warnings": [],
+  "sfx": [
+    {
+      "type": "ding",
+      "at_s": 0.0,
+      "start_s": 0.0,
+      "end_s": 0.901,
+      "path": "sfx.0"
+    },
+    {
+      "type": "pop",
+      "at_s": 3.0,
+      "start_s": 3.0,
+      "end_s": 3.15,
+      "path": "sfx.1"
+    },
+    {
+      "type": "pop",
+      "at_s": 6.0,
+      "start_s": 6.0,
+      "end_s": 6.15,
+      "path": "sfx.2"
+    },
+    {
+      "type": "pop",
+      "at_s": 9.0,
+      "start_s": 9.0,
+      "end_s": 9.15,
+      "path": "sfx.3"
+    },
+    {
+      "type": "whoosh",
+      "at_s": 12.0,
+      "start_s": 11.25,
+      "end_s": 12.75,
+      "path": "sfx.4"
+    },
+    {
+      "type": "riser",
+      "at_s": 15.0,
+      "start_s": 13.5,
+      "end_s": 15.0,
+      "path": "sfx.5"
+    },
+    {
+      "type": "impact",
+      "at_s": 15.0,
+      "start_s": 15.0,
+      "end_s": 18.0,
+      "path": "sfx.6"
+    },
+    {
+      "type": "sub-drop",
+      "at_s": 15.0,
+      "start_s": 15.0,
+      "end_s": 18.0,
+      "path": "sfx.7"
+    }
+  ]
+}

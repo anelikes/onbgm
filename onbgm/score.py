@@ -6,7 +6,7 @@ from __future__ import annotations
 
 import math
 import re
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from pathlib import Path
 
 import yaml
@@ -105,6 +105,7 @@ class Score:
     swing_unit: int = 16  # 16：十六分音符摇摆；8：八分音符摇摆（shuffle）
     fx: dict | None = None  # 整体效果，如 {"lofi": 0.7}
     tail: float = 0.0  # 不循环时，乐谱结束后再留几秒余音
+    sfx: list = field(default_factory=list)  # 音效时间线（onbgm.sfx.SfxEvent）
 
     @property
     def total_beats(self) -> float:
@@ -254,6 +255,45 @@ def _parse_melody(text: str, section: Section, where: str, problems: list[Proble
     return notes
 
 
+def _parse_sfx(items: list, sections: list[Section], bpm: float, tail: float, problems: list[Problem]) -> list:
+    """音效时间线：at 可以是段落名（该段开头）或时间；按音效类型检查起止是否越界。"""
+    from .sfx import SFX_TYPES, SfxEvent
+
+    names = {s.name: s for s in sections}
+    total = sections[-1].end
+    events = []
+    for i, item in enumerate(items):
+        where = f"sfx.{i}"
+        kind, at_raw = item["type"], item["at"]
+        spec = SFX_TYPES[kind]
+        if isinstance(at_raw, str) and at_raw in names:
+            at = names[at_raw].start
+        else:
+            try:
+                at = parse_time(at_raw) * bpm / 60
+            except ValueError:
+                problems.append(Problem("unknown_section", f"{where}.at",
+                                        f"{at_raw!r} 既不是段落名也不是时间（段落: {', '.join(names)}；时间写 \"0:12\" 或 12）"))
+                continue
+        if "length" in item and spec.length is None:
+            problems.append(Problem("field_not_for_sfx", f"{where}.length", f"{kind} 的长度由音效本身决定，不用写 length"))
+            continue
+        ev = SfxEvent(kind, at, item.get("length", spec.length) or 0.0, item.get("level", 0.8), item.get("duck", 0.0), where)
+        start, end = ev.span(spec.natural * bpm / 60)
+        if start < -1e-6:
+            problems.append(Problem("sfx_out_of_range", f"{where}.at",
+                                    f"{kind} 长 {ev.length:g} 拍、{'在 at 结束' if spec.anchor == 'end' else '最响处在 at'}，"
+                                    f"起点会早于乐谱开头 {fmt_time(-start * 60 / bpm)}；把 length 缩短到 "
+                                    f"{(ev.at if spec.anchor == 'end' else 2 * ev.at):g} 拍以内，或把 at 往后挪",
+                                    {"length": round(ev.at if spec.anchor == "end" else 2 * ev.at, 3)}))
+        elif at > total + tail * bpm / 60 + 1e-6:
+            problems.append(Problem("sfx_out_of_range", f"{where}.at",
+                                    f"at 在 {fmt_time(at * 60 / bpm)}，超出了乐谱（到 {fmt_time((total) * 60 / bpm)}）"))
+        else:
+            events.append(ev)
+    return events
+
+
 def load(path: str | Path) -> Score:
     try:
         raw = yaml.safe_load(Path(path).read_text(encoding="utf-8")) or {}
@@ -353,6 +393,7 @@ def load(path: str | Path) -> Score:
             problems.append(Problem("bad_format", "meta.tail", str(e)))
         if meta.get("loop"):
             problems.append(Problem("tail_with_loop", "meta.tail", "只用于不循环的曲子（loop: false）；循环时余音会自动叠回开头"))
+    sfx_events = _parse_sfx(raw.get("sfx") or [], sections, bpm, tail, problems)
     fx = raw.get("fx") or {}
     for k, v in fx.items():
         if k not in FX:
@@ -375,4 +416,5 @@ def load(path: str | Path) -> Score:
         swing_unit=swing_unit,
         fx=fx,
         tail=tail,
+        sfx=sfx_events,
     )

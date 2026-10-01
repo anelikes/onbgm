@@ -124,11 +124,15 @@ def cmd_render(args) -> None:
         "balance": [{"section": s.name, "tracks": balance_data(score, result.stems, parts, s.name)}
                     for s in score.sections],
         "warnings": [w.to_dict() for w in all_warnings],
+        "sfx": result.sfx,
     }
     lines = [timeline(score), "", "音源:"] + [f"  {k:<8} {v}" for k, v in result.sources.items()]
     if result.mix:
         lines.append("自动混音: " + "，".join(f"{m['track']}@{m['section']} {m['gain_db']:+.1f} dB" for m in result.mix))
     lines += [f"⚠ {w}" for w in all_warnings]
+    if result.sfx:
+        lines.append("音效音量（比当时的音乐响多少）: " + "，".join(
+            f"{x['type']}@{x['at_s']:g}s {x['vs_music_db']:+.1f} dB" for x in result.sfx))
     lines += [f"整体响度: {loud['integrated_lufs']:.1f} LUFS，时长 {data['duration_s']:.3f} 秒", "",
               loudness_report(score, result.main), balance_report(score, result.stems, parts, loudest), "",
               f"输出: {out}/"] + [f"  {k:<9} {Path(v).name}" for k, v in files.items()]

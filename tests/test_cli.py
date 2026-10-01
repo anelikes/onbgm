@@ -73,7 +73,10 @@ def test_catalog_search_finds_relevant_patterns():
 @pytest.mark.parametrize("item", [x for x in catalog.items() if "snippet" in x], ids=lambda x: x["name"])
 def test_every_catalog_snippet_can_be_pasted_into_a_score(write_score, item):
     snippet = yaml.safe_load(item["snippet"])
-    if item["kind"] == "progression":
+    if item["kind"] == "sfx":
+        doc = {"meta": {"bpm": 120}, "sections": [{"name": n, "bars": 4} for n in ("intro", "drop", "logo")],
+               "harmony": {n: "C" for n in ("intro", "drop", "logo")}, "sfx": snippet}
+    elif item["kind"] == "progression":
         bars = len(snippet.split("|"))
         doc = {"meta": {"bpm": 100}, "sections": [{"name": "a", "bars": bars}], "harmony": {"a": snippet},
                "tracks": {"keys": {"sound": "piano", "texture": "comp", "rhythm": "x--- ---- ---- ----"}}}

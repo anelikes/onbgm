@@ -14,7 +14,7 @@ import soundfile as sf
 from pedalboard import Compressor, Delay, Distortion, Gain, HighpassFilter, LowpassFilter, Pedalboard
 from pedalboard.io import AudioFile
 
-from . import library, sampler, synth
+from . import library, sampler, sfx, synth
 from .arrange import Part
 from .midi_io import write_midi
 from .score import Problem, Score
@@ -274,6 +274,7 @@ class Rendered:
     sources: dict[str, str]
     mix: list[dict]  # 旋律在各段的自动增益
     warnings: list[Problem]
+    sfx: list[dict]  # 每个音效实际的起止时间
     files: dict[str, Path]  # audio / preview / midi / stems
 
 
@@ -288,6 +289,20 @@ def render(score: Score, parts: list[Part], out: Path, soundset: str = "hq") -> 
     length = round(score.seconds(score.total_beats) * SR)
     if (score.fx or {}).get("lofi"):
         full = lofi(full, score.fx["lofi"], length if score.loop else None)
+    placed_sfx: list[dict] = []
+    if score.sfx:
+        sfx_audio, duck, placed_sfx = sfx.render(score, score.sfx, len(full))
+        wet = Pedalboard([HighpassFilter(200), LowpassFilter(9000)])(np.ascontiguousarray(sfx_audio.T), SR).T
+        music = full * duck[:, None]
+        for row in placed_sfx:  # 音效比当时的音乐响多少（同样的 K 计权），用来核对"再轻一点"之类的修改
+            a, b = round(row["start_s"] * SR), round(row["end_s"] * SR)
+            if b - a < int(0.4 * SR):
+                mid = (a + b) // 2
+                a, b = max(0, mid - int(0.2 * SR)), mid + int(0.2 * SR)
+            row["vs_music_db"] = round(row["level_db"] - sfx.average_level(music[a:b]), 1)
+        full = music + sfx_audio + _convolve(wet, hall_ir()) * 0.25
+        stems["sfx"] = sfx_audio
+        sf.write(out / "stems" / "sfx.wav", sfx_audio, SR, subtype="PCM_24")
     files: dict[str, Path] = {}
     if score.loop:
         # 把结尾溢出的混响尾巴叠回开头，循环播放时接缝处就是连续的
@@ -311,4 +326,4 @@ def render(score: Score, parts: list[Part], out: Path, soundset: str = "hq") -> 
     files["midi"] = out / "song.mid"
     write_midi(files["midi"], score, parts)
     files["stems"] = out / "stems"
-    return Rendered(main, stems, sources, mix_log, warnings, files)
+    return Rendered(main, stems, sources, mix_log, warnings, placed_sfx, files)

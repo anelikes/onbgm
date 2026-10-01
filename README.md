@@ -61,7 +61,7 @@ onbgm render my_bgm/score.yaml -o my_bgm/out/v1 --soundset gm # 只用 GM 音源
 | `sunny_walk` | 木吉他 vlog：扫弦、拍手、钟琴 |
 | `cafe_jazz` | 咖啡馆爵士钢琴三重奏 |
 | `vlog_intro` | 20 秒不循环片头 |
-| `product_video` | 45 秒产品宣传片配乐，全部合成器音色，按视频时间点对齐 |
+| `product_video` | 45 秒产品宣传片配乐：全部合成器音色，按视频时间点对齐，带音效时间线（上升音、冲击、whoosh、logo 提示音） |
 
 `cafe_jazz` 和 `vlog_intro` 是两个只读过文档的全新 agent 写的。`experiments/` 里存着这类可用性测试的原始记录。
 

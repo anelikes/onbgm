@@ -42,7 +42,16 @@ def timeline_data(score: Score) -> dict:
         ],
         "tracks": [{"name": t.name, "sound": t.sound, "texture": t.texture, "sections": t.sections}
                    for t in score.tracks],
+        "sfx": [_sfx_row(score, ev) for ev in score.sfx],
     }
+
+
+def _sfx_row(score: Score, ev) -> dict:
+    from .sfx import SFX_TYPES
+
+    start, end = ev.span(SFX_TYPES[ev.type].natural * score.bpm / 60)
+    return {"type": ev.type, "at_s": _r(score.seconds(ev.at), 3), "start_s": _r(score.seconds(start), 3),
+            "end_s": _r(score.seconds(end), 3), "anchor": SFX_TYPES[ev.type].anchor, "path": ev.path}
 
 
 def locate(score: Score, seconds: float) -> dict:
@@ -69,6 +78,10 @@ def timeline(score: Score) -> str:
         a, b = s["energy"]
         energy = f"{a:.2f}" if a == b else f"{a:.2f}→{b:.2f}"
         lines.append(f"  {s['name']:<8} 第 {s['bars'][0]:>2}–{s['bars'][1]:<2} 小节  {fmt_time(s['start_s'])}  能量 {energy}")
+    anchor_word = {"end": "结束于", "start": "开始于", "center": "最响处在"}
+    for x in d["sfx"]:
+        lines.append(f"  ♪ {x['type']:<14} {anchor_word[x['anchor']]} {fmt_time(x['at_s'])}"
+                     f"（{fmt_time(x['start_s'])}–{fmt_time(x['end_s'])}）")
     return "\n".join(lines)
 
 
@@ -136,6 +149,12 @@ def pianoroll(score: Score, parts: list[Part], path: Path) -> None:
             ax.add_patch(plt.Rectangle((score.seconds(n.start), n.pitch - 0.4), score.seconds(n.dur), 0.8,
                                        color=c, alpha=0.35 + 0.6 * n.vel / 127, linewidth=0))
         ax.plot([], [], color=c, linewidth=6, label=p.name)
+    for ev in score.sfx:  # 音效：在顶部画出起止范围，对准点画实线
+        row = _sfx_row(score, ev)
+        ax.axvspan(row["start_s"], row["end_s"], ymin=0.86, ymax=0.9, color="darkorange", alpha=0.3)
+        ax.axvline(row["at_s"], ymin=0.85, ymax=0.91, color="darkorange", linewidth=1.5)
+        ax.text(row["at_s"], 0.875, f" {row['type']}", transform=ax.get_xaxis_transform(), fontsize=6.5,
+                color="saddlebrown", va="center", ha="left" if row["anchor"] != "end" else "right")
     for s in score.sections:
         x = score.seconds(s.start)
         ax.axvline(x, color="k", linewidth=0.8, linestyle="--", alpha=0.5)

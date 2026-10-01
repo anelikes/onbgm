@@ -11,7 +11,7 @@ from pathlib import Path
 import yaml
 
 HERE = Path(__file__).resolve().parent
-KINDS = ["drums", "strum", "bassline", "comp", "arp", "progression", "texture", "sound", "drum", "chord", "example"]
+KINDS = ["drums", "strum", "bassline", "comp", "arp", "progression", "sfx", "texture", "sound", "drum", "chord", "example"]
 
 
 @lru_cache(maxsize=None)
