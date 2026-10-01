@@ -19,7 +19,7 @@
 | `onbgm fit 0:08=drop 0:30=logo --length 0:45 [--bpm 100-130] [--hit 0:03] [--ending-tempo 60] [--write score.yaml]` | 给视频配乐：根据画面节点算出速度和每段的小节数，必要时给段落设略有偏差的速度，让每个节点都落在小节第一拍；`--write` 直接写出乐谱骨架 |
 | `onbgm check score.yaml` | 校验乐谱，输出时间轴 |
 | `onbgm timeline score.yaml [--at 秒 …]` | 输出每段的起止时间和每小节的和弦；`--at 0:23.4` 查某个时间点在第几小节第几拍 |
-| `onbgm render score.yaml -o 目录 [--soundset gm]` | 渲染 |
+| `onbgm render score.yaml -o 目录 [--soundset gm] [--draft]` | 渲染。`--draft` 只输出报告和卷帘图、不写音频文件，反复修改时用它更快 |
 | `onbgm review out/版本 [--compare out/旧版本] [--port N] [--no-open]` | 启动审听页面（只监听本机）：钢琴卷帘、A/B 无缝切换、在时间轴上写意见。会一直运行，请在后台运行；`--json` 时第一行输出 `{"url": …, "review_file": …}` |
 | `onbgm review out/版本 --list` | 不启动页面，列出用户已经写的意见 |
 | `onbgm schema` | 输出乐谱格式的 JSON Schema |
@@ -118,6 +118,12 @@
 - `render` 的 `sfx` 里，`level_db` 是音效自己的音量（K 计权后最响 100ms），`vs_music_db` 是它比当时的音乐响多少 dB。用户说"再轻一点"时，可以用它核对改了多少。
 - `loudness` 里的各段响度是最终混音的响度，包含音效，也包含从上一段延续过来的余音。
 - `timeline` 和 `render` 都会列出 `sfx`：每个音效的对准点 `at_s` 和实际起止 `start_s` / `end_s`。`timeline` 里还有 `anchor`，表示怎么对准：`end` 在 at 结束，`start` 从 at 开始，`center` 最响处在 at。
+
+## 环境变量
+
+- `ONBGM_SOUNDS`：音源目录。
+- `ONBGM_CACHE`：缓存目录（默认 `~/.cache/onbgm`）。
+- `ONBGM_MAX_RENDERS`：最多同时进行几个渲染，多出来的排队。批量生成、很多 agent 同时渲染时设置，避免把机器占满。
 
 ## 错误码
 

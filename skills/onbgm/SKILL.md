@@ -34,6 +34,7 @@ description: >
    - 格式细节见 [references/score-format.md](references/score-format.md)；怎么写得好听，见 [references/arranging.md](references/arranging.md)。
 3. **校验。** 运行 `onbgm check score.yaml --json`。每个问题都有 `path`（出错位置）和改法，有些还带 `fix`（可以直接套用的值）。改到没有报错为止。这一步很快，可以反复跑。
 4. **渲染。** 运行 `onbgm render score.yaml -o out/<版本名> --json`，每个版本用不同的输出目录，方便对比。
+   反复调整时可以加 `--draft`：报告和卷帘图完全一样，只是不写音频文件，更快。
 5. **读报告**（见下文），需要时用读图工具看 `files.pianoroll`。发现问题就回到第 2 步改乐谱。
 6. **交付。** 把文件路径告诉用户，并说明你能确认的事实：时长、高潮在第几秒、响度走向、各段用了哪些乐器。
    不要说"很好听"，因为你听不到。请用户试听并给意见。

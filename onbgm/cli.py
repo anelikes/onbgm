@@ -98,20 +98,23 @@ def cmd_timeline(args) -> None:
 
 
 def cmd_render(args) -> None:
-    from .render import SR, render
+    from .render import ALL_OUTPUTS, SR, render, render_slot
 
     score, parts, warnings = _load(args.score, args.json)
     out = Path(args.out or Path("out") / Path(args.score).stem)
     try:
-        result = render(score, parts, out, args.soundset)
+        with render_slot():
+            result = render(score, parts, out, args.soundset, outputs=frozenset() if args.draft else ALL_OUTPUTS)
     except RuntimeError as e:
         _fail([Problem("missing_dependency", "", str(e))], args.json, code=2)
     pianoroll(score, parts, out / "pianoroll.png")
-    from .player import player_data, write_player
+    files = {k: str(v) for k, v in result.files.items()} | {"pianoroll": str(out / "pianoroll.png")}
+    if not args.draft:
+        from .player import player_data, write_player
 
-    player = write_player(out, player_data(score, parts, result.files["audio"], len(result.main) / SR, args.score))
-    files = ({k: str(v) for k, v in result.files.items()} | {"pianoroll": str(out / "pianoroll.png")}
-             | {k: str(v) for k, v in player.items()})
+        player = write_player(out, player_data(score, parts, out / ("loop.wav" if score.loop else "song.wav"),
+                                               len(result.main) / SR, args.score))
+        files |= {k: str(v) for k, v in player.items()}
     loud = loudness_data(score, result.main)
     loudest = max(score.sections, key=lambda s: sum(s.energy)).name
     all_warnings = warnings + result.warnings
@@ -337,6 +340,8 @@ def main() -> None:
     p.add_argument("-o", "--out", help="输出目录（默认 out/<乐谱名>）")
     p.add_argument("--soundset", choices=["hq", "gm"], default="hq",
                    help="hq：高质量采样（缺的乐器自动退回 gm）；gm：只用 GeneralUser GS")
+    p.add_argument("--draft", action="store_true",
+                   help="草稿：完整渲染并输出报告和卷帘图，但不写音频文件（反复修改时更快、不占磁盘）")
     p = add("fit", cmd_fit, "根据视频的画面节点算出速度和段落结构，让每个节点都落在小节第一拍")
     p.add_argument("cues", nargs="+", help="段落分界的时间点，可带名字：0:08=drop 0:30=logo")
     p.add_argument("--length", help="总时长，如 0:45")

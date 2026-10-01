@@ -82,3 +82,31 @@ def test_editing_one_section_of_an_accompaniment_track_leaves_its_other_sections
     a_end = round(3.9 * SR)  # a 段到第 4 秒
     for name in ["keys", "drums"]:
         assert np.array_equal(results[0].stems[name][:a_end], results[1].stems[name][:a_end]), name
+
+
+def test_render_slot_limits_concurrent_renders(monkeypatch, tmp_path):
+    """批量生成时几十个 agent 可能同时渲染：ONBGM_MAX_RENDERS 限制同时进行的渲染数量，其余排队。"""
+    import threading
+    import time
+
+    from onbgm.render import render_slot
+
+    monkeypatch.setenv("ONBGM_MAX_RENDERS", "2")
+    monkeypatch.setenv("ONBGM_CACHE", str(tmp_path))
+    active, peak, lock = [0], [0], threading.Lock()
+
+    def work():
+        with render_slot():
+            with lock:
+                active[0] += 1
+                peak[0] = max(peak[0], active[0])
+            time.sleep(0.3)
+            with lock:
+                active[0] -= 1
+
+    threads = [threading.Thread(target=work) for _ in range(5)]
+    for t in threads:
+        t.start()
+    for t in threads:
+        t.join()
+    assert peak[0] == 2
