@@ -53,6 +53,20 @@ onbgm render my_bgm/score.yaml -o my_bgm/out/v1 --soundset gm # 只用 GM 音源
 - `stems/`：分轨；
 - `pianoroll.png`：卷帘图。
 
+### 审听
+
+```bash
+onbgm review out/my_bgm                          # 打开审听页面
+onbgm review out/my_bgm_v2 --compare out/my_bgm   # 新旧两版 A/B 对比
+```
+
+页面上可以：
+- 看钢琴卷帘、段落、和弦和音效标记，点哪里就从哪里播放；
+- 新旧两版在同一位置无缝切换；
+- 边听边在时间轴上写意见。
+
+意见存进输出目录的 `review.json`，每条带秒数、小节、拍、段落和和弦，agent 可以直接读来修改。渲染输出里的 `player.html` 也能直接双击打开试听。
+
 ### 常见问题
 
 **Linux 上一运行就报 `Illegal instruction`，或者 `onbgm` 提示 `pedalboard_illegal_instruction`**

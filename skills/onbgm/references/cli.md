@@ -20,6 +20,8 @@
 | `onbgm check score.yaml` | 校验乐谱，输出时间轴 |
 | `onbgm timeline score.yaml [--at 秒 …]` | 输出每段的起止时间和每小节的和弦；`--at 0:23.4` 查某个时间点在第几小节第几拍 |
 | `onbgm render score.yaml -o 目录 [--soundset gm]` | 渲染 |
+| `onbgm review out/版本 [--compare out/旧版本] [--port N] [--no-open]` | 启动审听页面（只监听本机）：钢琴卷帘、A/B 无缝切换、在时间轴上写意见。会一直运行，请在后台运行；`--json` 时第一行输出 `{"url": …, "review_file": …}` |
+| `onbgm review out/版本 --list` | 不启动页面，列出用户已经写的意见 |
 | `onbgm schema` | 输出乐谱格式的 JSON Schema |
 | `onbgm fetch` | 下载音源 |
 
@@ -102,6 +104,15 @@
 - `audio` 是交付用的文件：循环曲是 `loop.wav`，不循环是 `song.wav`。
 - `automix` 里的 `gain_db` 是相对原始渲染电平的增益，数值大（比如 +20）也正常。
 - `balance` 列出每一段里各声部的响度，从响到轻排列，可以检查旋律有没有被伴奏盖住。
+- `review --list --json` 返回 `{"comments": [...]}`。每条意见的字段：
+  - `time_s`：秒数；
+  - `bar`、`beat`：第几小节第几拍；
+  - `section`、`chord`：所在段落和当时的和弦；
+  - `in_tail`：是否落在乐谱结束后的余音里；
+  - `version`：用户当时听的是哪个输出目录的版本；
+  - `text`：意见内容；
+  - `created`：写下的时间。
+  改完一版后，用 `--compare` 让用户对比新旧两版。
 - `timeline --at` 查到乐谱结束后的余音（`meta.tail`）里时，返回 `{"in_tail": true, "note": …}`。
 - `files.stems` 目录里有每个声部的分轨；有音效时还有 `sfx.wav`（所有音效，不含混响）。分轨是自动定音量之后、`gain` 和声像之前的声音。
 - `render` 的 `sfx` 里，`level_db` 是音效自己的音量（K 计权后最响 100ms），`vs_music_db` 是它比当时的音乐响多少 dB。用户说"再轻一点"时，可以用它核对改了多少。
@@ -119,4 +130,5 @@
 | 音效 | `sfx_out_of_range`（起点早于开头或超出结尾，`fix.length` 给出能放下的最大长度） `field_not_for_sfx` |
 | 声部和织体 | `missing_texture` `field_not_for_texture` `not_overridable` `missing_pattern` `unknown_drum` `pattern_bar_count` `pattern_step_count` `pattern_bad_char` |
 | 渲染时的警告 | `note_out_of_range` `automix_outlier` `heavy_limiting` |
-| 环境和文件 | `missing_dependency` `file_not_found` `file_exists` |
+| 环境和文件 | `missing_dependency` `file_not_found` `file_exists` `pedalboard_illegal_instruction`（见 README 常见问题） |
+| 审听 | `no_player_data`（目录不是 render 的输出，或者是旧版本渲染的，重新渲染即可） `port_unavailable` |
