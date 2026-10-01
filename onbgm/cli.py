@@ -18,7 +18,7 @@ from .arrange import arrange
 from .fetch import VSCO_PARTS, fetch_all
 from .library import GM_SF2, SOUNDS_DIR
 from .schema import score_schema
-from .score import Problem, ScoreError, load, parse_time
+from .score import Problem, ScoreError, fmt_time, load, parse_time
 
 EXAMPLES = Path(__file__).resolve().parent / "examples"
 TEMPLATE = """\
@@ -139,6 +139,55 @@ def cmd_render(args) -> None:
     _emit(data, args.json, "\n".join(lines))
 
 
+def cmd_fit(args) -> None:
+    from .fit import Cue, fit
+
+    try:
+        cues = []
+        for i, raw in enumerate(args.cues):
+            t, _, name = raw.partition("=")
+            cues.append(Cue(parse_time(t), (name or f"s{i + 2}").strip().replace(" ", "_")))
+        length = parse_time(args.length) if args.length else None
+        hits = [parse_time(h) for h in args.hit]
+        lo, _, hi = args.bpm.partition("-")
+        bpm_range = (float(lo), float(hi or lo))
+    except ValueError as e:
+        _fail([Problem("bad_format", "", f"{e}（节点写成 0:08 或 0:08=drop；速度范围写成 100-130）")], args.json)
+    times = [c.seconds for c in cues]
+    if times != sorted(times) or len(set(times)) != len(times) or (times and times[0] <= 0) or \
+            (length and times and times[-1] >= length):
+        _fail([Problem("out_of_range", "", "节点要按时间递增、大于 0、且都在总时长之内")], args.json)
+    result = fit(cues, length, bpm_range, hits, args.top, args.ending_tempo)
+    plans = result["plans"]
+    if args.write and plans:
+        Path(args.write).write_text(plans[0]["skeleton"], encoding="utf-8")
+    lines = []
+    for i, p in enumerate(plans, 1):
+        changes = sum(1 for s in p["sections"] if s["tempo"] is not None)
+        lines.append(f"方案 {i}：主速度 {p['bpm']:g} BPM，" + (
+            f"{changes} 段单独设速度，相邻段落最大速度跳变 {p['max_jump_pct']:g}%" if changes
+            else "所有节点都在同一个速度下正好落在小节线上"))
+        for s in p["sections"]:
+            extra = f"  速度 {s['tempo']:g}" if s["tempo"] is not None else ""
+            if s["jump_pct"]:
+                extra += f"（比上一段{'快' if s['jump_pct'] > 0 else '慢'} {abs(s['jump_pct']):g}%）"
+            if s["ramp_to"]:
+                extra += f"  渐慢到 {s['ramp_to']:g} BPM"
+            if s["tail_s"] > 0.01:
+                extra += f"  之后余音 {s['tail_s']:g} 秒"
+            lines.append(f"  {s['name']:<10} {fmt_time(s['start_s'])}–{fmt_time(s['end_s'])}  {s['bars']:>2} 小节{extra}")
+        for h in p["hits"]:
+            where = {"downbeat": "小节第一拍", "beat": "拍上", "eighth": "半拍上", "off": "不在拍上（音效照样精确，只是不在节奏点上）"}
+            lines.append(f"  音效点 {fmt_time(h['time_s'])} → 第 {h['bar']} 小节第 {h['beat']:g} 拍，{where[h['on']]}")
+    if result["suggestion"]:
+        lines.insert(0, f"提示：{result['suggestion']}\n")
+    if plans:
+        lines += ["", "方案 1 的乐谱骨架" + (f"（已写入 {args.write}）" if args.write else "（加 --write 文件名 可以直接写出）") + "：",
+                  plans[0]["skeleton"]]
+    _emit({"plans": plans, "suggestion": result["suggestion"], "written": args.write if args.write and plans else None},
+          args.json, "\n".join(lines))
+
+
 def cmd_catalog(args) -> None:
     found = catalog.search(args.query, args.kind, args.limit)
     if args.query is None and args.kind is None:
@@ -254,6 +303,14 @@ def main() -> None:
     p.add_argument("-o", "--out", help="输出目录（默认 out/<乐谱名>）")
     p.add_argument("--soundset", choices=["hq", "gm"], default="hq",
                    help="hq：高质量采样（缺的乐器自动退回 gm）；gm：只用 GeneralUser GS")
+    p = add("fit", cmd_fit, "根据视频的画面节点算出速度和段落结构，让每个节点都落在小节第一拍")
+    p.add_argument("cues", nargs="+", help="段落分界的时间点，可带名字：0:08=drop 0:30=logo")
+    p.add_argument("--length", help="总时长，如 0:45")
+    p.add_argument("--bpm", default="80-140", help="基准速度范围，如 100-130（默认 80-140）")
+    p.add_argument("--hit", action="append", default=[], help="只放音效、不分段的时间点（报告它落在第几拍），可重复")
+    p.add_argument("--top", type=int, default=3, help="给出几个方案")
+    p.add_argument("--ending-tempo", type=float, help="结尾渐慢到这个速度（如 60），最后一段会按渐慢后的实际时长排")
+    p.add_argument("--write", help="把方案 1 的乐谱骨架写到这个文件")
     p = add("catalog", cmd_catalog, "搜索现成的写法（鼓组、扫弦、低音、和弦伴奏、和弦进行）和可用的构件")
     p.add_argument("-q", "--query", help="用自然语言描述，如 \"慵懒的 lo-fi 鼓\"")
     p.add_argument("--kind", choices=catalog.KINDS, help="只看某一类")

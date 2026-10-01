@@ -32,7 +32,8 @@ def timeline_data(score: Score) -> dict:
         "sections": [
             {"name": s.name, "bars": [s.start_bar + 1, s.start_bar + s.bars],
              "start_s": _r(score.seconds(s.start), 3), "end_s": _r(score.seconds(s.end), 3),
-             "energy": [s.energy[0], s.energy[1]]}
+             "energy": [s.energy[0], s.energy[1]],
+             "bpm": [_r(score.bpm_at(s.start), 2), _r(score.bpm_at(s.end - 1e-6), 2)]}
             for s in score.sections
         ],
         "chords": [
@@ -49,14 +50,14 @@ def timeline_data(score: Score) -> dict:
 def _sfx_row(score: Score, ev) -> dict:
     from .sfx import SFX_TYPES
 
-    start, end = ev.span(SFX_TYPES[ev.type].natural * score.bpm / 60)
+    start, end = ev.span(SFX_TYPES[ev.type].natural * score.bpm_at(ev.at) / 60)
     return {"type": ev.type, "at_s": _r(score.seconds(ev.at), 3), "start_s": _r(score.seconds(start), 3),
             "end_s": _r(score.seconds(end), 3), "anchor": SFX_TYPES[ev.type].anchor, "path": ev.path}
 
 
 def locate(score: Score, seconds: float) -> dict:
     """某个时间点在乐谱里的位置：第几小节第几拍、哪一段、什么和弦。"""
-    beat = seconds * score.bpm / 60
+    beat = score.beat_at(seconds)
     end = score.seconds(score.total_beats)
     if 0 <= seconds - end < score.tail:
         return {"time_s": _r(seconds, 3), "in_tail": True,
@@ -64,6 +65,8 @@ def locate(score: Score, seconds: float) -> dict:
     if not 0 <= beat < score.total_beats:
         return {"time_s": _r(seconds, 3),
                 "error": f"超出乐谱范围（0 ~ {fmt_time(end)}{f'，加余音到 {fmt_time(end + score.tail)}' if score.tail else ''}）"}
+    if abs(beat - round(beat)) * 60 / score.bpm_at(beat) < 0.005:  # 离拍点不到 5ms 就算正好在拍点上
+        beat = float(round(beat))
     sec, chord = score.section_at(beat), score.chord_at(beat)
     return {"time_s": _r(seconds, 3), "bar": int(beat // BEATS_PER_BAR) + 1, "beat": _r(beat % BEATS_PER_BAR + 1, 3),
             "section": sec.name, "bar_in_section": int((beat - sec.start) // BEATS_PER_BAR) + 1,
@@ -72,12 +75,15 @@ def locate(score: Score, seconds: float) -> dict:
 
 def timeline(score: Score) -> str:
     d = timeline_data(score)
-    lines = [f"《{d['title']}》 {score.bpm:g} BPM · {d['key']} · {d['bars']} 小节 · {fmt_time(d['duration_s'])}"
+    varies = score.tempo_map is not None and score.tempo_map.varies
+    lines = [f"《{d['title']}》 {score.bpm:g} BPM{'（变速）' if varies else ''} · {d['key']} · {d['bars']} 小节 · {fmt_time(d['duration_s'])}"
              + (" · 可无缝循环" if d["loop"] else "")]
     for s in d["sections"]:
         a, b = s["energy"]
         energy = f"{a:.2f}" if a == b else f"{a:.2f}→{b:.2f}"
-        lines.append(f"  {s['name']:<8} 第 {s['bars'][0]:>2}–{s['bars'][1]:<2} 小节  {fmt_time(s['start_s'])}  能量 {energy}")
+        b0, b1 = s["bpm"]
+        speed = f"  速度 {b0:g}" + (f"→{b1:g}" if b0 != b1 else "") if varies else ""
+        lines.append(f"  {s['name']:<8} 第 {s['bars'][0]:>2}–{s['bars'][1]:<2} 小节  {fmt_time(s['start_s'])}  能量 {energy}{speed}")
     anchor_word = {"end": "结束于", "start": "开始于", "center": "最响处在"}
     for x in d["sfx"]:
         lines.append(f"  ♪ {x['type']:<14} {anchor_word[x['anchor']]} {fmt_time(x['at_s'])}"
@@ -146,7 +152,7 @@ def pianoroll(score: Score, parts: list[Part], path: Path) -> None:
                        s=[8 + 40 * n.vel / 127 for n in p.notes], marker="|", color=c, label=p.name, zorder=3)
             continue
         for n in p.notes:
-            ax.add_patch(plt.Rectangle((score.seconds(n.start), n.pitch - 0.4), score.seconds(n.dur), 0.8,
+            ax.add_patch(plt.Rectangle((score.seconds(n.start), n.pitch - 0.4), score.duration(n.start, n.dur), 0.8,
                                        color=c, alpha=0.35 + 0.6 * n.vel / 127, linewidth=0))
         ax.plot([], [], color=c, linewidth=6, label=p.name)
     for ev in score.sfx:  # 音效：在顶部画出起止范围，对准点画实线

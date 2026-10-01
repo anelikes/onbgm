@@ -1,0 +1,132 @@
+# 旅行 vlog 配乐 v2 —— 只把蒙太奇（0:16.9–0:28.3）改得更燃，其余段落不动
+# （v1 说明：38 秒、不循环、温暖 / 电影感 / 积极向上
+# 0:00 日出空镜（轻轻进来）→ 0:05.4 人物（展开）→ 0:16.9 快剪蒙太奇（节奏起来，
+# 0:19.2 / 0:21.5 / 0:23.8 三个关键切点落在小节第一拍并配音效）→ 0:28.3 慢镜头（回落）
+# → 结尾渐慢收住，到 0:38 结束。
+# 段落、at、tempo 由 `onbgm fit` 算出（基准 104.35 BPM，1 小节 = 2.3 秒）。
+title: Golden Hour Journey
+meta:
+  bpm: 104.35
+  key: D major
+  loop: false
+  tail: 1.411   # 乐谱在 0:36.589 结束（timeline 查得），余音补到 0:38.000
+  seed: 11
+
+sections:
+  - { name: intro,   bars: 2, energy: "0.15->0.35", tempo: 88.89 }   # 0:00.00–0:05.40 日出空镜
+  - { name: person,  bars: 5, energy: "0.45->0.65", at: "0:05.40" }  # 0:05.40–0:16.90 人物镜头
+  - { name: montage, bars: 1, energy: 0.9,  at: "0:16.90" }          # 0:16.90–0:19.20 蒙太奇开始
+  - { name: cut1,    bars: 1, energy: 0.93, at: "0:19.20" }          # 0:19.20 关键切点 1
+  - { name: cut2,    bars: 1, energy: 0.96, at: "0:21.50" }          # 0:21.50 关键切点 2
+  - { name: cut3,    bars: 2, energy: 1.0,  at: "0:23.80", tempo: 106.67 }  # 0:23.80 关键切点 3（高潮）
+  - { name: slowmo,  bars: 1, energy: 0.4,  at: "0:28.30" }          # 0:28.30 慢镜头，音乐回落
+  - { name: ending,  bars: 2, energy: "0.35->0.15", tempo: "->60" }  # 渐慢收尾，终止和弦的余音留到 0:38
+
+harmony:
+  intro:   "Dadd9 | Gmaj7"
+  person:  "D | A/C# | Bm7 | Gmaj7 | Asus4 A"
+  montage: "D A/C#"
+  cut1:    "Bm7 G"
+  cut2:    "D A/C#"
+  cut3:    "G A | Bm7 A"
+  slowmo:  "D"
+  ending:  "Gmaj7 A7sus4 | D"
+
+tracks:
+  piano:
+    sound: piano
+    texture: arpeggio
+    in: [intro, person, montage, cut1, cut2, cut3, slowmo]
+    gain: 0.66          # v2：蒙太奇变响后自动混音把整轨压低了 0.66 dB，补回来让其他段落与 v1 一致
+
+  piano_end:            # 收尾拆成柱式和弦，只在拍头起音，配合渐慢
+    sound: piano
+    texture: comp
+    in: [ending]
+    rhythm: "x--- ---- x--- ---- | x--- ---- ---- ----"
+    roll: 0.08
+
+  pad:
+    sound: strings-slow
+    texture: pad
+    in: all
+    gain: 0.70          # v2：同上，补偿整轨被压低的 0.70 dB
+
+  bass:
+    sound: contrabass
+    texture: bass-sustain
+    in: [person, slowmo, ending]
+
+  bass_drive:           # 蒙太奇里换成八分音符跳弓低音，推动节奏（v2：改成八度跳）
+    sound: contrabass
+    texture: bassline
+    in: [montage, cut1, cut2, cut3]
+    rhythm: "1.8. 1.8. 1.8. 1.8."
+    articulation: staccato
+
+  motif:                # 钢琴旋律：前奏预告、人物段展开、慢镜头与收尾
+    sound: piano
+    texture: melody
+    notes:
+      intro:  "r/2 F#5/4 A5/4 | B5/1"
+      person: >-
+        r/4 A5/8 B5/8 A5/4. F#5/8 | E5/2 r/4 E5/8 F#5/8 |
+        D5/4. F#5/8 A5/4 B5/8 A5/8 | F#5/2. r/8 D5/8 | E5/4. D5/8 C#5/2
+      slowmo: "A5/2. F#5/8 A5/8"
+      ending: "B5/4 G5/4 A5/4 E5/4 | D5/1"
+
+  lead:                 # 蒙太奇主旋律交给小提琴组
+    sound: strings
+    texture: melody
+    notes:
+      montage: "F#5/8 A5/8 D6/4 C#6/8 A5/8 E5/4"
+      cut1:    "D6/8> B5/8 F#6/4 G6/8 D6/8 B5/4"
+      cut2:    "F#6/4.> E6/8 E6/4 C#6/8 A5/8"
+      cut3:    "D6/8> G6/8 B6/4> A6/8 E6/8 C#6/4 | D6/4. F#6/8 E6/4 C#6/4"
+
+  ostinato:             # v2 新增：蒙太奇里小提琴十六分音符跳弓音型
+    sound: strings
+    texture: line
+    articulation: staccato
+    in: [montage, cut1, cut2, cut3]
+    notes:
+      montage: "D4/16 A4/16 D5/16 A4/16 D4/16 A4/16 D5/16 A4/16 C#4/16 A4/16 E5/16 A4/16 C#4/16 A4/16 E5/16 A4/16"
+      cut1:    "B3/16 F#4/16 B4/16 F#4/16 B3/16 F#4/16 B4/16 F#4/16 G3/16 D4/16 G4/16 D4/16 G3/16 D4/16 G4/16 D4/16"
+      cut2:    "D4/16 A4/16 D5/16 A4/16 D4/16 A4/16 D5/16 A4/16 C#4/16 A4/16 E5/16 A4/16 C#4/16 A4/16 E5/16 A4/16"
+      cut3: >-
+        G3/16 D4/16 G4/16 D4/16 G3/16 D4/16 G4/16 D4/16 A3/16 E4/16 A4/16 E4/16 A3/16 E4/16 A4/16 E4/16 |
+        B3/16 F#4/16 B4/16 F#4/16 B3/16 F#4/16 B4/16 F#4/16 A3/16 E4/16 A4/16 C#5/16 E5/16 A4/16 C#5/16 E5/16
+
+  timpani:
+    sound: timpani
+    texture: timpani
+    in: [montage, cut1, cut2, cut3]
+    roll_into: montage  # 人物段最后一小节渐强滚奏进蒙太奇
+    gain: 0.11          # v2：同上，补偿整轨被压低的 0.11 dB
+
+  drums:
+    sound: drums-room
+    texture: groove
+    in: [montage, cut1, cut2, cut3]
+    pattern:              # v2：底鼓更密、军鼓加重音和 ghost、踩镲十六分、每个切点都敲吊镲
+      kick:       "X..x ..x. x.x. ..x."
+      snare:      ".... X..g .... X..g"
+      hat:        "xgxg xgxg xgxg xgxg"
+      tambourine: ".... x... .... x..."
+      crash:      "X... .... .... ...."
+    by_section:
+      cut3:
+        pattern:
+          kick:       "X..x ..x. x.x. ..x. | x..x ..x. x... x..."
+          snare:      ".... X..g .... X..g | .... X..g xxxx XXXX"
+          hat:        "xgxg xgxg xgxg xgxg | xgxg xgxg .... ...."
+          tambourine: ".... x... .... x... | .... x... .... ...."
+          crash:      "X... .... .... .... | .... .... .... ...."
+
+sfx:
+  - { type: whoosh, at: "0:19.2", level: 0.75 }           # 关键切点 1
+  - { type: whoosh, at: "0:21.5", level: 0.75 }           # 关键切点 2
+  - { type: whoosh, at: "0:23.8", level: 0.8 }          # 关键切点 3
+  - { type: riser, at: "0:23.8", length: 8, level: 0.55 }  # v2：从 0:19.2 起往上推，在切点 3 戛然而止
+  - { type: impact, at: "0:23.8", level: 0.65, duck: 4 }   # 切点 3 是蒙太奇的高点（v2：冲击加重）
+  - { type: sub-drop, at: "0:23.8", level: 0.6 }           # v2：下坠低音托底

@@ -37,6 +37,25 @@ def _expand(notes: list[Note]) -> list[Note]:
     return out
 
 
+def _tempo_events(score: Score) -> list:
+    """速度图写成 MIDI 速度事件：固定速度的段落写一个，渐变段每 1/8 拍写一个（取这一小段中点的速度）。"""
+    if score.tempo_map is None:
+        return [(0, 0, mido.MetaMessage("set_tempo", tempo=mido.bpm2tempo(score.bpm)))]
+    events, last = [], None
+    for seg in score.tempo_map.segments:
+        steps = 1 if abs(seg.bpm1 - seg.bpm0) < 1e-9 else max(1, round((seg.end - seg.start) * 8))
+        width = (seg.end - seg.start) / steps
+        for i in range(steps):
+            beat = seg.start + i * width
+            # 一小段内的平均速度：用秒数反推，保证 MIDI 播放的总时长和速度图一致
+            secs = seg.seconds_into(beat + width) - seg.seconds_into(beat)
+            tempo = round(secs / width * 1e6)
+            if tempo != last:
+                events.append((_tick(beat), 0, mido.MetaMessage("set_tempo", tempo=tempo)))
+                last = tempo
+    return events
+
+
 def write_midi(path: Path, score: Score, parts: list[Part], tail_beats: float = 0.0) -> None:
     mid = mido.MidiFile(type=1, ticks_per_beat=TPB)
     end = _tick(score.total_beats + tail_beats)
@@ -44,7 +63,7 @@ def write_midi(path: Path, score: Score, parts: list[Part], tail_beats: float = 
     conductor = mido.MidiTrack()
     events = [
         (0, 0, mido.MetaMessage("track_name", name=score.title)),
-        (0, 0, mido.MetaMessage("set_tempo", tempo=mido.bpm2tempo(score.bpm))),
+        *_tempo_events(score),
         (0, 0, mido.MetaMessage("time_signature", numerator=BEATS_PER_BAR, denominator=4)),
     ]
     events += [(_tick(s.start), 1, mido.MetaMessage("marker", text=s.name)) for s in score.sections]

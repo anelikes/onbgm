@@ -36,6 +36,7 @@ onbgm doctor                              # 检查环境
 onbgm init my_bgm --example late_study    # 从示例起步
 onbgm catalog -q "慵懒的 lo-fi 鼓"          # 搜现成的写法
 onbgm check my_bgm/score.yaml             # 校验、打印时间轴
+onbgm fit 0:07.3=reveal 0:21.8=feature --length 0:45 --write video.yaml   # 给视频配乐：按画面节点算速度和结构
 onbgm timeline my_bgm/score.yaml --at 0:20
 onbgm render my_bgm/score.yaml -o my_bgm/out/v1               # 渲染
 onbgm render my_bgm/score.yaml -o my_bgm/out/v1 --soundset gm # 只用 GM 音源（快、轻量）

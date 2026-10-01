@@ -16,6 +16,7 @@
 | `onbgm example [名字]` | 不带名字时列出示例；带名字时输出完整乐谱 |
 | `onbgm catalog -q "描述"` | 用自然语言搜现成的写法：鼓组、扫弦、低音、和弦伴奏、和弦进行，返回可以直接粘贴的片段 |
 | `onbgm catalog --kind 类别` | 浏览某一类：`drums strum bassline comp arp progression sfx texture sound drum chord example` |
+| `onbgm fit 0:08=drop 0:30=logo --length 0:45 [--bpm 100-130] [--hit 0:03] [--ending-tempo 60] [--write score.yaml]` | 给视频配乐：根据画面节点算出速度和每段的小节数，必要时给段落设略有偏差的速度，让每个节点都落在小节第一拍；`--write` 直接写出乐谱骨架 |
 | `onbgm check score.yaml` | 校验乐谱，输出时间轴 |
 | `onbgm timeline score.yaml [--at 秒 …]` | 输出每段的起止时间和每小节的和弦；`--at 0:23.4` 查某个时间点在第几小节第几拍 |
 | `onbgm render score.yaml -o 目录 [--soundset gm]` | 渲染 |
@@ -42,6 +43,29 @@
   - `replace_with`：拼错的字段或取值，换成这个；
   - 时间约束冲突时给 `bpm`（满足约束需要的速度），以及 `bars_before` 或 `bars`（保持现有速度时需要的小节数）。
 
+**`fit`**：
+
+```json
+{
+  "plans": [{
+    "bpm": 100.599, "max_jump_pct": 1.3, "max_deviation_pct": 1.96,
+    "sections": [{"name": "intro", "start_s": 0.0, "end_s": 7.3, "bars": 3, "tempo": 98.63, "deviation_pct": -1.96,
+                  "jump_pct": 0.0, "tail_s": 0.0, "ramp_to": null}],
+    "hits": [{"time_s": 3.0, "bar": 2, "beat": 1.0, "on": "downbeat"}],
+    "skeleton": "title: …"
+  }],
+  "suggestion": null,
+  "written": "score.yaml"
+}
+```
+
+- 方案按听感排序：先比相邻段落之间明显的速度跳变（超过 6%）有几处，再比最大跳变，最后比总代价（小节数偏好 2、4、8 这类整齐的数）。
+- `bpm` 是主速度（用的小节最多的那个速度）。`tempo` 为 null 表示这一段用主速度。
+- `jump_pct` 是这一段比上一段快或慢多少，这是听得到的那个量：3% 以内几乎听不出，3–6% 略有感觉，6% 以上明显。`deviation_pct` 是相对主速度的差。
+- `ramp_to` 不为空表示这一段渐慢（或渐快）到这个速度（来自 `--ending-tempo`）；`tail_s` 是乐谱结束后留给余音的秒数。
+- `hits[].on` 表示音效点落在哪里：`downbeat`（小节第一拍）、`beat`（拍上）、`eighth`（半拍上）、`off`（不在节奏点上；音效照样精确，只是不在节奏点上）。
+- `suggestion` 不为空时，说明放宽速度范围能得到明显更好的方案。
+
 **`check` 成功**：`{"ok": true, "timeline": {…}, "warnings": [{code, path, message}]}`
 
 **`timeline`**：
@@ -49,7 +73,7 @@
 ```json
 {
   "bpm": 90.0, "bars": 24, "duration_s": 64.0, "seconds_per_bar": 2.6667, "loop": true,
-  "sections": [{"name": "climax", "bars": [13, 20], "start_s": 32.0, "end_s": 53.333, "energy": [1.0, 1.0]}],
+  "sections": [{"name": "climax", "bars": [13, 20], "start_s": 32.0, "end_s": 53.333, "energy": [1.0, 1.0], "bpm": [90.0, 90.0]}],
   "chords": [{"bar": 13, "beat": 1.0, "start_s": 32.0, "chord": "Bb", "section": "climax"}],
   "tracks": [{"name": "lead", "sound": "strings", "texture": "melody", "sections": ["climax"]}],
   "at": [{"time_s": 23.4, "bar": 9, "beat": 4.1, "section": "build", "bar_in_section": 5, "chord": "Gm9", "energy": 0.68}]
@@ -79,7 +103,7 @@
 - `automix` 里的 `gain_db` 是相对原始渲染电平的增益，数值大（比如 +20）也正常。
 - `balance` 列出每一段里各声部的响度，从响到轻排列，可以检查旋律有没有被伴奏盖住。
 - `timeline --at` 查到乐谱结束后的余音（`meta.tail`）里时，返回 `{"in_tail": true, "note": …}`。
-- `files.stems` 目录里有每个声部的分轨；有音效时还有 `sfx.wav`（所有音效，不含混响）。
+- `files.stems` 目录里有每个声部的分轨；有音效时还有 `sfx.wav`（所有音效，不含混响）。分轨是自动定音量之后、`gain` 和声像之前的声音。
 - `render` 的 `sfx` 里，`level_db` 是音效自己的音量（K 计权后最响 100ms），`vs_music_db` 是它比当时的音乐响多少 dB。用户说"再轻一点"时，可以用它核对改了多少。
 - `loudness` 里的各段响度是最终混音的响度，包含音效，也包含从上一段延续过来的余音。
 - `timeline` 和 `render` 都会列出 `sfx`：每个音效的对准点 `at_s` 和实际起止 `start_s` / `end_s`。`timeline` 里还有 `anchor`，表示怎么对准：`end` 在 at 结束，`start` 从 at 开始，`center` 最响处在 at。

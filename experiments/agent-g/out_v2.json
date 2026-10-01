@@ -1,0 +1,889 @@
+{
+  "ok": true,
+  "files": {
+    "audio": "experiments/agent-g/out/v2/song.wav",
+    "preview": "experiments/agent-g/out/v2/preview.mp3",
+    "midi": "experiments/agent-g/out/v2/song.mid",
+    "stems": "experiments/agent-g/out/v2/stems",
+    "pianoroll": "experiments/agent-g/out/v2/pianoroll.png"
+  },
+  "duration_s": 38.0,
+  "loop": false,
+  "lufs": -15.1,
+  "timeline": {
+    "title": "Golden Hour Journey",
+    "bpm": 104.35,
+    "key": "D major",
+    "loop": false,
+    "bars": 15,
+    "duration_s": 36.589,
+    "seconds_per_bar": 2.7,
+    "sections": [
+      {
+        "name": "intro",
+        "bars": [
+          1,
+          2
+        ],
+        "start_s": 0.0,
+        "end_s": 5.4,
+        "energy": [
+          0.15,
+          0.35
+        ],
+        "bpm": [
+          88.89,
+          88.89
+        ]
+      },
+      {
+        "name": "person",
+        "bars": [
+          3,
+          7
+        ],
+        "start_s": 5.4,
+        "end_s": 16.9,
+        "energy": [
+          0.45,
+          0.65
+        ],
+        "bpm": [
+          104.35,
+          104.35
+        ]
+      },
+      {
+        "name": "montage",
+        "bars": [
+          8,
+          8
+        ],
+        "start_s": 16.9,
+        "end_s": 19.2,
+        "energy": [
+          0.9,
+          0.9
+        ],
+        "bpm": [
+          104.35,
+          104.35
+        ]
+      },
+      {
+        "name": "cut1",
+        "bars": [
+          9,
+          9
+        ],
+        "start_s": 19.2,
+        "end_s": 21.5,
+        "energy": [
+          0.93,
+          0.93
+        ],
+        "bpm": [
+          104.35,
+          104.35
+        ]
+      },
+      {
+        "name": "cut2",
+        "bars": [
+          10,
+          10
+        ],
+        "start_s": 21.5,
+        "end_s": 23.8,
+        "energy": [
+          0.96,
+          0.96
+        ],
+        "bpm": [
+          104.35,
+          104.35
+        ]
+      },
+      {
+        "name": "cut3",
+        "bars": [
+          11,
+          12
+        ],
+        "start_s": 23.8,
+        "end_s": 28.299,
+        "energy": [
+          1.0,
+          1.0
+        ],
+        "bpm": [
+          106.67,
+          106.67
+        ]
+      },
+      {
+        "name": "slowmo",
+        "bars": [
+          13,
+          13
+        ],
+        "start_s": 28.299,
+        "end_s": 30.599,
+        "energy": [
+          0.4,
+          0.4
+        ],
+        "bpm": [
+          104.35,
+          104.35
+        ]
+      },
+      {
+        "name": "ending",
+        "bars": [
+          14,
+          15
+        ],
+        "start_s": 30.599,
+        "end_s": 36.589,
+        "energy": [
+          0.35,
+          0.15
+        ],
+        "bpm": [
+          104.35,
+          60.0
+        ]
+      }
+    ],
+    "chords": [
+      {
+        "bar": 1,
+        "beat": 1.0,
+        "start_s": 0.0,
+        "chord": "Dadd9",
+        "section": "intro"
+      },
+      {
+        "bar": 2,
+        "beat": 1.0,
+        "start_s": 2.7,
+        "chord": "Gmaj7",
+        "section": "intro"
+      },
+      {
+        "bar": 3,
+        "beat": 1.0,
+        "start_s": 5.4,
+        "chord": "D",
+        "section": "person"
+      },
+      {
+        "bar": 4,
+        "beat": 1.0,
+        "start_s": 7.7,
+        "chord": "A/C#",
+        "section": "person"
+      },
+      {
+        "bar": 5,
+        "beat": 1.0,
+        "start_s": 10.0,
+        "chord": "Bm7",
+        "section": "person"
+      },
+      {
+        "bar": 6,
+        "beat": 1.0,
+        "start_s": 12.3,
+        "chord": "Gmaj7",
+        "section": "person"
+      },
+      {
+        "bar": 7,
+        "beat": 1.0,
+        "start_s": 14.6,
+        "chord": "Asus4",
+        "section": "person"
+      },
+      {
+        "bar": 7,
+        "beat": 3.0,
+        "start_s": 15.75,
+        "chord": "A",
+        "section": "person"
+      },
+      {
+        "bar": 8,
+        "beat": 1.0,
+        "start_s": 16.9,
+        "chord": "D",
+        "section": "montage"
+      },
+      {
+        "bar": 8,
+        "beat": 3.0,
+        "start_s": 18.05,
+        "chord": "A/C#",
+        "section": "montage"
+      },
+      {
+        "bar": 9,
+        "beat": 1.0,
+        "start_s": 19.2,
+        "chord": "Bm7",
+        "section": "cut1"
+      },
+      {
+        "bar": 9,
+        "beat": 3.0,
+        "start_s": 20.35,
+        "chord": "G",
+        "section": "cut1"
+      },
+      {
+        "bar": 10,
+        "beat": 1.0,
+        "start_s": 21.5,
+        "chord": "D",
+        "section": "cut2"
+      },
+      {
+        "bar": 10,
+        "beat": 3.0,
+        "start_s": 22.65,
+        "chord": "A/C#",
+        "section": "cut2"
+      },
+      {
+        "bar": 11,
+        "beat": 1.0,
+        "start_s": 23.8,
+        "chord": "G",
+        "section": "cut3"
+      },
+      {
+        "bar": 11,
+        "beat": 3.0,
+        "start_s": 24.925,
+        "chord": "A",
+        "section": "cut3"
+      },
+      {
+        "bar": 12,
+        "beat": 1.0,
+        "start_s": 26.049,
+        "chord": "Bm7",
+        "section": "cut3"
+      },
+      {
+        "bar": 12,
+        "beat": 3.0,
+        "start_s": 27.174,
+        "chord": "A",
+        "section": "cut3"
+      },
+      {
+        "bar": 13,
+        "beat": 1.0,
+        "start_s": 28.299,
+        "chord": "D",
+        "section": "slowmo"
+      },
+      {
+        "bar": 14,
+        "beat": 1.0,
+        "start_s": 30.599,
+        "chord": "Gmaj7",
+        "section": "ending"
+      },
+      {
+        "bar": 14,
+        "beat": 3.0,
+        "start_s": 31.815,
+        "chord": "A7sus4",
+        "section": "ending"
+      },
+      {
+        "bar": 15,
+        "beat": 1.0,
+        "start_s": 33.185,
+        "chord": "D",
+        "section": "ending"
+      }
+    ],
+    "tracks": [
+      {
+        "name": "piano",
+        "sound": "piano",
+        "texture": "arpeggio",
+        "sections": [
+          "intro",
+          "person",
+          "montage",
+          "cut1",
+          "cut2",
+          "cut3",
+          "slowmo"
+        ]
+      },
+      {
+        "name": "piano_end",
+        "sound": "piano",
+        "texture": "comp",
+        "sections": [
+          "ending"
+        ]
+      },
+      {
+        "name": "pad",
+        "sound": "strings-slow",
+        "texture": "pad",
+        "sections": [
+          "intro",
+          "person",
+          "montage",
+          "cut1",
+          "cut2",
+          "cut3",
+          "slowmo",
+          "ending"
+        ]
+      },
+      {
+        "name": "bass",
+        "sound": "contrabass",
+        "texture": "bass-sustain",
+        "sections": [
+          "person",
+          "slowmo",
+          "ending"
+        ]
+      },
+      {
+        "name": "bass_drive",
+        "sound": "contrabass",
+        "texture": "bassline",
+        "sections": [
+          "montage",
+          "cut1",
+          "cut2",
+          "cut3"
+        ]
+      },
+      {
+        "name": "motif",
+        "sound": "piano",
+        "texture": "melody",
+        "sections": [
+          "intro",
+          "person",
+          "slowmo",
+          "ending"
+        ]
+      },
+      {
+        "name": "lead",
+        "sound": "strings",
+        "texture": "melody",
+        "sections": [
+          "montage",
+          "cut1",
+          "cut2",
+          "cut3"
+        ]
+      },
+      {
+        "name": "ostinato",
+        "sound": "strings",
+        "texture": "line",
+        "sections": [
+          "montage",
+          "cut1",
+          "cut2",
+          "cut3"
+        ]
+      },
+      {
+        "name": "timpani",
+        "sound": "timpani",
+        "texture": "timpani",
+        "sections": [
+          "montage",
+          "cut1",
+          "cut2",
+          "cut3"
+        ]
+      },
+      {
+        "name": "drums",
+        "sound": "drums-room",
+        "texture": "groove",
+        "sections": [
+          "montage",
+          "cut1",
+          "cut2",
+          "cut3"
+        ]
+      }
+    ],
+    "sfx": [
+      {
+        "type": "whoosh",
+        "at_s": 19.2,
+        "start_s": 18.625,
+        "end_s": 19.775,
+        "anchor": "center",
+        "path": "sfx.0"
+      },
+      {
+        "type": "whoosh",
+        "at_s": 21.5,
+        "start_s": 20.925,
+        "end_s": 22.075,
+        "anchor": "center",
+        "path": "sfx.1"
+      },
+      {
+        "type": "whoosh",
+        "at_s": 23.8,
+        "start_s": 23.225,
+        "end_s": 24.362,
+        "anchor": "center",
+        "path": "sfx.2"
+      },
+      {
+        "type": "riser",
+        "at_s": 23.8,
+        "start_s": 19.2,
+        "end_s": 23.8,
+        "anchor": "end",
+        "path": "sfx.3"
+      },
+      {
+        "type": "impact",
+        "at_s": 23.8,
+        "start_s": 23.8,
+        "end_s": 26.8,
+        "anchor": "start",
+        "path": "sfx.4"
+      },
+      {
+        "type": "sub-drop",
+        "at_s": 23.8,
+        "start_s": 23.8,
+        "end_s": 26.05,
+        "anchor": "start",
+        "path": "sfx.5"
+      }
+    ]
+  },
+  "sources": {
+    "piano": "SalamanderGrandPiano.sf2",
+    "piano_end": "SalamanderGrandPiano.sf2",
+    "pad": "vsco2: celli/violas/violins",
+    "bass": "vsco2: basses",
+    "bass_drive": "vsco2: basses",
+    "motif": "SalamanderGrandPiano.sf2",
+    "lead": "vsco2: violins",
+    "ostinato": "vsco2: violins",
+    "timpani": "vsco2: timpani",
+    "drums": "GeneralUser-GS.sf2"
+  },
+  "automix": [
+    {
+      "track": "motif",
+      "section": "intro",
+      "gain_db": 16.8
+    },
+    {
+      "track": "motif",
+      "section": "person",
+      "gain_db": 20.6
+    },
+    {
+      "track": "motif",
+      "section": "slowmo",
+      "gain_db": 19.0
+    },
+    {
+      "track": "motif",
+      "section": "ending",
+      "gain_db": 24.6
+    },
+    {
+      "track": "lead",
+      "section": "montage",
+      "gain_db": 10.4
+    },
+    {
+      "track": "lead",
+      "section": "cut1",
+      "gain_db": 8.7
+    },
+    {
+      "track": "lead",
+      "section": "cut2",
+      "gain_db": 8.6
+    },
+    {
+      "track": "lead",
+      "section": "cut3",
+      "gain_db": 6.9
+    }
+  ],
+  "loudness": {
+    "integrated_lufs": -15.1,
+    "sections": [
+      {
+        "section": "intro",
+        "energy": 0.25,
+        "lufs": -25.3
+      },
+      {
+        "section": "person",
+        "energy": 0.55,
+        "lufs": -16.8
+      },
+      {
+        "section": "montage",
+        "energy": 0.9,
+        "lufs": -13.2
+      },
+      {
+        "section": "cut1",
+        "energy": 0.93,
+        "lufs": -12.9
+      },
+      {
+        "section": "cut2",
+        "energy": 0.96,
+        "lufs": -11.7
+      },
+      {
+        "section": "cut3",
+        "energy": 1.0,
+        "lufs": -12.7
+      },
+      {
+        "section": "slowmo",
+        "energy": 0.4,
+        "lufs": -19.4
+      },
+      {
+        "section": "ending",
+        "energy": 0.25,
+        "lufs": -18.7
+      }
+    ],
+    "follows_energy": true,
+    "issues": []
+  },
+  "balance": [
+    {
+      "section": "intro",
+      "tracks": [
+        {
+          "track": "motif",
+          "lufs": -27.0
+        },
+        {
+          "track": "piano",
+          "lufs": -30.0
+        },
+        {
+          "track": "pad",
+          "lufs": -30.1
+        }
+      ]
+    },
+    {
+      "section": "person",
+      "tracks": [
+        {
+          "track": "motif",
+          "lufs": -17.3
+        },
+        {
+          "track": "bass",
+          "lufs": -20.3
+        },
+        {
+          "track": "piano",
+          "lufs": -23.7
+        },
+        {
+          "track": "pad",
+          "lufs": -24.7
+        },
+        {
+          "track": "timpani",
+          "lufs": -31.5
+        },
+        {
+          "track": "drums",
+          "lufs": -41.8
+        }
+      ]
+    },
+    {
+      "section": "montage",
+      "tracks": [
+        {
+          "track": "lead",
+          "lufs": -13.4
+        },
+        {
+          "track": "pad",
+          "lufs": -17.7
+        },
+        {
+          "track": "piano",
+          "lufs": -19.0
+        },
+        {
+          "track": "bass_drive",
+          "lufs": -19.1
+        },
+        {
+          "track": "drums",
+          "lufs": -19.9
+        },
+        {
+          "track": "ostinato",
+          "lufs": -22.0
+        },
+        {
+          "track": "timpani",
+          "lufs": -23.5
+        },
+        {
+          "track": "bass",
+          "lufs": -26.6
+        },
+        {
+          "track": "motif",
+          "lufs": -56.8
+        }
+      ]
+    },
+    {
+      "section": "cut1",
+      "tracks": [
+        {
+          "track": "lead",
+          "lufs": -13.5
+        },
+        {
+          "track": "pad",
+          "lufs": -17.6
+        },
+        {
+          "track": "piano",
+          "lufs": -18.1
+        },
+        {
+          "track": "drums",
+          "lufs": -19.6
+        },
+        {
+          "track": "bass_drive",
+          "lufs": -20.3
+        },
+        {
+          "track": "ostinato",
+          "lufs": -22.3
+        },
+        {
+          "track": "timpani",
+          "lufs": -23.7
+        }
+      ]
+    },
+    {
+      "section": "cut2",
+      "tracks": [
+        {
+          "track": "lead",
+          "lufs": -12.4
+        },
+        {
+          "track": "pad",
+          "lufs": -16.2
+        },
+        {
+          "track": "piano",
+          "lufs": -16.3
+        },
+        {
+          "track": "bass_drive",
+          "lufs": -19.3
+        },
+        {
+          "track": "drums",
+          "lufs": -20.4
+        },
+        {
+          "track": "ostinato",
+          "lufs": -20.9
+        },
+        {
+          "track": "timpani",
+          "lufs": -23.7
+        }
+      ]
+    },
+    {
+      "section": "cut3",
+      "tracks": [
+        {
+          "track": "lead",
+          "lufs": -12.5
+        },
+        {
+          "track": "pad",
+          "lufs": -16.1
+        },
+        {
+          "track": "piano",
+          "lufs": -18.0
+        },
+        {
+          "track": "drums",
+          "lufs": -18.5
+        },
+        {
+          "track": "ostinato",
+          "lufs": -19.8
+        },
+        {
+          "track": "bass_drive",
+          "lufs": -20.8
+        },
+        {
+          "track": "timpani",
+          "lufs": -21.8
+        }
+      ]
+    },
+    {
+      "section": "slowmo",
+      "tracks": [
+        {
+          "track": "lead",
+          "lufs": -19.8
+        },
+        {
+          "track": "motif",
+          "lufs": -22.1
+        },
+        {
+          "track": "piano",
+          "lufs": -25.1
+        },
+        {
+          "track": "bass",
+          "lufs": -25.5
+        },
+        {
+          "track": "pad",
+          "lufs": -28.3
+        },
+        {
+          "track": "drums",
+          "lufs": -38.8
+        },
+        {
+          "track": "timpani",
+          "lufs": -50.1
+        }
+      ]
+    },
+    {
+      "section": "ending",
+      "tracks": [
+        {
+          "track": "motif",
+          "lufs": -18.1
+        },
+        {
+          "track": "piano_end",
+          "lufs": -21.0
+        },
+        {
+          "track": "bass",
+          "lufs": -27.6
+        },
+        {
+          "track": "pad",
+          "lufs": -30.4
+        },
+        {
+          "track": "piano",
+          "lufs": -40.5
+        },
+        {
+          "track": "timpani",
+          "lufs": -66.4
+        }
+      ]
+    }
+  ],
+  "warnings": [],
+  "sfx": [
+    {
+      "type": "whoosh",
+      "at_s": 19.2,
+      "start_s": 18.625,
+      "end_s": 19.775,
+      "level_db": -16.5,
+      "path": "sfx.0",
+      "vs_music_db": -2.7
+    },
+    {
+      "type": "whoosh",
+      "at_s": 21.5,
+      "start_s": 20.925,
+      "end_s": 22.075,
+      "level_db": -16.5,
+      "path": "sfx.1",
+      "vs_music_db": -2.0
+    },
+    {
+      "type": "whoosh",
+      "at_s": 23.8,
+      "start_s": 23.225,
+      "end_s": 24.362,
+      "level_db": -15.9,
+      "path": "sfx.2",
+      "vs_music_db": -1.3
+    },
+    {
+      "type": "riser",
+      "at_s": 23.8,
+      "start_s": 19.2,
+      "end_s": 23.8,
+      "level_db": -19.2,
+      "path": "sfx.3",
+      "vs_music_db": -5.3
+    },
+    {
+      "type": "impact",
+      "at_s": 23.8,
+      "start_s": 23.8,
+      "end_s": 26.8,
+      "level_db": -17.7,
+      "path": "sfx.4",
+      "vs_music_db": -3.9
+    },
+    {
+      "type": "sub-drop",
+      "at_s": 23.8,
+      "start_s": 23.8,
+      "end_s": 26.05,
+      "level_db": -18.4,
+      "path": "sfx.5",
+      "vs_music_db": -4.3
+    }
+  ]
+}

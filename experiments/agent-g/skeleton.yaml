@@ -1,0 +1,23 @@
+title: My BGM
+meta:
+  bpm: 104.35
+  loop: false
+  tail: 0.5   # 音乐在 0:37.50 结束，余音到视频结尾
+
+sections:
+  - { name: intro, bars: 2, energy: 0.5, tempo: 88.89 }   # 0:00.00–0:05.40，速度比基准慢 14.81%
+  - { name: person, bars: 5, energy: 0.5, at: "0:05.40" }   # 0:05.40–0:16.90
+  - { name: montage, bars: 1, energy: 0.5, at: "0:16.90" }   # 0:16.90–0:19.20
+  - { name: cut1, bars: 1, energy: 0.5, at: "0:19.20" }   # 0:19.20–0:21.50
+  - { name: cut2, bars: 1, energy: 0.5, at: "0:21.50" }   # 0:21.50–0:23.80
+  - { name: cut3, bars: 2, energy: 0.5, at: "0:23.80", tempo: 106.67 }   # 0:23.80–0:28.30，速度比基准快 2.22%
+  - { name: slowmo, bars: 4, energy: 0.5, at: "0:28.30" }   # 0:28.30–0:38.00，之后余音 0.5 秒
+
+harmony:   # TODO：每段换成真正的和弦进行（小节数要等于段落小节数或能整除）
+  intro: "C"
+  person: "C"
+  montage: "C"
+  cut1: "C"
+  cut2: "C"
+  cut3: "C"
+  slowmo: "C"

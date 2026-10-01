@@ -293,7 +293,8 @@ def render_part(score: Score, part: Part, impl, n: int) -> np.ndarray:
                 hit = np.interp(idx, np.arange(len(hit)), hit).astype(np.float32)
             audio = _pan(np.stack([hit, hit], axis=1), impl.pans.get(kind, 0.0)) * (note.vel / 127) ** 1.6
         else:
-            audio = render_note(impl, note.pitch, note.vel, score.seconds(note.dur), (part.name, round(note.start, 4), note.pitch))
+            audio = render_note(impl, note.pitch, note.vel, score.duration(note.start, note.dur),
+                                (part.name, round(note.start, 4), note.pitch))
         end = min(n, start + len(audio))
         if end > start:
             out[start:end] += audio[: end - start]

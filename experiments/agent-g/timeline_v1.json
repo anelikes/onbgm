@@ -1,0 +1,441 @@
+{
+  "title": "Golden Hour Journey",
+  "bpm": 104.35,
+  "key": "D major",
+  "loop": false,
+  "bars": 15,
+  "duration_s": 36.589,
+  "seconds_per_bar": 2.7,
+  "sections": [
+    {
+      "name": "intro",
+      "bars": [
+        1,
+        2
+      ],
+      "start_s": 0.0,
+      "end_s": 5.4,
+      "energy": [
+        0.15,
+        0.35
+      ],
+      "bpm": [
+        88.89,
+        88.89
+      ]
+    },
+    {
+      "name": "person",
+      "bars": [
+        3,
+        7
+      ],
+      "start_s": 5.4,
+      "end_s": 16.9,
+      "energy": [
+        0.45,
+        0.65
+      ],
+      "bpm": [
+        104.35,
+        104.35
+      ]
+    },
+    {
+      "name": "montage",
+      "bars": [
+        8,
+        8
+      ],
+      "start_s": 16.9,
+      "end_s": 19.2,
+      "energy": [
+        0.8,
+        0.8
+      ],
+      "bpm": [
+        104.35,
+        104.35
+      ]
+    },
+    {
+      "name": "cut1",
+      "bars": [
+        9,
+        9
+      ],
+      "start_s": 19.2,
+      "end_s": 21.5,
+      "energy": [
+        0.85,
+        0.85
+      ],
+      "bpm": [
+        104.35,
+        104.35
+      ]
+    },
+    {
+      "name": "cut2",
+      "bars": [
+        10,
+        10
+      ],
+      "start_s": 21.5,
+      "end_s": 23.8,
+      "energy": [
+        0.9,
+        0.9
+      ],
+      "bpm": [
+        104.35,
+        104.35
+      ]
+    },
+    {
+      "name": "cut3",
+      "bars": [
+        11,
+        12
+      ],
+      "start_s": 23.8,
+      "end_s": 28.299,
+      "energy": [
+        1.0,
+        1.0
+      ],
+      "bpm": [
+        106.67,
+        106.67
+      ]
+    },
+    {
+      "name": "slowmo",
+      "bars": [
+        13,
+        13
+      ],
+      "start_s": 28.299,
+      "end_s": 30.599,
+      "energy": [
+        0.4,
+        0.4
+      ],
+      "bpm": [
+        104.35,
+        104.35
+      ]
+    },
+    {
+      "name": "ending",
+      "bars": [
+        14,
+        15
+      ],
+      "start_s": 30.599,
+      "end_s": 36.589,
+      "energy": [
+        0.35,
+        0.15
+      ],
+      "bpm": [
+        104.35,
+        60.0
+      ]
+    }
+  ],
+  "chords": [
+    {
+      "bar": 1,
+      "beat": 1.0,
+      "start_s": 0.0,
+      "chord": "Dadd9",
+      "section": "intro"
+    },
+    {
+      "bar": 2,
+      "beat": 1.0,
+      "start_s": 2.7,
+      "chord": "Gmaj7",
+      "section": "intro"
+    },
+    {
+      "bar": 3,
+      "beat": 1.0,
+      "start_s": 5.4,
+      "chord": "D",
+      "section": "person"
+    },
+    {
+      "bar": 4,
+      "beat": 1.0,
+      "start_s": 7.7,
+      "chord": "A/C#",
+      "section": "person"
+    },
+    {
+      "bar": 5,
+      "beat": 1.0,
+      "start_s": 10.0,
+      "chord": "Bm7",
+      "section": "person"
+    },
+    {
+      "bar": 6,
+      "beat": 1.0,
+      "start_s": 12.3,
+      "chord": "Gmaj7",
+      "section": "person"
+    },
+    {
+      "bar": 7,
+      "beat": 1.0,
+      "start_s": 14.6,
+      "chord": "Asus4",
+      "section": "person"
+    },
+    {
+      "bar": 7,
+      "beat": 3.0,
+      "start_s": 15.75,
+      "chord": "A",
+      "section": "person"
+    },
+    {
+      "bar": 8,
+      "beat": 1.0,
+      "start_s": 16.9,
+      "chord": "D",
+      "section": "montage"
+    },
+    {
+      "bar": 8,
+      "beat": 3.0,
+      "start_s": 18.05,
+      "chord": "A/C#",
+      "section": "montage"
+    },
+    {
+      "bar": 9,
+      "beat": 1.0,
+      "start_s": 19.2,
+      "chord": "Bm7",
+      "section": "cut1"
+    },
+    {
+      "bar": 9,
+      "beat": 3.0,
+      "start_s": 20.35,
+      "chord": "G",
+      "section": "cut1"
+    },
+    {
+      "bar": 10,
+      "beat": 1.0,
+      "start_s": 21.5,
+      "chord": "D",
+      "section": "cut2"
+    },
+    {
+      "bar": 10,
+      "beat": 3.0,
+      "start_s": 22.65,
+      "chord": "A/C#",
+      "section": "cut2"
+    },
+    {
+      "bar": 11,
+      "beat": 1.0,
+      "start_s": 23.8,
+      "chord": "G",
+      "section": "cut3"
+    },
+    {
+      "bar": 11,
+      "beat": 3.0,
+      "start_s": 24.925,
+      "chord": "A",
+      "section": "cut3"
+    },
+    {
+      "bar": 12,
+      "beat": 1.0,
+      "start_s": 26.049,
+      "chord": "Bm7",
+      "section": "cut3"
+    },
+    {
+      "bar": 12,
+      "beat": 3.0,
+      "start_s": 27.174,
+      "chord": "A",
+      "section": "cut3"
+    },
+    {
+      "bar": 13,
+      "beat": 1.0,
+      "start_s": 28.299,
+      "chord": "D",
+      "section": "slowmo"
+    },
+    {
+      "bar": 14,
+      "beat": 1.0,
+      "start_s": 30.599,
+      "chord": "Gmaj7",
+      "section": "ending"
+    },
+    {
+      "bar": 14,
+      "beat": 3.0,
+      "start_s": 31.815,
+      "chord": "A7sus4",
+      "section": "ending"
+    },
+    {
+      "bar": 15,
+      "beat": 1.0,
+      "start_s": 33.185,
+      "chord": "D",
+      "section": "ending"
+    }
+  ],
+  "tracks": [
+    {
+      "name": "piano",
+      "sound": "piano",
+      "texture": "arpeggio",
+      "sections": [
+        "intro",
+        "person",
+        "montage",
+        "cut1",
+        "cut2",
+        "cut3",
+        "slowmo"
+      ]
+    },
+    {
+      "name": "piano_end",
+      "sound": "piano",
+      "texture": "comp",
+      "sections": [
+        "ending"
+      ]
+    },
+    {
+      "name": "pad",
+      "sound": "strings-slow",
+      "texture": "pad",
+      "sections": [
+        "intro",
+        "person",
+        "montage",
+        "cut1",
+        "cut2",
+        "cut3",
+        "slowmo",
+        "ending"
+      ]
+    },
+    {
+      "name": "bass",
+      "sound": "contrabass",
+      "texture": "bass-sustain",
+      "sections": [
+        "person",
+        "slowmo",
+        "ending"
+      ]
+    },
+    {
+      "name": "bass_drive",
+      "sound": "contrabass",
+      "texture": "bassline",
+      "sections": [
+        "montage",
+        "cut1",
+        "cut2",
+        "cut3"
+      ]
+    },
+    {
+      "name": "motif",
+      "sound": "piano",
+      "texture": "melody",
+      "sections": [
+        "intro",
+        "person",
+        "slowmo",
+        "ending"
+      ]
+    },
+    {
+      "name": "lead",
+      "sound": "strings",
+      "texture": "melody",
+      "sections": [
+        "montage",
+        "cut1",
+        "cut2",
+        "cut3"
+      ]
+    },
+    {
+      "name": "timpani",
+      "sound": "timpani",
+      "texture": "timpani",
+      "sections": [
+        "montage",
+        "cut1",
+        "cut2",
+        "cut3"
+      ]
+    },
+    {
+      "name": "drums",
+      "sound": "drums-room",
+      "texture": "groove",
+      "sections": [
+        "montage",
+        "cut1",
+        "cut2",
+        "cut3"
+      ]
+    }
+  ],
+  "sfx": [
+    {
+      "type": "whoosh",
+      "at_s": 19.2,
+      "start_s": 18.625,
+      "end_s": 19.775,
+      "anchor": "center",
+      "path": "sfx.0"
+    },
+    {
+      "type": "whoosh",
+      "at_s": 21.5,
+      "start_s": 20.925,
+      "end_s": 22.075,
+      "anchor": "center",
+      "path": "sfx.1"
+    },
+    {
+      "type": "whoosh",
+      "at_s": 23.8,
+      "start_s": 23.225,
+      "end_s": 24.362,
+      "anchor": "center",
+      "path": "sfx.2"
+    },
+    {
+      "type": "impact",
+      "at_s": 23.8,
+      "start_s": 23.8,
+      "end_s": 26.8,
+      "anchor": "start",
+      "path": "sfx.3"
+    }
+  ]
+}
