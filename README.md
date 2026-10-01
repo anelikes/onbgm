@@ -30,7 +30,7 @@ agent 用的说明在 [`skills/onbgm/`](skills/onbgm/SKILL.md)，按 skill 格�
 ```bash
 brew install fluid-synth                  # Debian/Ubuntu: sudo apt install fluidsynth
 uv tool install git+https://github.com/anelikes/onbgm
-onbgm fetch                               # 下载音源到 ~/.onbgm/sounds（约 700MB；可用 ONBGM_SOUNDS 指定位置）
+onbgm fetch                               # 下载音源到 ~/.onbgm/sounds（约 1GB；可用 ONBGM_SOUNDS 指定位置）
 onbgm doctor                              # 检查环境
 
 onbgm init my_bgm --example late_study    # 从示例起步
@@ -73,12 +73,18 @@ onbgm render my_bgm/score.yaml -o my_bgm/out/v1 --soundset gm # 只用 GM 音源
 | [GeneralUser GS](https://github.com/mrbumpy409/GeneralUser-GS) | 自由使用 | 所有音色的保底实现（`--soundset gm`） |
 | [Salamander Grand Piano](https://freepats.zenvoid.org/Piano/acoustic-grand-piano.html) | CC-BY 3.0 | 钢琴 |
 | [VSCO 2 Community Edition](https://github.com/sgossner/VSCO-2-CE) | CC0 | 弦乐分部（含跳弓）、低音提琴、拨弦、定音鼓、镲、钟琴 |
+| [jRhodes（GM 版）](https://github.com/sfzinstruments/Discord-SFZ-GM-Bank)，Jeff Learman | CC0 | 电钢琴 |
+| [FSS Steel String Guitar](https://freepats.zenvoid.org/Guitar/steel-acoustic-guitar.html)，Gary Campion / FreePats | GPL-3.0+，附例外：用它做的音乐不受 GPL 约束 | 钢弦木吉他 |
+| [Black And Blue Basses](https://github.com/sfzinstruments/karoryfer.black-and-blue-basses)，Karoryfer Samples | CC0 | 电贝斯 |
+| [AVL Drumkits](https://www.bandshed.net/avldrumkits/)（Black Pearl、Blonde Bop），Glen MacArthur | CC-BY-SA 3.0，用它做的音乐不需要署名 | 标准鼓组、爵士鼓组 |
 | 内置合成器（`onbgm/synth.py`） | — | 合成器音色（pluck、pad、supersaw、lead、bass、808、FM 钟声和电钢琴）和合成鼓组，不需要下载 |
 
-VSCO 的采样由内置采样器（`onbgm/sampler.py`）直接读取：
-- 用 soxr 做高质量重采样来变调；
-- 加载时裁掉开头的静音，并对齐各采样的响度；
-- 用频谱检测每个采样的真实音高。
+采样由内置采样器（`onbgm/sampler.py`）直接读取，用 soxr 做高质量重采样来变调。
+- VSCO：加载时裁掉开头的静音，对齐各采样的响度，用频谱检测每个采样的真实音高。
+- SFZ 采样库（`onbgm/sfz.py`）：区域、力度层、轮替、包络、循环点和互斥组（闭镲切断开镲）都按 SFZ 文件来。另外做两项校准：
+  - 有的库在起音前留了预备音（比如贝斯的手指声），播放时提前这么多，让真正的起音落在拍子上；
+  - 相邻力度层在交界处的音量对齐，避免力度多一点音量反而突变。
+- 下载的采样库都固定到具体版本，作者更新不会改变已有乐谱的声音。
 
 `hq` 音源缺哪件乐器，就自动退回 GM。
 

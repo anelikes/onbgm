@@ -199,7 +199,7 @@ sfx:
 | 音色 | 音域 | 类型 | 音源 |
 |---|---|---|---|
 | `piano` | A0–C8 | 衰减音 | 高质量采样 |
-| `epiano` | E1–G7 | 衰减音 | GM |
+| `epiano` | E1–G7 | 衰减音 | 高质量采样（Rhodes 电钢琴） |
 | `harp` | C1–G7 | 衰减音 | GM |
 | `strings` | E1–C7 | 持续音 | 高质量采样（小提琴组） |
 | `strings-slow` | E1–C7 | 持续音 | 高质量采样（按音区分给大提琴、中提琴、小提琴） |
@@ -208,7 +208,7 @@ sfx:
 | `cello` | C2–E5 | 持续音 | 高质量采样 |
 | `contrabass` | E1–G4 | 持续音 | 高质量采样 |
 | `acoustic-bass` | E1–G4 | 衰减音 | GM |
-| `electric-bass` | E1–G4 | 衰减音 | GM |
+| `electric-bass` | E1–G4 | 衰减音 | 高质量采样（五弦指弹电贝斯） |
 | `timpani` | C2–A3 | 衰减音 | 高质量采样 |
 | `horn` | Bb1–F5 | 持续音 | GM |
 | `brass` | Bb1–C6 | 持续音 | GM |
@@ -220,7 +220,7 @@ sfx:
 | `marimba` | A2–C7 | 衰减音 | GM |
 | `glockenspiel` | C5–C8 | 衰减音 | 高质量采样 |
 | `guitar-nylon` | E2–E6 | 衰减音 | GM |
-| `guitar-steel` | E2–E6 | 衰减音 | GM |
+| `guitar-steel` | E2–E6 | 衰减音 | 高质量采样 |
 
 合成器音色（由引擎直接合成，不需要下载音源，任何档位都可用）：
 
@@ -237,5 +237,8 @@ sfx:
 | `fm-epiano` | FM 电钢琴（DX7 风格） |
 
 鼓组：`drums`（标准）、`drums-room`、`drums-jazz`、`drums-brush`（刷子）、`drums-808`、`drums-electronic`、`drums-synth`（合成鼓组，电子风格首选）。
+- `drums` 和 `drums-room` 用高质量采样的标准鼓组，`drums-jazz` 用高质量采样的爵士鼓组（底鼓小、声音更松）。
+- 这两套采样鼓组没有 conga：用到 `conga-high` / `conga-low` 的轨道会整套退回 GM 鼓组。
+- 只写镲（`crash` 织体）的 `drums` 轨道用管弦乐的镲。
 
 超出音域的音会在报告里给出警告。
