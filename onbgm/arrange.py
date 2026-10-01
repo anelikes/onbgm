@@ -252,10 +252,14 @@ def t_melody(score: Score, track: Track, part: Part, perf: Performer) -> None:
     """逐音写好的旋律；力度随能量和音高轮廓起伏。"""
     gate = track.options.get("gate", 1.0 if part.sound.sustained else 0.95)
     default_art = _articulation(track)
-    center = sum(n.pitch for n in track.melody) / len(track.melody)
+    # 力度随音高起伏：参照所在段落的平均音高（不用整个声部的，否则改一段会牵动其他段落的力度）
+    by_section: dict[str, list[int]] = {}
+    for n in track.melody:
+        by_section.setdefault(score.section_of(n.start).name, []).append(n.pitch)
+    center = {name: sum(ps) / len(ps) for name, ps in by_section.items()}
     for n in track.melody:
         e = score.energy_at(n.start)
-        base = 56 + 36 * e + (n.pitch - center) * 0.8 + (14 if n.accent else 0)
+        base = 56 + 36 * e + (n.pitch - center[score.section_of(n.start).name]) * 0.8 + (14 if n.accent else 0)
         art = n.art or default_art
         dur = _staccato_len(n.dur) if art == "staccato" else n.dur * gate
         part.notes.append(Note(perf.time(n.start, n.pitch, 0.01), dur, n.pitch,

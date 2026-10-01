@@ -1,0 +1,458 @@
+{
+  "ok": true,
+  "files": {
+    "audio": "experiments/agent-e/out/v2/song.wav",
+    "preview": "experiments/agent-e/out/v2/preview.mp3",
+    "midi": "experiments/agent-e/out/v2/song.mid",
+    "stems": "experiments/agent-e/out/v2/stems",
+    "pianoroll": "experiments/agent-e/out/v2/pianoroll.png"
+  },
+  "duration_s": 45.0,
+  "loop": false,
+  "lufs": -15.7,
+  "timeline": {
+    "title": "Product Launch",
+    "bpm": 120.0,
+    "key": "D major",
+    "loop": false,
+    "bars": 22,
+    "duration_s": 44.0,
+    "seconds_per_bar": 2.0,
+    "sections": [
+      {
+        "name": "intro",
+        "bars": [
+          1,
+          4
+        ],
+        "start_s": 0.0,
+        "end_s": 8.0,
+        "energy": [
+          0.2,
+          0.45
+        ]
+      },
+      {
+        "name": "drop",
+        "bars": [
+          5,
+          8
+        ],
+        "start_s": 8.0,
+        "end_s": 16.0,
+        "energy": [
+          0.85,
+          0.85
+        ]
+      },
+      {
+        "name": "drive",
+        "bars": [
+          9,
+          12
+        ],
+        "start_s": 16.0,
+        "end_s": 24.0,
+        "energy": [
+          0.9,
+          0.9
+        ]
+      },
+      {
+        "name": "lift",
+        "bars": [
+          13,
+          15
+        ],
+        "start_s": 24.0,
+        "end_s": 30.0,
+        "energy": [
+          0.9,
+          1.0
+        ]
+      },
+      {
+        "name": "ending",
+        "bars": [
+          16,
+          16
+        ],
+        "start_s": 30.0,
+        "end_s": 32.0,
+        "energy": [
+          1.0,
+          1.0
+        ]
+      },
+      {
+        "name": "logo",
+        "bars": [
+          17,
+          22
+        ],
+        "start_s": 32.0,
+        "end_s": 44.0,
+        "energy": [
+          0.35,
+          0.05
+        ]
+      }
+    ],
+    "chords": [
+      {
+        "bar": 1,
+        "beat": 1.0,
+        "start_s": 0.0,
+        "chord": "Bm7",
+        "section": "intro"
+      },
+      {
+        "bar": 2,
+        "beat": 1.0,
+        "start_s": 2.0,
+        "chord": "Gmaj7",
+        "section": "intro"
+      },
+      {
+        "bar": 3,
+        "beat": 1.0,
+        "start_s": 4.0,
+        "chord": "Em7",
+        "section": "intro"
+      },
+      {
+        "bar": 4,
+        "beat": 1.0,
+        "start_s": 6.0,
+        "chord": "Asus4",
+        "section": "intro"
+      },
+      {
+        "bar": 4,
+        "beat": 3.0,
+        "start_s": 7.0,
+        "chord": "A",
+        "section": "intro"
+      },
+      {
+        "bar": 5,
+        "beat": 1.0,
+        "start_s": 8.0,
+        "chord": "D",
+        "section": "drop"
+      },
+      {
+        "bar": 6,
+        "beat": 1.0,
+        "start_s": 10.0,
+        "chord": "A/C#",
+        "section": "drop"
+      },
+      {
+        "bar": 7,
+        "beat": 1.0,
+        "start_s": 12.0,
+        "chord": "Bm7",
+        "section": "drop"
+      },
+      {
+        "bar": 8,
+        "beat": 1.0,
+        "start_s": 14.0,
+        "chord": "G",
+        "section": "drop"
+      },
+      {
+        "bar": 9,
+        "beat": 1.0,
+        "start_s": 16.0,
+        "chord": "D",
+        "section": "drive"
+      },
+      {
+        "bar": 10,
+        "beat": 1.0,
+        "start_s": 18.0,
+        "chord": "A/C#",
+        "section": "drive"
+      },
+      {
+        "bar": 11,
+        "beat": 1.0,
+        "start_s": 20.0,
+        "chord": "Bm7",
+        "section": "drive"
+      },
+      {
+        "bar": 12,
+        "beat": 1.0,
+        "start_s": 22.0,
+        "chord": "G",
+        "section": "drive"
+      },
+      {
+        "bar": 13,
+        "beat": 1.0,
+        "start_s": 24.0,
+        "chord": "Em7",
+        "section": "lift"
+      },
+      {
+        "bar": 14,
+        "beat": 1.0,
+        "start_s": 26.0,
+        "chord": "G",
+        "section": "lift"
+      },
+      {
+        "bar": 15,
+        "beat": 1.0,
+        "start_s": 28.0,
+        "chord": "Asus4",
+        "section": "lift"
+      },
+      {
+        "bar": 15,
+        "beat": 3.0,
+        "start_s": 29.0,
+        "chord": "A",
+        "section": "lift"
+      },
+      {
+        "bar": 16,
+        "beat": 1.0,
+        "start_s": 30.0,
+        "chord": "D",
+        "section": "ending"
+      },
+      {
+        "bar": 17,
+        "beat": 1.0,
+        "start_s": 32.0,
+        "chord": "D",
+        "section": "logo"
+      },
+      {
+        "bar": 18,
+        "beat": 1.0,
+        "start_s": 34.0,
+        "chord": "D",
+        "section": "logo"
+      },
+      {
+        "bar": 19,
+        "beat": 1.0,
+        "start_s": 36.0,
+        "chord": "D",
+        "section": "logo"
+      },
+      {
+        "bar": 20,
+        "beat": 1.0,
+        "start_s": 38.0,
+        "chord": "D",
+        "section": "logo"
+      },
+      {
+        "bar": 21,
+        "beat": 1.0,
+        "start_s": 40.0,
+        "chord": "D",
+        "section": "logo"
+      },
+      {
+        "bar": 22,
+        "beat": 1.0,
+        "start_s": 42.0,
+        "chord": "D",
+        "section": "logo"
+      }
+    ],
+    "tracks": [
+      {
+        "name": "pad",
+        "sound": "strings-slow",
+        "texture": "pad",
+        "sections": [
+          "intro",
+          "drop",
+          "drive",
+          "lift",
+          "ending",
+          "logo"
+        ]
+      },
+      {
+        "name": "arp",
+        "sound": "marimba",
+        "texture": "line",
+        "sections": [
+          "intro",
+          "drop",
+          "drive",
+          "lift",
+          "ending"
+        ]
+      },
+      {
+        "name": "lead",
+        "sound": "glockenspiel",
+        "texture": "melody",
+        "sections": [
+          "drop",
+          "drive",
+          "lift",
+          "ending"
+        ]
+      },
+      {
+        "name": "bass",
+        "sound": "electric-bass",
+        "texture": "bassline",
+        "sections": [
+          "drop",
+          "drive",
+          "lift",
+          "ending"
+        ]
+      },
+      {
+        "name": "sub",
+        "sound": "contrabass",
+        "texture": "bass-sustain",
+        "sections": [
+          "logo"
+        ]
+      },
+      {
+        "name": "hit",
+        "sound": "piano",
+        "texture": "comp",
+        "sections": [
+          "drop",
+          "ending"
+        ]
+      },
+      {
+        "name": "boom",
+        "sound": "timpani",
+        "texture": "line",
+        "sections": [
+          "intro",
+          "drop"
+        ]
+      },
+      {
+        "name": "drums",
+        "sound": "drums-electronic",
+        "texture": "groove",
+        "sections": [
+          "intro",
+          "drop",
+          "drive",
+          "lift",
+          "ending"
+        ]
+      }
+    ]
+  },
+  "sources": {
+    "pad": "vsco2: celli/violas/violins",
+    "arp": "GeneralUser-GS.sf2",
+    "lead": "vsco2: glock",
+    "bass": "GeneralUser-GS.sf2",
+    "sub": "vsco2: basses",
+    "hit": "SalamanderGrandPiano.sf2",
+    "boom": "vsco2: timpani",
+    "drums": "GeneralUser-GS.sf2"
+  },
+  "automix": [
+    {
+      "track": "lead",
+      "section": "drop",
+      "gain_db": -2.9
+    },
+    {
+      "track": "lead",
+      "section": "drive",
+      "gain_db": -4.3
+    },
+    {
+      "track": "lead",
+      "section": "lift",
+      "gain_db": -4.1
+    },
+    {
+      "track": "lead",
+      "section": "ending",
+      "gain_db": 0.2
+    }
+  ],
+  "loudness": {
+    "integrated_lufs": -15.7,
+    "sections": [
+      {
+        "section": "intro",
+        "energy": 0.325,
+        "lufs": -21.6
+      },
+      {
+        "section": "drop",
+        "energy": 0.85,
+        "lufs": -13.6
+      },
+      {
+        "section": "drive",
+        "energy": 0.9,
+        "lufs": -13.9
+      },
+      {
+        "section": "lift",
+        "energy": 0.95,
+        "lufs": -13.6
+      },
+      {
+        "section": "ending",
+        "energy": 1.0,
+        "lufs": -15.4
+      },
+      {
+        "section": "logo",
+        "energy": 0.2,
+        "lufs": -23.1
+      }
+    ],
+    "follows_energy": true,
+    "issues": []
+  },
+  "balance": {
+    "section": "ending",
+    "tracks": [
+      {
+        "track": "lead",
+        "lufs": -16.0
+      },
+      {
+        "track": "pad",
+        "lufs": -18.1
+      },
+      {
+        "track": "drums",
+        "lufs": -19.2
+      },
+      {
+        "track": "hit",
+        "lufs": -20.8
+      },
+      {
+        "track": "bass",
+        "lufs": -22.6
+      },
+      {
+        "track": "arp",
+        "lufs": -27.3
+      }
+    ]
+  },
+  "warnings": []
+}

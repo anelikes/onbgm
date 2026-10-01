@@ -69,13 +69,15 @@
   "automix": [{"track": "lead", "section": "climax", "gain_db": 4.1}],
   "loudness": {"integrated_lufs": -16.9, "follows_energy": true, "issues": [],
                "sections": [{"section": "climax", "energy": 1.0, "lufs": -12.9}]},
-  "balance": {"section": "climax", "tracks": [{"track": "lead", "lufs": -14.6}, {"track": "piano", "lufs": -18.1}]},
+  "balance": [{"section": "climax", "tracks": [{"track": "lead", "lufs": -14.6}, {"track": "piano", "lufs": -18.1}]}],
   "warnings": []
 }
 ```
 
 - `audio` 是交付用的文件：循环曲是 `loop.wav`，不循环是 `song.wav`。
 - `automix` 里的 `gain_db` 是相对原始渲染电平的增益，数值大（比如 +20）也正常。
+- `balance` 列出每一段里各声部的响度，从响到轻排列，可以检查旋律有没有被伴奏盖住。
+- `timeline --at` 查到乐谱结束后的余音（`meta.tail`）里时，返回 `{"in_tail": true, "note": …}`。
 
 ## 错误码
 

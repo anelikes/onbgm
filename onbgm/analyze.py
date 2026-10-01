@@ -48,8 +48,13 @@ def timeline_data(score: Score) -> dict:
 def locate(score: Score, seconds: float) -> dict:
     """某个时间点在乐谱里的位置：第几小节第几拍、哪一段、什么和弦。"""
     beat = seconds * score.bpm / 60
+    end = score.seconds(score.total_beats)
+    if 0 <= seconds - end < score.tail:
+        return {"time_s": _r(seconds, 3), "in_tail": True,
+                "note": f"在乐谱结束（{fmt_time(end)}）之后的余音（meta.tail）里，这里不会有新的音符起音"}
     if not 0 <= beat < score.total_beats:
-        return {"time_s": _r(seconds, 3), "error": f"超出乐谱范围（0 ~ {fmt_time(score.seconds(score.total_beats))}）"}
+        return {"time_s": _r(seconds, 3),
+                "error": f"超出乐谱范围（0 ~ {fmt_time(end)}{f'，加余音到 {fmt_time(end + score.tail)}' if score.tail else ''}）"}
     sec, chord = score.section_at(beat), score.chord_at(beat)
     return {"time_s": _r(seconds, 3), "bar": int(beat // BEATS_PER_BAR) + 1, "beat": _r(beat % BEATS_PER_BAR + 1, 3),
             "section": sec.name, "bar_in_section": int((beat - sec.start) // BEATS_PER_BAR) + 1,

@@ -88,7 +88,7 @@ def cmd_timeline(args) -> None:
     if args.at:
         data["at"] = [locate(score, parse_time(t)) for t in args.at]
         for x in data["at"]:
-            lines.append(f"  {x['time_s']}s → " + (x["error"] if "error" in x else
+            lines.append(f"  {x['time_s']}s → " + (x.get("error") or x.get("note") if "bar" not in x else
                          f"第 {x['bar']} 小节第 {x['beat']:g} 拍（{x['section']} 段第 {x['bar_in_section']} 小节），和弦 {x['chord']}"))
     else:
         lines.append("和弦:")
@@ -121,7 +121,8 @@ def cmd_render(args) -> None:
         "sources": result.sources,
         "automix": result.mix,
         "loudness": loud,
-        "balance": {"section": loudest, "tracks": balance_data(score, result.stems, parts, loudest)},
+        "balance": [{"section": s.name, "tracks": balance_data(score, result.stems, parts, s.name)}
+                    for s in score.sections],
         "warnings": [w.to_dict() for w in all_warnings],
     }
     lines = [timeline(score), "", "音源:"] + [f"  {k:<8} {v}" for k, v in result.sources.items()]

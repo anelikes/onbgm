@@ -108,4 +108,16 @@ def test_render_json_lists_outputs(tmp_path):
     for key in ("audio", "preview", "midi", "stems", "pianoroll"):
         assert Path(data["files"][key]).exists(), key
     assert data["files"]["audio"].endswith("loop.wav") and data["files"]["preview"].endswith(".mp3")
-    assert data["automix"] and data["balance"]["tracks"]
+    assert data["automix"] and [b["section"] for b in data["balance"]] == ["intro", "main"]
+    assert all(b["tracks"] for b in data["balance"])
+
+
+def test_timeline_at_inside_tail_is_explained(write_score):
+    path = write_score("""
+        meta: {bpm: 120, tail: 2}
+        sections: [{name: a, bars: 2}]
+        harmony: {a: "C"}
+    """)
+    _, data = run("timeline", str(path), "--at", "4.5", "--at", "7")
+    assert data["at"][0]["in_tail"] is True
+    assert "加余音到 0:06.00" in data["at"][1]["error"]
