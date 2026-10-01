@@ -30,7 +30,7 @@ agent 用的说明在 [`skills/onbgm/`](skills/onbgm/SKILL.md)，按 skill 格�
 ```bash
 brew install fluid-synth                  # Debian/Ubuntu: sudo apt install fluidsynth
 uv tool install git+https://github.com/anelikes/onbgm
-onbgm fetch                               # 下载音源到 ~/.onbgm/sounds（约 1.2GB；可用 ONBGM_SOUNDS 指定位置）
+onbgm fetch                               # 下载音源到 ~/.onbgm/sounds（约 1.5GB；可用 ONBGM_SOUNDS 指定位置）
 onbgm doctor                              # 检查环境
 
 onbgm init my_bgm --example late_study    # 从示例起步
@@ -100,7 +100,7 @@ onbgm review out/my_bgm_v2 --compare out/my_bgm   # 新旧两版 A/B 对比
 | [Black And Blue Basses](https://github.com/sfzinstruments/karoryfer.black-and-blue-basses)，Karoryfer Samples | CC0 | 电贝斯 |
 | [AVL Drumkits](https://www.bandshed.net/avldrumkits/)（Black Pearl、Blonde Bop），Glen MacArthur | CC-BY-SA 3.0，用它做的音乐不需要署名 | 标准鼓组、爵士鼓组 |
 | [Swirly Drums](https://github.com/sfzinstruments/karoryfer.swirly-drums)，Karoryfer Samples | CC0 | 刷子鼓组（只用干声） |
-| [Versilian Community Sample Library](https://github.com/sgossner/VCSL)，Versilian Studios | CC0 | 颤音琴、马林巴 |
+| [Versilian Community Sample Library](https://github.com/sgossner/VCSL)，Versilian Studios | CC0 | 颤音琴、马林巴、竖琴、次中音萨克斯、越南筝 |
 | 内置合成器（`onbgm/synth.py`） | — | 合成器音色（pluck、pad、supersaw、lead、bass、808、FM 钟声和电钢琴）和合成鼓组，不需要下载 |
 
 采样由内置采样器（`onbgm/sampler.py`）直接读取，用 soxr 做高质量重采样来变调。

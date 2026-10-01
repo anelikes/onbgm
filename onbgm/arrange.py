@@ -47,6 +47,8 @@ SOUNDS: dict[str, Sound] = {
     "guitar-nylon": Sound(24, 40, 88, 0.2),
     "guitar-steel": Sound(25, 40, 88, 0.2),
     "electric-bass": Sound(33, 28, 67, 0.08),
+    "saxophone": Sound(66, 44, 77, 0.25, sustained=True),  # 次中音萨克斯
+    "zither": Sound(107, 45, 88, 0.3),  # 越南筝（音色接近古筝），弹拨
     "whistle": Sound(78, 60, 96, 0.3, sustained=True),
     # 合成器音色：由 onbgm.synth 直接合成，program 只用于导出 MIDI
     "synth-pluck": Sound(81, 24, 108, 0.25),

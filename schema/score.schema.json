@@ -254,6 +254,7 @@
               "oboe",
               "piano",
               "pizzicato",
+              "saxophone",
               "strings",
               "strings-slow",
               "sub-bass",
@@ -266,7 +267,8 @@
               "timpani",
               "tremolo",
               "vibraphone",
-              "whistle"
+              "whistle",
+              "zither"
             ],
             "description": "音色"
           },

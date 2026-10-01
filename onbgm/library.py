@@ -96,6 +96,7 @@ AVL_KIT = {36: 36, 37: 37, 38: 38, 39: 39, 42: 42, 44: 44, 46: 46, 45: 41, 47: 4
 # 刷子鼓组（Swirly Drums）有的鼓：底鼓、军鼓、鼓边、三种踩镲、吊镲、叮叮镲、三个嗵鼓。键位在生成程序时已按 GM 排好
 SWIRLY_KIT = {k: k for k in (36, 37, 38, 42, 44, 46, 45, 47, 50, 49, 51)}
 VIBES_LAYERS = {"soft_v1": 0, "soft_v2": 1, "hard_v2": 2, "hard_v3": 3}  # 软槌两层，硬槌两层：越响越亮
+ZITHER_NOTE = re.compile(r"^([A-Ga-g]#?)(\d)_(?:mf|f|ff)_\d\.wav$")  # 越南筝的文件名：B1_f_1.wav（不带前缀）
 
 
 def _sample_libs(root: Path) -> dict[str, Instrument]:
@@ -119,7 +120,21 @@ def _sample_libs(root: Path) -> dict[str, Instrument]:
             "marimba", libs["vcsl-marimba"],
             layer_of=lambda f: {"soft": 0, "med": 1, "loud": 2}[re.search(r"_(soft|med|loud)_", f.name).group(1)],
             sustain=False, source="vcsl"),
+        "harp": load_instrument(
+            "harp", libs["vcsl-harp"],
+            layer_of=lambda f: {"p": 0, "mp": 0, "mf": 0, "f": 1}[re.search(r"_(p|mp|mf|f)\d\.wav$", f.name).group(1)],
+            sustain=False, source="vcsl"),
+        # 萨克斯：长音用带颤音的采样，断奏用跳音采样；按谱面时值收音，松开时短促收尾
+        "saxophone": load_instrument("saxophone", libs["vcsl-sax"], sustain=True, release=0.12,
+                                     legato_skip=0.03, source="vcsl"),
+        "zither": load_instrument(
+            "zither", libs["vcsl-zither"], note_re=ZITHER_NOTE,
+            layer_of=lambda f: {"mf": 0, "f": 1, "ff": 2}[f.name.split("_")[1]], sustain=False, source="vcsl"),
     }
+    stacc = load_instrument("saxophone-staccato", libs["vcsl-sax"].parent / "Staccato", sustain=False, line_choke=True,
+                            layer_of=lambda f: int(re.search(r"_vl(\d)_", f.name).group(1)), source="vcsl")
+    if insts["saxophone"] and stacc:
+        insts["saxophone"].articulations = {"staccato": stacc}
     return {k: i for k, i in insts.items() if i is not None}
 
 
@@ -169,6 +184,9 @@ HQ = {
     "drums-brush": "swirly-drums",
     "vibraphone": "vibraphone",
     "marimba": "marimba",
+    "harp": "harp",
+    "saxophone": "saxophone",
+    "zither": "zither",
     "glockenspiel": "glock",
     "epiano": "jrhodes",
     "guitar-steel": "fss-guitar",

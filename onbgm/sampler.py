@@ -210,15 +210,16 @@ def _extend(audio: np.ndarray, needed: int) -> np.ndarray:
 # ---------- 乐器定义 ----------
 
 def load_instrument(name: str, folder: Path, include=lambda f: True, layer_of=None, recursive: bool = False,
-                    **kwargs) -> Instrument | None:
+                    note_re: re.Pattern = _NOTE_RE, **kwargs) -> Instrument | None:
     """从文件夹按文件名建乐器。音高以频谱检测为准，结果缓存在 .pitch.json。
     include 筛选用哪些文件；layer_of(文件) 给出力度层（越大越响），不给就用文件名里的 _vN；
-    recursive 表示连子文件夹里的采样一起用（如颤音琴的软槌、硬槌两个文件夹）。"""
+    recursive 表示连子文件夹里的采样一起用（如颤音琴的软槌、硬槌两个文件夹）；
+    note_re 用来从文件名里取音名和八度（第 1、2 组），文件名格式和默认不一样时传入。"""
     named = {}
     for f in sorted(folder.rglob("*.wav") if recursive else folder.glob("*.wav")):
-        if include(f) and (m := _NOTE_RE.search(f.name)):
-            layer = layer_of(f) if layer_of else int(m.group(3) or 1)
-            named[f] = (12 * (int(m.group(2)) + 1) + _PC[m.group(1)], layer)
+        if include(f) and (m := note_re.search(f.name)):
+            layer = layer_of(f) if layer_of else int((m.group(3) if m.re.groups >= 3 else None) or 1)
+            named[f] = (12 * (int(m.group(2)) + 1) + _PC[m.group(1).upper()], layer)
     if not named:
         return None
     cache_path = folder / ".pitch.json"
