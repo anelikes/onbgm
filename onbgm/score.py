@@ -15,7 +15,16 @@ from . import tempo
 from .tempo import TempoMap
 from .theory import Chord, parse_chord, parse_pitch
 
-BEATS_PER_BAR = 4
+BEATS_PER_BAR = 4  # 4/4 拍；其他拍号见 METERS
+# 拍号 → (每小节几拍（以四分音符为一拍）, 大拍有几拍, MIDI 拍号的分子, 分母)。
+# 速度一律按四分音符计：6/8 拍附点四分音符 = 60 时，bpm 写 90
+METERS = {
+    "4/4": (4.0, 1.0, 4, 4),
+    "3/4": (3.0, 1.0, 3, 4),
+    "2/4": (2.0, 1.0, 2, 4),
+    "6/8": (3.0, 1.5, 6, 8),
+    "12/8": (6.0, 1.5, 12, 8),
+}
 NOTE_TOLERANCE = 0.05  # 拍；人性化会把音符起点挪动几毫秒，判断段落归属时按谱面位置留出容差
 FX = {"lofi": "lo-fi 质感：磁带抖动、低通、轻微失真、黑胶底噪（0~1）"}
 
@@ -53,14 +62,15 @@ class Section:
     at: float | None  # 时间约束（秒）
     start_bar: int
     tempo: tuple[float | None, float] | None = None  # 这一段自己的速度（起, 止）；None 用基准速度
+    bpb: float = BEATS_PER_BAR  # 每小节几拍（四分音符），由拍号决定
 
     @property
     def start(self) -> float:
-        return self.start_bar * BEATS_PER_BAR
+        return self.start_bar * self.bpb
 
     @property
     def end(self) -> float:
-        return (self.start_bar + self.bars) * BEATS_PER_BAR
+        return (self.start_bar + self.bars) * self.bpb
 
 
 @dataclass
@@ -110,6 +120,30 @@ class Score:
     tail: float = 0.0  # 不循环时，乐谱结束后再留几秒余音
     sfx: list = field(default_factory=list)  # 音效时间线（onbgm.sfx.SfxEvent）
     tempo_map: TempoMap | None = None
+    meter: str = "4/4"
+
+    @property
+    def beats_per_bar(self) -> float:
+        return METERS[self.meter][0]
+
+    @property
+    def pulse(self) -> float:
+        """大拍的长度（拍）：简单拍子是 1，复合拍子（6/8、12/8）是附点四分音符 1.5。"""
+        return METERS[self.meter][1]
+
+    def accent(self, beat: float) -> int:
+        """强弱：小节第一拍最强，其次是 4/4 的第三拍、复合拍子的其他大拍；拍子上的音不加不减，拍子之间的音稍弱。"""
+        pos = round(beat % self.beats_per_bar, 3)
+        if pos == 0:
+            return 8
+        pulse = self.pulse
+        if self.meter == "4/4" and pos == 2:
+            return 4
+        if abs(pos / pulse - round(pos / pulse)) < 1e-6:
+            return 4 if pulse > 1 else 0
+        if pulse > 1 and abs(pos * 2 - round(pos * 2)) < 1e-6:  # 复合拍子里的八分音符
+            return -2
+        return 0 if pos == int(pos) else -5
 
     @property
     def total_beats(self) -> float:
@@ -232,8 +266,9 @@ def _solve_tempo(meta: dict, sections: list[Section], problems: list[Problem]) -
         fixed_beats = sum(s.end - s.start for s, _ in before if s.tempo is not None)
         if secs - fixed_s > 0:
             span = "总共" if where == "meta.length" else "它之前一共"
-            need = ((secs - fixed_s) * base / 60 + fixed_beats) / BEATS_PER_BAR
-            now = beats / BEATS_PER_BAR
+            bar_beats = sections[0].bpb
+            need = ((secs - fixed_s) * base / 60 + fixed_beats) / bar_beats
+            now = beats / bar_beats
             if abs(need - round(need)) < 0.02 and round(need) > 0:
                 fix["bars" if where == "meta.length" else "bars_before"] = round(need)
                 options.append(f"保持 {base:g} BPM，让{span} {round(need)} 小节（现在是 {now:g}）")
@@ -270,7 +305,7 @@ def _parse_melody(text: str, section: Section, where: str, problems: list[Proble
                                         f"第 {i + 1} 小节: 无法解析 {tok!r}（格式如 D5/4、F#4/8.、r/2、D5/16'、D5/8>）"))
                 return []
             dur = _VALUE_BEATS[m.group(2)] * (1.5 if m.group(3) else 1.0)
-            start = section.start + i * BEATS_PER_BAR + pos
+            start = section.start + i * section.bpb + pos
             if m.group(1) != "r":
                 pitch = parse_pitch(m.group(1))
                 prev = notes[-1] if notes else None
@@ -281,9 +316,9 @@ def _parse_melody(text: str, section: Section, where: str, problems: list[Proble
                                             ">" in m.group(4)))
             tie = bool(m.group(5))
             pos += dur
-        if abs(pos - BEATS_PER_BAR) > 1e-6:
+        if abs(pos - section.bpb) > 1e-6:
             problems.append(Problem("bar_length", where,
-                                    f"第 {i + 1} 小节时值合计 {pos:g} 拍，应为 {BEATS_PER_BAR} 拍: \"{bar}\""))
+                                    f"第 {i + 1} 小节时值合计 {pos:g} 拍，应为 {section.bpb:g} 拍: \"{bar}\""))
     return notes
 
 
@@ -343,6 +378,11 @@ def from_dict(raw: dict, default_title: str = "untitled") -> Score:
     problems: list[Problem] = []
     meta = raw.get("meta") or {}
 
+    meter = str(meta.get("meter", "4/4"))
+    if meter not in METERS:
+        problems.append(Problem("unknown_value", "meta.meter", f"不支持的拍号 {meter!r}（可用: {', '.join(METERS)}）"))
+        meter = "4/4"
+    bpb = METERS[meter][0]
     sections: list[Section] = []
     bar = 0
     for i, s in enumerate(raw.get("sections") or []):
@@ -364,7 +404,7 @@ def from_dict(raw: dict, default_title: str = "untitled") -> Score:
                 at = parse_time(s["at"])
             except ValueError as e:
                 problems.append(Problem("bad_format", f"sections.{name}.at", str(e)))
-        sections.append(Section(name, bars, energy, at, bar, section_tempo))
+        sections.append(Section(name, bars, energy, at, bar, section_tempo, bpb))
         bar += bars
     if not sections:
         raise ScoreError([Problem("no_sections", "sections", "至少需要一个段落")])
@@ -391,14 +431,14 @@ def from_dict(raw: dict, default_title: str = "untitled") -> Score:
             continue
         for i, bt in enumerate(bar_texts * (s.bars // len(bar_texts))):
             symbols = bt.split()
-            step = BEATS_PER_BAR / len(symbols)
+            step = s.bpb / len(symbols)
             for j, sym in enumerate(symbols):
                 try:
                     chord = parse_chord(sym)
                 except ValueError as e:
                     problems.append(Problem("unknown_chord", f"harmony.{s.name}", f"第 {i + 1} 小节: {e}"))
                     continue
-                chords.append(ChordSpan(chord, s.start + i * BEATS_PER_BAR + j * step, step, s.name))
+                chords.append(ChordSpan(chord, s.start + i * s.bpb + j * step, step, s.name))
 
     tracks: list[Track] = []
     for name, cfg in (raw.get("tracks") or {}).items():
@@ -424,6 +464,8 @@ def from_dict(raw: dict, default_title: str = "untitled") -> Score:
     if not isinstance(swing, (int, float)) or not 0.5 <= swing <= 0.75:
         problems.append(Problem("out_of_range", "meta.swing", f"须在 0.5（平直）到 0.75 之间，当前 {swing!r}"))
         swing = 0.5
+    if swing != 0.5 and METERS.get(meter, (0, 1.0))[1] > 1:
+        problems.append(Problem("invalid", "meta.swing", f"{meter} 是复合拍子，本身就是三连音律动，不需要 swing（删掉 meta.swing）"))
     swing_unit = meta.get("swing_unit", 16)
     if swing_unit not in (8, 16):
         problems.append(Problem("unknown_value", "meta.swing_unit", f"须为 8 或 16，当前 {swing_unit!r}"))
@@ -461,4 +503,5 @@ def from_dict(raw: dict, default_title: str = "untitled") -> Score:
         tail=tail,
         sfx=sfx_events,
         tempo_map=tmap,
+        meter=meter,
     )

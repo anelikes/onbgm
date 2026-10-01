@@ -16,7 +16,7 @@ from importlib import resources
 from pathlib import Path
 
 from .arrange import DRUM_KEYS, Part
-from .score import BEATS_PER_BAR, Score
+from .score import Score
 
 DATA_FILE = "player.json"
 PAGE_FILE = "player.html"
@@ -51,7 +51,8 @@ def player_data(score: Score, parts: list[Part], audio: Path, duration_s: float,
         "audio": audio.name,
         "duration_s": _r(duration_s),
         "music_end_s": _r(score.seconds(score.total_beats)),
-        "beats_per_bar": BEATS_PER_BAR,
+        "beats_per_bar": score.beats_per_bar,
+        "meter": score.meter,
         "beats": [_r(score.seconds(b)) for b in range(int(score.total_beats) + 1)],
         "sections": [{"name": s.name, "start_s": _r(score.seconds(s.start)), "end_s": _r(score.seconds(s.end)),
                       "bars": [s.start_bar + 1, s.start_bar + s.bars], "energy": list(s.energy)}

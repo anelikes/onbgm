@@ -132,6 +132,8 @@ def score_schema() -> dict:
                     "key": {"type": "string", "description": "调性，仅作记录", "examples": ["D minor"]},
                     "loop": {"type": "boolean", "description": "true：输出可无缝循环的 loop.wav；false：输出 song.wav"},
                     "seed": {"type": "integer", "description": "人性化随机种子"},
+                    "meter": {"enum": ["4/4", "3/4", "2/4", "6/8", "12/8"],
+                              "description": "拍号，默认 4/4。速度一律按四分音符计：6/8 拍附点四分音符 = 60 时 bpm 写 90"},
                     "swing": {"type": "number", "minimum": 0.5, "maximum": 0.75,
                               "description": "摇摆：0.5 平直，0.58 左右是 lo-fi 的晃动感"},
                     "swing_unit": {"enum": [8, 16], "description": "16：十六分音符摇摆；8：八分音符摇摆"},

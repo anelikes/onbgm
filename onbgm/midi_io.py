@@ -6,7 +6,7 @@ from pathlib import Path
 import mido
 
 from .arrange import Note, Part
-from .score import BEATS_PER_BAR, Score
+from .score import METERS, Score
 
 TPB = 480
 
@@ -64,7 +64,7 @@ def write_midi(path: Path, score: Score, parts: list[Part], tail_beats: float = 
     events = [
         (0, 0, mido.MetaMessage("track_name", name=score.title)),
         *_tempo_events(score),
-        (0, 0, mido.MetaMessage("time_signature", numerator=BEATS_PER_BAR, denominator=4)),
+        (0, 0, mido.MetaMessage("time_signature", numerator=METERS[score.meter][2], denominator=METERS[score.meter][3])),
     ]
     events += [(_tick(s.start), 1, mido.MetaMessage("marker", text=s.name)) for s in score.sections]
     _finish(conductor, events, end)
