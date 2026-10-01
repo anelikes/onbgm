@@ -238,6 +238,7 @@
         "properties": {
           "sound": {
             "enum": [
+              "accordion",
               "acoustic-bass",
               "bass-808",
               "brass",
@@ -253,9 +254,12 @@
               "drums-synth",
               "electric-bass",
               "epiano",
+              "erhu",
               "flute",
               "fm-epiano",
               "glockenspiel",
+              "guitar-distorted",
+              "guitar-electric",
               "guitar-nylon",
               "guitar-steel",
               "harp",
@@ -276,6 +280,7 @@
               "synth-pluck",
               "timpani",
               "tremolo",
+              "ukulele",
               "vibraphone",
               "whistle",
               "zither"

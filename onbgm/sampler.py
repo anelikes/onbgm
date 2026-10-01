@@ -70,6 +70,8 @@ class Instrument:
     loop: bool = True  # 持续音比采样长时循环中段延长；自然衰减的乐器（电钢琴、吉他）不循环
     kit: bool = False  # 鼓组：每个音高是一件鼓，没有采样的音高不能移调代替
     source: str = "vsco2"  # 采样来源，显示在渲染报告里
+    vibrato: tuple[float, float, float] | None = None  # 给长音加颤音：(幅度音分, 频率 Hz, 延迟秒)；采样本身没录颤音时用
+    post: list | None = None  # 整个声部渲染完后再过的效果链（pedalboard 插件），如失真吉他的失真和箱体
 
     def voices(self, pitch: int, vel: int, rr_state: dict) -> list[Zone]:
         """这个音要发声的区域。SFZ 乐器可能叠好几层（同一轮替位置的区域一起发声）。"""
@@ -257,6 +259,23 @@ def _sample_level(path: Path, offset: float) -> float:
     return float(10 * np.log10(np.mean(k ** 2) + 1e-12))
 
 
+def _retune(zones: list[Zone], cache_path: Path) -> None:
+    """按实测音高校准：每个采样在它的映射音高附近（±1.5 半音）测出实际音高，调整 shift 让输出正好在映射的音上。"""
+    cache = json.loads(cache_path.read_text()) if cache_path.exists() else {}
+    dirty = False
+    for z in zones:
+        if z.silent or z.keytrack == 0:
+            continue
+        key = f"pitch:{z.path.name}@{z.offset:.4f}"
+        if key not in cache:
+            audio = _load_raw(z.path)[0][round(z.offset * SR):][: 2 * SR]
+            cache[key] = detect_pitch(audio, hint=z.key - z.shift, window=1.5)
+            dirty = True
+        z.shift = z.key - cache[key]
+    if dirty:
+        cache_path.write_text(json.dumps(cache, indent=0))
+
+
 RR_SPREAD_DB = 1.5  # 同一力度的几个轮替采样之间最多差多少（dB）
 
 
@@ -309,10 +328,14 @@ def _smooth_layers(zones: list[Zone], cache_path: Path) -> None:
         cache_path.write_text(json.dumps(cache, indent=0))
 
 
-def load_sfz(name: str, path: Path, key_offset: int = 0, remap: dict | None = None, **kwargs) -> Instrument | None:
+def load_sfz(name: str, path: Path, key_offset: int = 0, remap: dict | None = None, key_range: tuple | None = None,
+             veltrack: float | None = None, retune: bool = False, **kwargs) -> Instrument | None:
     """从 SFZ 文件建乐器。
     key_offset：把整个键位映射平移几个半音（有的贝斯库按记谱音高映射，比实际发声高一个八度）；
     remap：鼓组键位表 {我们的音高: 库里的键位 或 (键位, 升降半音)}，只有表里的鼓可用；
+    key_range：只保留这个键位范围内的区域（去掉混在高音区的噪音、拍琴身之类的采样）；
+    veltrack：覆盖文件里的力度响应（有的库用控制器管强弱、力度不影响音量，我们需要力度起作用）；
+    retune：按实测音高逐个校准采样（手拉的乐器、调律不准的采样），结果缓存；
     其余 kwargs 覆盖从文件推断出的设置（sustain、release、pan 等）。"""
     from . import sfz
 
@@ -361,8 +384,15 @@ def load_sfz(name: str, path: Path, key_offset: int = 0, remap: dict | None = No
             continue
         releases.append(float(r.get("ampeg_release", 0.3)))
         one_shot.append(mode == "one_shot")
+    if key_range:
+        zones = [z for z in zones if key_range[0] <= z.keys[0] and z.keys[1] <= key_range[1]]
+    if veltrack is not None:
+        for z in zones:
+            z.veltrack, z.velcurve = veltrack, None
     if not any(not z.silent for z in zones):
         return None
+    if retune:
+        _retune(zones, path.parent / ".onbgm-levels.json")
     if remap:
         from dataclasses import replace
         moved = []
@@ -464,7 +494,23 @@ def render_part(score: Score, part: Part, route, n: int) -> np.ndarray:
     curve = _expression_curve(score, part, n)
     if curve is not None:
         out *= curve[:, None]
+    posts = {id(inst.post): inst.post for _, inst, _ in picked if inst.post}
+    for post in posts.values():  # 失真之类的效果作用在整个声部上（一个声部只会用一件带效果的乐器）
+        from pedalboard import Pedalboard
+
+        out = Pedalboard(post)(np.ascontiguousarray(out.T), SR).T.astype(np.float32)
     return out
+
+
+def _vibrato(y: np.ndarray, cents: float, hz: float, delay: float, fade: float = 0.5) -> np.ndarray:
+    """颤音：按随时间起伏的速度读取音频（音高随之上下摆动），延迟 delay 秒后在 fade 秒内逐渐加深。"""
+    n = len(y)
+    t = np.arange(n) / SR
+    depth = cents / 1200 * np.clip((t - delay) / fade, 0, 1)
+    ratio = 2 ** (depth * np.sin(2 * np.pi * hz * np.maximum(t - delay, 0)))
+    pos = np.clip(np.cumsum(ratio) - ratio[0], 0, n - 1)
+    idx = np.arange(n)
+    return np.stack([np.interp(pos, idx, y[:, c]) for c in range(y.shape[1])], axis=1).astype(np.float32)
 
 
 def _voice(out, score, note, inst: Instrument, zone: Zone, ends, starts, choke_at, next_any, group_starts, line, n):
@@ -544,6 +590,8 @@ def _voice(out, score, note, inst: Instrument, zone: Zone, ends, starts, choke_a
             fade = min(len(env), int(0.04 * SR))
             env[:fade] *= np.linspace(0, 1, fade)
         y = y * env[:, None]
+        if inst.vibrato and hold > inst.vibrato[2]:
+            y = _vibrato(y, *inst.vibrato)
     if inst.sfz:
         vel = max(1, min(127, note.vel))
         if zone.velcurve:
