@@ -157,3 +157,9 @@ def test_entry_skips_the_probe_outside_linux_x86(monkeypatch):
     monkeypatch.setattr(entry.sys, "platform", "darwin")
     monkeypatch.setattr(entry.subprocess, "run", lambda *a, **k: pytest.fail("不应该试导入"))
     assert not entry.pedalboard_crashes()
+
+
+def test_review_explains_directories_without_player_data(tmp_path):
+    run = subprocess.run([sys.executable, "-m", "onbgm.cli", "review", str(tmp_path), "--json"], capture_output=True, text=True)
+    assert run.returncode == 2
+    assert json.loads(run.stdout)["problems"][0]["code"] == "no_player_data"

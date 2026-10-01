@@ -107,7 +107,11 @@ def cmd_render(args) -> None:
     except RuntimeError as e:
         _fail([Problem("missing_dependency", "", str(e))], args.json, code=2)
     pianoroll(score, parts, out / "pianoroll.png")
-    files = {k: str(v) for k, v in result.files.items()} | {"pianoroll": str(out / "pianoroll.png")}
+    from .player import player_data, write_player
+
+    player = write_player(out, player_data(score, parts, result.files["audio"], len(result.main) / SR, args.score))
+    files = ({k: str(v) for k, v in result.files.items()} | {"pianoroll": str(out / "pianoroll.png")}
+             | {k: str(v) for k, v in player.items()})
     loud = loudness_data(score, result.main)
     loudest = max(score.sections, key=lambda s: sum(s.energy)).name
     all_warnings = warnings + result.warnings
@@ -283,6 +287,32 @@ def cmd_schema(args) -> None:
     print(json.dumps(score_schema(), ensure_ascii=False, indent=2))
 
 
+def cmd_review(args) -> None:
+    from .player import DATA_FILE, ReviewServer, load_comments
+
+    dirs = [Path(d) for d in [args.out] + ([args.compare] if args.compare else [])]
+    for d in dirs:
+        if not (d / DATA_FILE).exists():
+            _fail([Problem("no_player_data", str(d), f"{d} 里没有播放器数据（{DATA_FILE}）。"
+                           "要么不是 onbgm render 的输出目录，要么是旧版本渲染的，重新渲染一次即可。")], args.json, code=2)
+    if args.list:
+        comments = load_comments(dirs[0])
+        lines = [f"{c['time_s']:>7.2f}s  " + ("余音" if c.get("in_tail") else f"第 {c.get('bar')} 小节第 {c.get('beat')} 拍 {c.get('section')}")
+                 + f"  {c['text']}" for c in comments] or ["还没有意见"]
+        _emit({"ok": True, "comments": comments}, args.json, "\n".join(lines))
+    try:
+        server = ReviewServer(dirs[0], dirs[1] if len(dirs) > 1 else None, args.port)
+    except OSError as e:
+        _fail([Problem("port_unavailable", "--port", f"端口 {args.port} 用不了（{e.strerror}）。"
+                       "不写 --port 会自动选一个空闲端口")], args.json, code=2)
+    info = {"ok": True, "url": server.url, "review_file": str(dirs[0] / "review.json")}
+    if args.json:
+        print(json.dumps(info, ensure_ascii=False), flush=True)
+    else:
+        print(f"审听页面：{server.url}\n意见会保存到 {info['review_file']}\n按 Ctrl+C 结束", flush=True)
+    server.serve(open_browser=not args.no_open)
+
+
 def cmd_fetch(args) -> None:
     fetch_all(SOUNDS_DIR)
 
@@ -327,6 +357,12 @@ def main() -> None:
     add("doctor", cmd_doctor, "检查环境和音源是否就绪")
     add("schema", cmd_schema, "输出乐谱格式的 JSON Schema")
     add("fetch", cmd_fetch, "下载音源")
+    p = add("review", cmd_review, "打开网页播放器审听：看钢琴卷帘、A/B 对比、在时间轴上写意见（存进 review.json）")
+    p.add_argument("out", help="onbgm render 的输出目录")
+    p.add_argument("--compare", help="另一个输出目录，用来 A/B 对比（比如修改前的版本）")
+    p.add_argument("--port", type=int, default=0, help="端口（默认自动选一个空闲端口）")
+    p.add_argument("--no-open", action="store_true", help="不自动打开浏览器")
+    p.add_argument("--list", action="store_true", help="不启动服务器，只列出已有的意见")
     args = ap.parse_args()
     args.fn(args)
 
