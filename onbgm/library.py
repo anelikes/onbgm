@@ -5,6 +5,7 @@ hq 缺哪件乐器就自动退回 gm，所以没下载大音源也能跑。
 """
 from __future__ import annotations
 
+import os
 import re
 from dataclasses import dataclass, field
 from functools import lru_cache
@@ -14,7 +15,18 @@ from pedalboard import HighpassFilter, HighShelfFilter, PeakFilter
 
 from .sampler import Instrument, load_instrument, pitched_hits, unpitched
 
-SOUNDS_DIR = Path(__file__).resolve().parent.parent / "sounds"
+def _sounds_dir() -> Path:
+    """音源目录：环境变量 ONBGM_SOUNDS 优先；在源码仓库里开发时用仓库下的 sounds/；
+    作为工具安装（uv tool install 等）时用 ~/.onbgm/sounds。"""
+    if env := os.environ.get("ONBGM_SOUNDS"):
+        return Path(env).expanduser()
+    repo = Path(__file__).resolve().parent.parent
+    if (repo / "pyproject.toml").exists():
+        return repo / "sounds"
+    return Path.home() / ".onbgm" / "sounds"
+
+
+SOUNDS_DIR = _sounds_dir()
 GM_SF2 = "GeneralUser-GS.sf2"
 
 

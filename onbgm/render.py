@@ -12,11 +12,12 @@ import numpy as np
 import pyloudnorm as pyln
 import soundfile as sf
 from pedalboard import Compressor, Distortion, Gain, HighpassFilter, LowpassFilter, Pedalboard
+from pedalboard.io import AudioFile
 
 from . import library, sampler
 from .arrange import Part
 from .midi_io import write_midi
-from .score import Score
+from .score import Problem, Score
 
 SR = 44100
 TAIL_SEC = 4.0  # 渲染时在乐谱结束后多渲染的秒数（混响和释音）
@@ -107,15 +108,17 @@ def level_parts(score: Score, parts: list[Part], stems: dict[str, np.ndarray]) -
                 stems[p.name] = stems[p.name] * _db(ROLE_LUFS[p.texture] - lufs)
 
 
-def automix(score: Score, parts: list[Part], stems: dict[str, np.ndarray]) -> list[str]:
+def automix(score: Score, parts: list[Part], stems: dict[str, np.ndarray]) -> tuple[list[dict], list[Problem]]:
     """旋律声部按每段的伴奏自动定音量：至少比最响的伴奏高 3 dB，且不低于伴奏总和 1.5 dB。
-    伴奏稀疏时靠前一点，满编制时融进去一点。乐谱里的 gain 仍会叠加在结果上。"""
+    伴奏稀疏时靠前一点，满编制时融进去一点。乐谱里的 gain 仍会叠加在结果上。
+    返回 (每段的增益, 警告)。增益是相对原始渲染电平的，数值大不代表有问题。"""
     meter = pyln.Meter(SR)
 
     def lufs(x: np.ndarray) -> float:
         return meter.integrated_loudness(x) if np.abs(x).max() > 1e-5 else -np.inf
 
-    log = []
+    log: list[dict] = []
+    warnings: list[Problem] = []
     accomp = [p for p in parts if p.texture != "melody"]
     for mel in (p for p in parts if p.texture == "melody"):
         points = []  # (采样位置, 增益 dB)
@@ -134,18 +137,19 @@ def automix(score: Score, parts: list[Part], stems: dict[str, np.ndarray]) -> li
             g = max(max(levels) + 3, total - 1.5) - own
             points += [(a + round(0.15 * SR), g), (b - round(0.15 * SR), g)]
             gains[s.name] = g
-            log.append(f"{mel.name}@{s.name} {g:+.1f} dB")
+            log.append({"track": mel.name, "section": s.name, "gain_db": round(float(g), 1)})
         if gains:
             mid = float(np.median(list(gains.values())))
             for s, g in gains.items():
                 if abs(g - mid) > 18:
-                    log.append(f"⚠ {mel.name} 在 {s} 段的自动增益和其他段相差 {g - mid:+.0f} dB，"
-                               f"请检查这一段的旋律是否只有零星几个音，或写错了段落")
+                    warnings.append(Problem("automix_outlier", f"tracks.{mel.name}.notes.{s}",
+                                            f"这一段的自动增益和其他段相差 {g - mid:+.0f} dB，"
+                                            f"请检查这一段的旋律是否只有零星几个音，或写错了段落"))
         if points:
             x, g = zip(*points)
             env = _db(np.interp(np.arange(len(stems[mel.name])), x, g)).astype(np.float32)
             stems[mel.name] = stems[mel.name] * env[:, None]
-    return log
+    return log, warnings
 
 
 # ---------- 混音 ----------
@@ -248,11 +252,11 @@ def limit(x: np.ndarray, ceiling_db: float = PEAK_CEILING_DB, lookahead_ms: floa
     return x * gain[:, None]
 
 
-def _master(x: np.ndarray, notes: list[str] | None = None) -> np.ndarray:
+def _master(x: np.ndarray, warnings: list[Problem] | None = None) -> np.ndarray:
     pre = Pedalboard(_BUS + [Gain(MASTER_GAIN_DB)])(np.ascontiguousarray(x.T), SR).T
     over = 20 * np.log10(max(float(np.abs(pre).max()), 1e-9)) - PEAK_CEILING_DB
-    if notes is not None and over > LIMIT_WARN_DB:
-        notes.append(f"⚠ 限幅器压掉了 {over:.1f} dB 峰值，可能有声部太响或叠得太厚")
+    if warnings is not None and over > LIMIT_WARN_DB:
+        warnings.append(Problem("heavy_limiting", "", f"限幅器压掉了 {over:.1f} dB 峰值，可能有声部太响或叠得太厚"))
     return np.clip(limit(pre), -1.0, 1.0)
 
 
@@ -261,42 +265,43 @@ class Rendered:
     main: np.ndarray  # 可循环时是精确到采样的循环段；否则是乐谱时长（加 meta.tail）
     stems: dict[str, np.ndarray]
     sources: dict[str, str]
-    notes: list[str]  # 自动混音的结果和警告
-    files: list[Path]
+    mix: list[dict]  # 旋律在各段的自动增益
+    warnings: list[Problem]
+    files: dict[str, Path]  # audio / preview / midi / stems
 
 
 def render(score: Score, parts: list[Part], out: Path, soundset: str = "hq") -> Rendered:
     (out / "stems").mkdir(parents=True, exist_ok=True)
     stems, sources = render_stems(score, parts, soundset)
     level_parts(score, parts, stems)
-    mix_log = automix(score, parts, stems)
+    mix_log, warnings = automix(score, parts, stems)
     for name, audio in stems.items():
         sf.write(out / "stems" / f"{name}.wav", audio, SR, subtype="PCM_24")
     full = mix(stems, parts)
     length = round(score.seconds(score.total_beats) * SR)
     if (score.fx or {}).get("lofi"):
         full = lofi(full, score.fx["lofi"], length if score.loop else None)
-    files = []
+    files: dict[str, Path] = {}
     if score.loop:
         # 把结尾溢出的混响尾巴叠回开头，循环播放时接缝处就是连续的
         body = full[:length].copy()
         body[: len(full) - length] += full[length:]
         preview_raw = np.concatenate([body, full])  # 播放两遍再自然结束，第一遍到第二遍就是循环接缝
-        main = _master(np.concatenate([body, body]), mix_log)[length:]  # 预热一遍，让压缩器状态也首尾一致
+        main = _master(np.concatenate([body, body]), warnings)[length:]  # 预热一遍，让压缩器状态也首尾一致
         preview = _master(preview_raw)
-        sf.write(out / "loop.wav", main, SR, subtype="PCM_24")
-        files.append(out / "loop.wav")
+        files["audio"] = out / "loop.wav"
     else:
         # 时长精确等于乐谱时长（加 meta.tail），结尾淡出避免硬切
         body = full[: length + round(score.tail * SR)].copy()
         fade = min(len(body), round(max(0.3, score.tail) * SR))
         body[-fade:] *= np.linspace(1.0, 0.0, fade, dtype=np.float32)[:, None]
-        main = preview = _master(body, mix_log)
-        sf.write(out / "song.wav", main, SR, subtype="PCM_24")
-        files.append(out / "song.wav")
-    sf.write(out / "preview.wav", preview, SR, subtype="PCM_24")
-    subprocess.run(["ffmpeg", "-y", "-loglevel", "error", "-i", str(out / "preview.wav"),
-                    "-c:a", "aac", "-b:a", "192k", str(out / "preview.m4a")], check=True)
-    write_midi(out / "song.mid", score, parts)
-    files += [out / "preview.m4a", out / "preview.wav", out / "song.mid", out / "stems"]
-    return Rendered(main, stems, sources, mix_log, files)
+        main = preview = _master(body, warnings)
+        files["audio"] = out / "song.wav"
+    sf.write(files["audio"], main, SR, subtype="PCM_24")
+    files["preview"] = out / "preview.mp3"
+    with AudioFile(str(files["preview"]), "w", SR, 2, quality="V2") as f:
+        f.write(np.ascontiguousarray(preview.T))
+    files["midi"] = out / "song.mid"
+    write_midi(files["midi"], score, parts)
+    files["stems"] = out / "stems"
+    return Rendered(main, stems, sources, mix_log, warnings, files)

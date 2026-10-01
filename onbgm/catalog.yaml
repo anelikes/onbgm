@@ -1,0 +1,265 @@
+# 写法库：验证过的常用写法，snippet 可以直接粘贴进乐谱。
+# kind 为 drums/strum/bassline/comp 的 snippet 是一个声部（tracks 下的一项）；progression 是一行 harmony。
+
+- name: boom-bap
+  kind: drums
+  tags: [lofi, lo-fi, hip-hop, 嘻哈, 慵懒, chill, 学习, 放松]
+  description: lo-fi / 嘻哈的经典鼓型：底鼓落在第 1 拍和第 2、3 拍的后半，军鼓打 2、4 拍并往后拖一点
+  snippet: |
+    sound: drums-jazz
+    texture: groove
+    laid_back: 0.03
+    pattern:
+      kick:  "x... ...x ..x. ...."
+      snare: ".... x..g .... x..."
+      hat:   "x.xg x.x. x.xg x.xg"
+
+- name: four-on-the-floor
+  kind: drums
+  tags: [pop, dance, edm, 流行, 舞曲, 电子, 轻快, 动感, upbeat]
+  description: 每拍一下底鼓的舞曲律动，拍手打 2、4 拍，开镲在反拍
+  snippet: |
+    sound: drums
+    texture: groove
+    pattern:
+      kick:     "x... x... x... x..."
+      clap:     ".... x... .... x..."
+      open-hat: "..x. ..x. ..x. ..x."
+      shaker:   "gxgx gxgx gxgx gxgx"
+
+- name: pop-backbeat
+  kind: drums
+  tags: [pop, rock, 流行, 摇滚, backbeat]
+  description: 流行 / 摇滚的基本鼓型：军鼓打 2、4 拍，八分音符踩镲
+  snippet: |
+    sound: drums
+    texture: groove
+    pattern:
+      kick:  "x... ...x x... ...."
+      snare: ".... x... .... x..."
+      hat:   "x.x. x.x. x.x. x.x."
+
+- name: half-time
+  kind: drums
+  tags: [cinematic, epic, 电影, 史诗, 宏大, 慢, half-time, trap]
+  description: 半速感鼓型：军鼓只打第 3 拍，显得厚重、开阔，适合史诗或电影感高潮
+  snippet: |
+    sound: drums-room
+    texture: groove
+    pattern:
+      kick:  "x... .... ..x. ...."
+      snare: ".... .... x... ...."
+      hat:   "x.x. x.x. x.x. x.x."
+
+- name: acoustic-pop-percussion
+  kind: drums
+  tags: [acoustic, vlog, folk, 木吉他, 民谣, 轻快, 拍手, 阳光]
+  description: 木吉他流行的轻打击：底鼓 + 拍手 + 十六分音符沙锤
+  snippet: |
+    sound: drums
+    texture: groove
+    pattern:
+      kick:   "x... .... x.x. ...."
+      clap:   ".... x... .... x..."
+      shaker: "gxgx gxgx gxgx gxgx"
+
+- name: jazz-brush-swing
+  kind: drums
+  tags: [jazz, 爵士, 咖啡馆, cafe, brush, 刷子, swing, 摇摆]
+  description: 刷子鼓的爵士摇摆：每小节 8 步。乐谱里要配上 meta.swing 0.62 和 meta.swing_unit 8
+  snippet: |
+    sound: drums-brush
+    texture: groove
+    pattern:
+      kick:      "g....... | ....g..."
+      snare:     "g.x.g.x. | g.x.g.xg"
+      pedal-hat: "..x...x. | ..x...x."
+      ride:      "x.xxx.xx | x.xxx.xx"
+
+- name: bossa-nova
+  kind: drums
+  tags: [bossa, latin, 拉丁, 巴萨诺瓦, 慵懒, 咖啡馆, 夏天]
+  description: 巴萨诺瓦：底鼓的"咚——咚"型，配边击打出巴萨节奏（clave）
+  snippet: |
+    sound: drums-brush
+    texture: groove
+    pattern:
+      kick: "x..x x..x x..x x..x"
+      rim:  "x..x ..x. ..x. .x.."
+      hat:  "gggg gggg gggg gggg"
+
+- name: cinematic-drive
+  kind: drums
+  tags: [cinematic, chase, action, 追逐, 紧张, 动作, 游戏, 3+3+2]
+  description: 3+3+2 切分的通鼓推进，制造追逐感和紧张感
+  snippet: |
+    sound: drums-room
+    texture: groove
+    pattern:
+      kick:     "x..x ..x. x..x ..x."
+      tom-low:  ".... x... .... x..."
+      tom-high: "..x. ..x. ..x. .xxx"
+
+- name: pop-strum
+  kind: strum
+  tags: [pop, acoustic, 吉他, 扫弦, 流行, 民谣, D-DU-UDU]
+  description: 最常见的流行扫弦"下、下上、上下上"
+  snippet: |
+    sound: guitar-steel
+    texture: strum
+    pattern: "D... D.U. ..U. D.U."
+
+- name: chuck-strum
+  kind: strum
+  tags: [pop, acoustic, vlog, 吉他, 扫弦, 闷音, 切音, 弹性, 轻快]
+  description: 二、四拍打闷音切音，节奏很有弹性，适合轻快的主歌
+  snippet: |
+    sound: guitar-steel
+    texture: strum
+    pattern: "D... x.U. D.U. x.U."
+
+- name: ballad-strum
+  kind: strum
+  tags: [ballad, 抒情, 安静, 吉他, 慢]
+  description: 稀疏的抒情扫弦，留出空间给旋律
+  snippet: |
+    sound: guitar-nylon
+    texture: strum
+    pattern: "D... ..U. D... ..U."
+
+- name: folk-sixteenths
+  kind: strum
+  tags: [folk, 民谣, 吉他, 十六分, 推进, 片头]
+  description: 十六分音符的民谣扫弦，推进感强
+  snippet: |
+    sound: guitar-steel
+    texture: strum
+    pattern: "D.DU .UDU D.DU .UDU"
+
+- name: root-fifth
+  kind: bassline
+  tags: [bass, 低音, 简单, 抒情, 根音, 五音]
+  description: 根音、五音各一拍半，最稳的低音写法
+  snippet: |
+    sound: electric-bass
+    texture: bassline
+    rhythm: "1--- ---- 5--- ----"
+
+- name: eighth-pump
+  kind: bassline
+  tags: [bass, 低音, 流行, 摇滚, 推进, 八分]
+  description: 八分音符连续弹根音，推动感强，适合副歌
+  snippet: |
+    sound: electric-bass
+    texture: bassline
+    rhythm: "1-1- 1-1- 1-1- 1-1-"
+
+- name: boom-bap-bass
+  kind: bassline
+  tags: [lofi, lo-fi, hip-hop, 嘻哈, 低音, 慵懒]
+  description: 跟着 boom-bap 底鼓走的低音
+  snippet: |
+    sound: electric-bass
+    texture: bassline
+    rhythm: "1--- ---1 --5- ----"
+
+- name: syncopated-332
+  kind: bassline
+  tags: [chase, action, 追逐, 紧张, 切分, 3+3+2, 动作]
+  description: 3+3+2 切分低音，配合断奏可以做出紧张的推进
+  snippet: |
+    sound: contrabass
+    texture: bassline
+    articulation: staccato
+    rhythm: "1..1 ..1. 1..1 ..1."
+
+- name: sustained-chords
+  kind: comp
+  tags: [pad, 铺底, 安静, 全音符, 抒情, 收尾, 结束, 片尾, ending]
+  description: 每小节弹一次、延长到底的和弦，也适合最后一小节收尾
+  snippet: |
+    sound: epiano
+    texture: comp
+    rhythm: "x--- ---- ---- ----"
+
+- name: anticipation-push
+  kind: comp
+  tags: [lofi, jazz, 爵士, 电钢, 切分, 提前]
+  description: 第 1 拍弹和弦，第 2 拍后半提前切入，lo-fi 和爵士常用
+  snippet: |
+    sound: epiano
+    texture: comp
+    roll: 0.02
+    rhythm: "x--- --x- ---- ----"
+
+- name: offbeat-skank
+  kind: comp
+  tags: [reggae, ska, 雷鬼, 反拍, 轻快, 夏天]
+  description: 只在反拍上短促地弹和弦，雷鬼 / 斯卡的味道
+  snippet: |
+    sound: guitar-nylon
+    texture: comp
+    rhythm: "..x. ..x. ..x. ..x."
+
+- name: eighth-pump-chords
+  kind: comp
+  tags: [pop, rock, 流行, 八分, 推进, 钢琴]
+  description: 八分音符反复弹和弦，推进感强
+  snippet: |
+    sound: piano
+    texture: comp
+    rhythm: "x-x- x-x- x-x- x-x-"
+
+- name: pop-axis
+  kind: progression
+  tags: [pop, 流行, 大调, 温暖, 积极, I-V-vi-IV, vlog]
+  description: I–V–vi–IV，最常见的流行和弦进行（C 大调）
+  snippet: '"C | G | Am | F"'
+
+- name: sad-axis
+  kind: progression
+  tags: [pop, 伤感, 抒情, vi-IV-I-V, 怀旧]
+  description: vi–IV–I–V，同样四个和弦，从小调和弦开始就更伤感（C 大调）
+  snippet: '"Am | F | C | G"'
+
+- name: epic-minor
+  kind: progression
+  tags: [epic, cinematic, 史诗, 电影, 小调, 宏大, i-VI-III-VII]
+  description: i–VI–III–VII，史诗、电影预告片常用（D 小调）
+  snippet: '"Dm | Bb | F | C"'
+
+- name: cinematic-minor-cadence
+  kind: progression
+  tags: [cinematic, 电影, 情绪, 小调, 循环, i-VI-iv-V]
+  description: i–VI–iv–V，结尾落在属和弦，适合导回开头循环（D 小调）
+  snippet: '"Dm | Bb | Gm | A7"'
+
+- name: jazz-two-five-one
+  kind: progression
+  tags: [jazz, 爵士, 咖啡馆, ii-V-I, 七和弦]
+  description: ii–V–I，爵士的核心进行（C 大调）
+  snippet: '"Dm7 | G7 | Cmaj7 | Cmaj7"'
+
+- name: lofi-turnaround
+  kind: progression
+  tags: [lofi, lo-fi, 爵士, 慵懒, 学习, 九和弦, turnaround]
+  description: ii–V–I–VI 的爵士化循环，九和弦和十三和弦带来 lo-fi 的朦胧感（C 大调）
+  snippet: '"Dm9 | G13 | Cmaj9 | A7b9"'
+
+- name: canon
+  kind: progression
+  tags: [classical, 古典, 卡农, 温馨, 婚礼, 大调]
+  description: 卡农进行，8 小节（C 大调）
+  snippet: '"C | G | Am | Em | F | C | F | G"'
+
+- name: twelve-bar-blues
+  kind: progression
+  tags: [blues, 布鲁斯, 摇摆, 12 小节]
+  description: 12 小节布鲁斯（C 调）
+  snippet: '"C7 | F7 | C7 | C7 | F7 | F7 | C7 | C7 | G7 | F7 | C7 | G7"'
+
+- name: plagal-perfect-ending
+  kind: progression
+  tags: [ending, 收尾, 结束, cadence, 终止, 片尾]
+  description: IV–V–I 终止式，3 小节，用于不循环曲子的结尾（C 大调）
+  snippet: '"F | G | C"'

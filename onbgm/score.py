@@ -18,10 +18,29 @@ NOTE_TOLERANCE = 0.05  # 拍；人性化会把音符起点挪动几毫秒，判�
 FX = {"lofi": "lo-fi 质感：磁带抖动、低通、轻微失真、黑胶底噪（0~1）"}
 
 
+@dataclass
+class Problem:
+    """一条写给 agent 看的问题。code 便于程序处理；path 指向乐谱里出问题的位置；
+    message 是说明和改法；fix 是可以直接套用的修正值（有的话）。"""
+    code: str
+    path: str
+    message: str
+    fix: dict | None = None
+
+    def __str__(self) -> str:
+        return f"{self.path}: {self.message}" if self.path else self.message
+
+    def to_dict(self) -> dict:
+        d = {"code": self.code, "path": self.path, "message": self.message}
+        if self.fix:
+            d["fix"] = self.fix
+        return d
+
+
 class ScoreError(Exception):
-    def __init__(self, problems: list[str]):
-        super().__init__("\n".join(f"- {p}" for p in problems))
+    def __init__(self, problems: list[Problem]):
         self.problems = problems
+        super().__init__("\n".join(f"- {p}" for p in problems))
 
 
 @dataclass
@@ -136,33 +155,35 @@ def fmt_time(sec: float) -> str:
     return f"{int(sec // 60)}:{sec % 60:05.2f}"
 
 
-def _parse_energy(v, where: str, problems: list[str]) -> tuple[float, float]:
+def _parse_energy(v, where: str, problems: list[Problem]) -> tuple[float, float]:
     try:
         if isinstance(v, (int, float)):
             a = b = float(v)
         else:
             a, b = (float(x) for x in str(v).split("->"))
     except ValueError:
-        problems.append(f"{where}: 无法解析能量 {v!r}（写 0.6 或 \"0.4->0.9\"）")
+        problems.append(Problem("bad_format", where, f"无法解析能量 {v!r}（写 0.6 或 \"0.4->0.9\"）"))
         return (0.5, 0.5)
     if not (0 <= a <= 1 and 0 <= b <= 1):
-        problems.append(f"{where}: 能量须在 0~1 之间，当前 {v!r}")
+        problems.append(Problem("out_of_range", where, f"能量须在 0~1 之间，当前 {v!r}"))
     return (a, b)
 
 
-def _solve_bpm(meta: dict, sections: list[Section], problems: list[str]) -> float:
+def _solve_bpm(meta: dict, sections: list[Section], problems: list[Problem]) -> float:
     """根据时间约束确定或校验 BPM。"""
     constraints = [(f"sections.{s.name}.at", s.start, s.at) for s in sections if s.at is not None]
     if "length" in meta:
         constraints.append(("meta.length", sections[-1].end, parse_time(meta["length"])))
     bpm = meta.get("bpm", "auto" if constraints else None)
     if bpm is None:
-        problems.append("缺少 meta.bpm：写一个数字（如 90），或写 auto 并用 meta.length 或段落的 at 约束时间")
+        problems.append(Problem("missing_bpm", "meta.bpm",
+                                "缺少速度：写一个数字（如 90），或写 auto 并用 meta.length 或段落的 at 约束时间"))
         return 90.0
     if bpm == "auto":
         usable = [c for c in constraints if c[1] > 0 and c[2] > 0]
         if not usable:
-            problems.append("meta.bpm 为 auto 时需要至少一个时间约束（meta.length 或某个段落的 at）")
+            problems.append(Problem("no_time_constraint", "meta.bpm",
+                                    "为 auto 时需要至少一个时间约束（meta.length 或某个段落的 at）"))
             return 90.0
         _, beats, secs = usable[0]
         bpm = beats * 60 / secs
@@ -170,22 +191,25 @@ def _solve_bpm(meta: dict, sections: list[Section], problems: list[str]) -> floa
     for where, beats, secs in constraints:
         actual = beats * 60 / bpm
         if abs(actual - secs) > 0.01:
-            msg = f"{where} 要求 {fmt_time(secs)}，但在 {bpm:g} BPM 下实际是 {fmt_time(actual)}。可以："
-            options = []
+            msg = f"要求 {fmt_time(secs)}，但在 {bpm:g} BPM 下实际是 {fmt_time(actual)}。可以："
+            options, fix = [], {}
             if secs > 0:
+                fix["bpm"] = round(beats * 60 / secs, 2)
                 options.append(f"把 bpm 改为 {beats * 60 / secs:.2f}（或 auto）")
                 # 保持这个速度：需要多少小节
                 span = "总共" if where == "meta.length" else "它之前一共"
                 need = secs * bpm / 60 / BEATS_PER_BAR
                 now = beats / BEATS_PER_BAR
                 if abs(need - round(need)) < 0.02 and round(need) > 0:
+                    fix["bars" if where == "meta.length" else "bars_before"] = round(need)
                     options.append(f"保持 {bpm:g} BPM，让{span} {round(need)} 小节（现在是 {now:g}）")
                 else:
                     lo, hi = math.floor(need), math.ceil(need)
                     near = "、".join(f"{n} 小节（{fmt_time(n * BEATS_PER_BAR * 60 / bpm)}）" for n in (lo, hi) if n > 0)
                     options.append(f"保持 {bpm:g} BPM 的话，{span}需要 {need:.2f} 小节，不是整数；最接近的是 {near}")
             options.append("删掉这个约束")
-            problems.append(msg + "；".join(f"({i + 1}) {o}" for i, o in enumerate(options)))
+            problems.append(Problem("time_constraint_mismatch", where,
+                                    msg + "；".join(f"({i + 1}) {o}" for i, o in enumerate(options)), fix or None))
     return bpm
 
 
@@ -193,12 +217,13 @@ _NOTE_RE = re.compile(r"(r|[A-Ga-g][#b]*-?\d)/(1|2|4|8|16)(\.?)([>']*)(~?)")
 _VALUE_BEATS = {"1": 4.0, "2": 2.0, "4": 1.0, "8": 0.5, "16": 0.25}
 
 
-def _parse_melody(text: str, section: Section, where: str, problems: list[str]) -> list[MelodyNote]:
+def _parse_melody(text: str, section: Section, where: str, problems: list[Problem]) -> list[MelodyNote]:
     """旋律记法：D5/4 = 四分音符，F#4/8. = 附点八分，r/2 = 二分休止，A4/2~ = 连到下一个同音，
     D5/16' = 断奏，D5/8> = 重音（可以合写成 D5/8'>）。"""
     bars = [b.strip() for b in str(text).split("|") if b.strip()]
     if section.bars % len(bars):
-        problems.append(f"{where}: 写了 {len(bars)} 小节，但段落 {section.name} 有 {section.bars} 小节")
+        problems.append(Problem("melody_bar_count", where,
+                                f"写了 {len(bars)} 小节，但段落 {section.name} 有 {section.bars} 小节（须相等或能整除）"))
         return []
     bars = bars * (section.bars // len(bars))
     notes: list[MelodyNote] = []
@@ -208,7 +233,8 @@ def _parse_melody(text: str, section: Section, where: str, problems: list[str]) 
         for tok in bar.split():
             m = _NOTE_RE.fullmatch(tok)
             if not m:
-                problems.append(f"{where} 第 {i + 1} 小节: 无法解析 {tok!r}（格式如 D5/4、F#4/8.、r/2、D5/16'、D5/8>）")
+                problems.append(Problem("bad_note", where,
+                                        f"第 {i + 1} 小节: 无法解析 {tok!r}（格式如 D5/4、F#4/8.、r/2、D5/16'、D5/8>）"))
                 return []
             dur = _VALUE_BEATS[m.group(2)] * (1.5 if m.group(3) else 1.0)
             start = section.start + i * BEATS_PER_BAR + pos
@@ -223,7 +249,8 @@ def _parse_melody(text: str, section: Section, where: str, problems: list[str]) 
             tie = bool(m.group(5))
             pos += dur
         if abs(pos - BEATS_PER_BAR) > 1e-6:
-            problems.append(f"{where} 第 {i + 1} 小节时值合计 {pos:g} 拍，应为 {BEATS_PER_BAR} 拍: \"{bar}\"")
+            problems.append(Problem("bar_length", where,
+                                    f"第 {i + 1} 小节时值合计 {pos:g} 拍，应为 {BEATS_PER_BAR} 拍: \"{bar}\""))
     return notes
 
 
@@ -231,12 +258,12 @@ def load(path: str | Path) -> Score:
     try:
         raw = yaml.safe_load(Path(path).read_text(encoding="utf-8")) or {}
     except yaml.YAMLError as e:
-        raise ScoreError([f"YAML 语法错误: {e}"]) from None
+        raise ScoreError([Problem("yaml_syntax", "", f"YAML 语法错误: {e}")]) from None
     from .schema import validate
 
     if problems := validate(raw):
         raise ScoreError(problems)
-    problems: list[str] = []
+    problems: list[Problem] = []
     meta = raw.get("meta") or {}
 
     sections: list[Section] = []
@@ -245,7 +272,7 @@ def load(path: str | Path) -> Score:
         name = s.get("name") or f"section{i + 1}"
         bars = s.get("bars")
         if not isinstance(bars, int) or bars <= 0:
-            problems.append(f"sections.{name}.bars 须为正整数，当前 {bars!r}")
+            problems.append(Problem("out_of_range", f"sections.{name}.bars", f"须为正整数，当前 {bars!r}"))
             bars = 1
         energy = _parse_energy(s.get("energy", 0.5), f"sections.{name}.energy", problems)
         at = None
@@ -253,14 +280,14 @@ def load(path: str | Path) -> Score:
             try:
                 at = parse_time(s["at"])
             except ValueError as e:
-                problems.append(f"sections.{name}.at: {e}")
+                problems.append(Problem("bad_format", f"sections.{name}.at", str(e)))
         sections.append(Section(name, bars, energy, at, bar))
         bar += bars
     if not sections:
-        raise ScoreError(["至少需要一个 section"])
+        raise ScoreError([Problem("no_sections", "sections", "至少需要一个段落")])
     names = [s.name for s in sections]
     for n in {n for n in names if names.count(n) > 1}:
-        problems.append(f"段落名 {n} 重复了")
+        problems.append(Problem("duplicate_section", "sections", f"段落名 {n} 重复了"))
 
     bpm = _solve_bpm(meta, sections, problems)
 
@@ -268,15 +295,16 @@ def load(path: str | Path) -> Score:
     harmony = raw.get("harmony") or {}
     for key in harmony:
         if key not in names:
-            problems.append(f"harmony.{key}: 没有这个段落（现有: {', '.join(names)}）")
+            problems.append(Problem("unknown_section", f"harmony.{key}", f"没有这个段落（现有: {', '.join(names)}）"))
     for s in sections:
         prog = harmony.get(s.name)
         if prog is None:
-            problems.append(f"harmony 里缺少段落 {s.name} 的和弦进行")
+            problems.append(Problem("missing_harmony", f"harmony.{s.name}", f"缺少段落 {s.name} 的和弦进行"))
             continue
         bar_texts = [b.strip() for b in str(prog).split("|") if b.strip()]
         if s.bars % len(bar_texts):
-            problems.append(f"harmony.{s.name}: 写了 {len(bar_texts)} 小节，但段落有 {s.bars} 小节（须相等或能整除以便重复）")
+            problems.append(Problem("harmony_bar_count", f"harmony.{s.name}",
+                                    f"写了 {len(bar_texts)} 小节，但段落有 {s.bars} 小节（须相等或能整除以便重复）"))
             continue
         for i, bt in enumerate(bar_texts * (s.bars // len(bar_texts))):
             symbols = bt.split()
@@ -285,7 +313,7 @@ def load(path: str | Path) -> Score:
                 try:
                     chord = parse_chord(sym)
                 except ValueError as e:
-                    problems.append(f"harmony.{s.name} 第 {i + 1} 小节: {e}")
+                    problems.append(Problem("unknown_chord", f"harmony.{s.name}", f"第 {i + 1} 小节: {e}"))
                     continue
                 chords.append(ChordSpan(chord, s.start + i * BEATS_PER_BAR + j * step, step, s.name))
 
@@ -296,40 +324,41 @@ def load(path: str | Path) -> Score:
         notes = cfg.get("notes") or {}
         for sec_name, text in notes.items():
             if sec_name not in names:
-                problems.append(f"tracks.{name}.notes.{sec_name}: 没有这个段落")
+                problems.append(Problem("unknown_section", f"tracks.{name}.notes.{sec_name}",
+                                        f"没有这个段落（现有: {', '.join(names)}）"))
                 continue
             melody += _parse_melody(text, sections[names.index(sec_name)], f"tracks.{name}.notes.{sec_name}", problems)
         in_ = cfg.get("in", list(notes) if notes else "all")
         track_sections = names if in_ == "all" else list(in_)
         for n in track_sections:
             if n not in names:
-                problems.append(f"tracks.{name}.in: 没有段落 {n}（现有: {', '.join(names)}）")
+                problems.append(Problem("unknown_section", f"tracks.{name}.in", f"没有段落 {n}（现有: {', '.join(names)}）"))
         options = {k: v for k, v in cfg.items() if k not in ("sound", "texture", "in", "notes")}
         texture = cfg.get("texture", "melody" if notes else None)
         tracks.append(Track(name, cfg.get("sound"), texture, track_sections, melody, options))
 
     swing = meta.get("swing", 0.5)
     if not isinstance(swing, (int, float)) or not 0.5 <= swing <= 0.75:
-        problems.append(f"meta.swing 须在 0.5（平直）到 0.75 之间，当前 {swing!r}")
+        problems.append(Problem("out_of_range", "meta.swing", f"须在 0.5（平直）到 0.75 之间，当前 {swing!r}"))
         swing = 0.5
     swing_unit = meta.get("swing_unit", 16)
     if swing_unit not in (8, 16):
-        problems.append(f"meta.swing_unit 须为 8 或 16，当前 {swing_unit!r}")
+        problems.append(Problem("unknown_value", "meta.swing_unit", f"须为 8 或 16，当前 {swing_unit!r}"))
         swing_unit = 16
     tail = 0.0
     if "tail" in meta:
         try:
             tail = parse_time(meta["tail"])
         except ValueError as e:
-            problems.append(f"meta.tail: {e}")
+            problems.append(Problem("bad_format", "meta.tail", str(e)))
         if meta.get("loop"):
-            problems.append("meta.tail 只用于不循环的曲子（loop: false）；循环时余音会自动叠回开头")
+            problems.append(Problem("tail_with_loop", "meta.tail", "只用于不循环的曲子（loop: false）；循环时余音会自动叠回开头"))
     fx = raw.get("fx") or {}
     for k, v in fx.items():
         if k not in FX:
-            problems.append(f"fx.{k}: 不认识（可用: {', '.join(FX)}）")
+            problems.append(Problem("unknown_field", f"fx.{k}", f"不认识（可用: {', '.join(FX)}）"))
         elif not isinstance(v, (int, float)) or not 0 <= v <= 1:
-            problems.append(f"fx.{k} 须在 0~1 之间，当前 {v!r}")
+            problems.append(Problem("out_of_range", f"fx.{k}", f"须在 0~1 之间，当前 {v!r}"))
 
     if problems:
         raise ScoreError(problems)

@@ -10,7 +10,7 @@ from dataclasses import dataclass, field
 
 import math
 
-from .score import BEATS_PER_BAR, ChordSpan, Score, ScoreError, Section, Track
+from .score import BEATS_PER_BAR, ChordSpan, Problem, Score, ScoreError, Section, Track
 from .theory import Chord, guitar_voicing, pitch_name, place, voice_lead
 
 
@@ -288,14 +288,16 @@ def steps(section: Section, text: str, allowed: str, where: str) -> list[tuple[f
     """把节奏型字符串展开成 [(绝对拍, 每步拍数, 字符)]。空格只为好读，会被忽略。"""
     bars = [b.replace(" ", "") for b in str(text).split("|") if b.strip()]
     if not bars or section.bars % len(bars):
-        raise ScoreError([f"{where}: 写了 {len(bars)} 小节，段落 {section.name} 有 {section.bars} 小节（须相等或能整除）"])
+        raise ScoreError([Problem("pattern_bar_count", where,
+                                  f"写了 {len(bars)} 小节，段落 {section.name} 有 {section.bars} 小节（须相等或能整除）")])
     out = []
     for i, bar in enumerate(bars * (section.bars // len(bars))):
         if len(bar) not in STEP_COUNTS:
-            raise ScoreError([f"{where} 第 {i + 1} 小节有 {len(bar)} 步，每小节须为 "
-                              f"{'/'.join(map(str, STEP_COUNTS))} 步: \"{bar}\""])
+            raise ScoreError([Problem("pattern_step_count", where, f"第 {i + 1} 小节有 {len(bar)} 步，每小节须为 "
+                                      f"{'/'.join(map(str, STEP_COUNTS))} 步: \"{bar}\"")])
         if bad := set(bar) - set(allowed):
-            raise ScoreError([f"{where} 第 {i + 1} 小节有不认识的字符 {''.join(sorted(bad))}（可用: {allowed}）"])
+            raise ScoreError([Problem("pattern_bad_char", where,
+                                      f"第 {i + 1} 小节有不认识的字符 {''.join(sorted(bad))}（可用: {allowed}）")])
         step = BEATS_PER_BAR / len(bar)
         out += [(section.start + i * BEATS_PER_BAR + j * step, step, c) for j, c in enumerate(bar)]
     return out
@@ -307,7 +309,8 @@ def _events(score: Score, track: Track, key: str, allowed: str) -> list[tuple[fl
     for name in track.sections:
         text = _pattern(track, name, key)
         if text is None:
-            raise ScoreError([f"tracks.{track.name}: {track.texture} 织体需要 {key}（可写在 by_section.{name} 里）"])
+            raise ScoreError([Problem("missing_pattern", f"tracks.{track.name}.{key}",
+                                      f"{track.texture} 织体需要 {key}（可写在 by_section.{name} 里）")])
         cur = None
         for b, step, c in steps(score.section(name), text, allowed, f"tracks.{track.name}.{key}"):
             span = score.chord_at(b)
@@ -339,10 +342,12 @@ def t_groove(score: Score, track: Track, part: Part, perf: Performer) -> None:
     for name in track.sections:
         pattern = _pattern(track, name, "pattern")
         if not isinstance(pattern, dict):
-            raise ScoreError([f"tracks.{track.name}: groove 织体需要 pattern，每件鼓一行（可用: {', '.join(DRUM_KEYS)}）"])
+            raise ScoreError([Problem("missing_pattern", f"tracks.{track.name}.pattern",
+                                      f"groove 织体需要 pattern，每件鼓一行（可用: {', '.join(DRUM_KEYS)}）")])
         for drum, text in pattern.items():
             if drum not in DRUM_KEYS:
-                raise ScoreError([f"tracks.{track.name}.pattern.{drum}: 不认识这件鼓（可用: {', '.join(DRUM_KEYS)}）"])
+                raise ScoreError([Problem("unknown_drum", f"tracks.{track.name}.pattern.{drum}",
+                                          f"不认识这件鼓（可用: {', '.join(DRUM_KEYS)}）")])
             key = DRUM_KEYS[drum]
             for b, step, c in steps(score.section(name), text, "Xxg.", f"tracks.{track.name}.pattern.{drum}"):
                 if c == ".":
@@ -470,13 +475,14 @@ def arrange(score: Score) -> tuple[list[Part], list[str]]:
     problems = []
     for t in score.tracks:
         if t.sound not in SOUNDS:
-            problems.append(f"tracks.{t.name}.sound: 不认识 {t.sound!r}（可用: {', '.join(SOUNDS)}）")
+            problems.append(Problem("unknown_value", f"tracks.{t.name}.sound", f"不认识 {t.sound!r}（可用: {', '.join(SOUNDS)}）"))
         if t.texture not in TEXTURES:
-            problems.append(f"tracks.{t.name}.texture: 不认识 {t.texture!r}（可用: {', '.join(TEXTURES)}）")
+            problems.append(Problem("unknown_value", f"tracks.{t.name}.texture",
+                                    f"不认识 {t.texture!r}（可用: {', '.join(TEXTURES)}）"))
         elif t.texture in ("melody", "line") and not t.melody:
-            problems.append(f"tracks.{t.name}: {t.texture} 织体需要 notes")
+            problems.append(Problem("missing_notes", f"tracks.{t.name}.notes", f"{t.texture} 织体需要 notes"))
         if "roll_into" in t.options and t.options["roll_into"] not in [s.name for s in score.sections]:
-            problems.append(f"tracks.{t.name}.roll_into: 没有段落 {t.options['roll_into']}")
+            problems.append(Problem("unknown_section", f"tracks.{t.name}.roll_into", f"没有段落 {t.options['roll_into']}"))
     if problems:
         raise ScoreError(problems)
 
@@ -496,8 +502,8 @@ def arrange(score: Score) -> tuple[list[Part], list[str]]:
             bad = [n for n in part.notes if not sound.lo <= n.pitch <= sound.hi]
             if bad:
                 n = bad[0]
-                warnings.append(f"{t.name}: {len(bad)} 个音超出 {t.sound} 音域 "
-                                f"{pitch_name(sound.lo)}–{pitch_name(sound.hi)}（例如 {pitch_name(n.pitch)}，"
-                                f"第 {int(n.start // BEATS_PER_BAR) + 1} 小节）")
+                warnings.append(Problem("note_out_of_range", f"tracks.{t.name}",
+                                        f"{len(bad)} 个音超出 {t.sound} 音域 {pitch_name(sound.lo)}–{pitch_name(sound.hi)}"
+                                        f"（例如 {pitch_name(n.pitch)}，第 {int((n.start + 0.05) // BEATS_PER_BAR) + 1} 小节）"))
         parts.append(part)
     return parts, warnings
