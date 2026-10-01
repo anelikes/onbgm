@@ -260,9 +260,9 @@ def doctor_checks() -> list[dict]:
         found = list(base.glob("*.wav")) if part.endswith("/") else list(base.parent.glob(base.name + "*.wav"))
         add(f"hq_{part.strip('/').replace(' ', '_').lower()}", found, f"{len(found)} 个采样",
             "运行 onbgm fetch（缺少时这件乐器退回 GM）", required=False)
-    from .fetch import SFZ_LIBS, sfz_path
-    for lib in SFZ_LIBS:
-        add(f"hq_{lib.name}", sfz_path(lib, SOUNDS_DIR).exists(), f"{lib.title}：{lib.used_for}",
+    from .fetch import SAMPLE_LIBS, lib_path
+    for lib in SAMPLE_LIBS:
+        add(f"hq_{lib.name}", lib_path(lib, SOUNDS_DIR).exists(), f"{lib.title}：{lib.used_for}",
             "运行 onbgm fetch（缺少时这件乐器退回 GM）", required=False)
     return checks
 

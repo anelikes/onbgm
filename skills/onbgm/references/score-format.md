@@ -216,8 +216,8 @@ sfx:
 | `oboe` | Bb3–G6 | 持续音 | GM |
 | `whistle` | C4–C7 | 持续音 | GM |
 | `choir` | E2–C6 | 持续音 | GM |
-| `vibraphone` | F3–F6 | 衰减音 | GM |
-| `marimba` | A2–C7 | 衰减音 | GM |
+| `vibraphone` | F3–F6 | 衰减音 | 高质量采样（软槌，力度大时换硬槌；按写的时值收音） |
+| `marimba` | A2–C7 | 衰减音 | 高质量采样 |
 | `glockenspiel` | C5–C8 | 衰减音 | 高质量采样 |
 | `guitar-nylon` | E2–E6 | 衰减音 | GM |
 | `guitar-steel` | E2–E6 | 衰减音 | 高质量采样 |
@@ -237,8 +237,9 @@ sfx:
 | `fm-epiano` | FM 电钢琴（DX7 风格） |
 
 鼓组：`drums`（标准）、`drums-room`、`drums-jazz`、`drums-brush`（刷子）、`drums-808`、`drums-electronic`、`drums-synth`（合成鼓组，电子风格首选）。
-- `drums` 和 `drums-room` 用高质量采样的标准鼓组，`drums-jazz` 用高质量采样的爵士鼓组（底鼓小、声音更松）。
-- 这两套采样鼓组没有 conga：用到 `conga-high` / `conga-low` 的轨道会整套退回 GM 鼓组。
+- `drums` 和 `drums-room` 用高质量采样的标准鼓组，`drums-jazz` 用高质量采样的爵士鼓组（底鼓小、声音更松），`drums-brush` 用高质量采样的刷子鼓组。
+- 这两套标准、爵士鼓组没有 conga：用到 `conga-high` / `conga-low` 的轨道会整套退回 GM 鼓组。
+- 刷子鼓组只有底鼓、军鼓、`rim`（刷子扫鼓边）、三种踩镲、`crash`、`ride` 和三个嗵鼓；用到其他鼓（`clap`、`ride-bell`、`tambourine`、`shaker` 等）的轨道整套退回 GM。
 - 只写镲（`crash` 织体）的 `drums` 轨道用管弦乐的镲。
 
 超出音域的音会在报告里给出警告。
