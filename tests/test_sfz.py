@@ -169,10 +169,45 @@ def test_velocity_layers_are_level_matched_at_their_boundary(tmp_path, write_sco
     assert (tmp_path / ".onbgm-levels.json").exists()
 
 
-@pytest.mark.skipif(not (SOUNDS_DIR / "sfz/black-pearl").exists(), reason="需要 AVL 鼓组（onbgm fetch）")
+@pytest.mark.skipif(not (SOUNDS_DIR / "libs/black-pearl").exists(), reason="需要 AVL 鼓组（onbgm fetch）")
 def test_drum_kit_uses_samples_only_when_every_piece_is_in_the_kit():
     from onbgm.library import SF2, resolve
     kit = resolve("drums", "hq", {36, 38, 42, 50, 70})  # 高嗵鼓、沙锤在 AVL 里换了键位
     assert kit(36).name == "black-pearl"
     assert isinstance(resolve("drums", "hq", {36, 62}), SF2)  # conga 没有采样：整套退回 GM
     assert resolve("drums", "hq", {49})(49).name == "crash"  # 只有镲：用管弦乐的镲
+
+
+def test_cc_defaults_resolve_pan_tune_and_amplitude():
+    """回归测试：刷子鼓的库先把整套设成"全部最左、降一个八度"，再靠控制器默认值调回原位；不折算的话全在最左边、低八度。"""
+    r = sfz.apply_cc({"pan": "-100", "pan_oncc71": "200", "set_cc71": "63.5", "tune": "-1200", "tune_oncc72": "2400",
+                      "set_cc72": "63.5", "amplitude_oncc70": "100", "set_cc70": "127", "ampeg_releasecc83": "5",
+                      "set_cc83": "127", "ampeg_release": "0.03", "volume_oncc24": "7"})
+    assert float(r["pan"]) == pytest.approx(0) and float(r["tune"]) == pytest.approx(0)
+    assert float(r["amplitude"]) == pytest.approx(100) and float(r["ampeg_release"]) == pytest.approx(5.03)
+    assert float(r["volume"]) == 0  # 控制器没设默认值：按 0 算
+
+
+def test_silent_regions_only_trigger_choke_groups(tmp_path, write_score):
+    rng = np.random.default_rng(0)
+    sf.write(tmp_path / "open.wav", rng.standard_normal(2 * SR) * 0.1, SR)
+    sf.write(tmp_path / "closed.wav", rng.standard_normal(SR // 4) * 0.1, SR)
+    (tmp_path / "hats.sfz").write_text("""
+        <group> loop_mode=one_shot
+        <region> key=46 sample=open.wav off_by=7
+        <region> key=42 sample=closed.wav
+        <group> group=7 sample=*silence
+        <region> key=42
+    """)
+    inst = load_sfz("hats", tmp_path / "hats.sfz")
+    state = defaultdict(int)
+    assert [z.silent for z in inst.voices(42, 100, state)] == [False, True]
+    score = load(write_score("""
+        meta: {bpm: 120}
+        sections: [{name: a, bars: 1}]
+        harmony: {a: "C"}
+    """))
+    part = Part("x", "drums", SOUNDS["drums"], 0.0, [Note(0.0, 0.25, 46, 100), Note(1.0, 0.25, 42, 100)], [], texture="groove")
+    closed = Part("x", "drums", SOUNDS["drums"], 0.0, [Note(1.0, 0.25, 42, 100)], [], texture="groove")
+    open_hat = render_part(score, part, lambda p: inst, 2 * SR) - render_part(score, closed, lambda p: inst, 2 * SR)
+    assert np.abs(open_hat[round(0.53 * SR):]).max() < 1e-4  # 闭镲的无声区域切断了开镲

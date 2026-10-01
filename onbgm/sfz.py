@@ -9,8 +9,9 @@
 - 播放：offset、end、loop_mode（one_shot / no_loop / loop_continuous），循环点取 loop_start / loop_end
   或 WAV 文件里的 smpl 块；包络 ampeg_attack / hold / decay / sustain / release；pan；
 - trigger：只用按键发声的区域，跳过松键声；
-- 互斥：group / off_by（踩镲闭合时切断开镲）。
-滤波器、LFO 和按控制器调制的参数都不支持，按默认值（不调制）处理。
+- 互斥：group / off_by / off_mode（踩镲闭合时切断开镲），包括只用来触发互斥的无声区域（sample=*silence）；
+- 控制器调制（如 pan_onccN、amplitude_onccN）按控制器的默认值（set_ccN，没写为 0）算成固定值。
+滤波器和 LFO 不支持。
 """
 from __future__ import annotations
 
@@ -88,6 +89,12 @@ def parse(path: Path) -> list[dict]:
                       **levels["global"], **levels["master"], **levels["group"], **ops}
             if "sample" not in merged:
                 continue
+            if merged["sample"].startswith("*"):  # 内置的生成器：只支持 *silence（无声，用来触发互斥组）
+                if merged["sample"] != "*silence":
+                    continue
+                merged["_sample"] = "*silence"
+                regions.append(merged)
+                continue
             sample = (control.get("default_path", "") + merged["sample"]).replace("\\", "/")
             merged["_sample"] = str((path.parent / sample).resolve())
             regions.append(merged)
@@ -148,3 +155,22 @@ def velcurve(region: dict) -> list[tuple[int, float]] | None:
     points.setdefault(0, 0.0)
     points.setdefault(127, 1.0)
     return sorted(points.items())
+
+
+_ADDITIVE = r"pan|tune|volume|offset|ampeg_(?:attack|hold|decay|sustain|release)"
+
+
+def apply_cc(region: dict) -> dict:
+    """把控制器调制按控制器默认值折算进基础值：pan、tune、volume、offset、包络时间是加上 值×控制器/127，
+    amplitude 是乘上 值%×控制器/127。有的库先把整套乐器设成"全部最左、降一个八度"，再靠控制器默认值调回原位。"""
+    out = dict(region)
+    for op, value in region.items():
+        m = re.fullmatch(rf"({_ADDITIVE}|amplitude)_?(?:on)?cc(\d+)", op)  # SFZ 1 写作 ampeg_releaseccN，SFZ 2 写作 _onccN
+        if not m:
+            continue
+        target, cc = m.group(1), float(region.get(f"set_cc{m.group(2)}", 0)) / 127
+        if target == "amplitude":
+            out["amplitude"] = str(float(out.get("amplitude", 100)) * float(value) / 100 * cc)
+        else:
+            out[target] = str(float(out.get(target, 0 if target != "ampeg_sustain" else 100)) + float(value) * cc)
+    return out

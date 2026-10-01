@@ -51,6 +51,8 @@ class Zone:
     loop: tuple[float, float] | None = None  # 循环段（秒）：音符比采样长时重复这一段
     env: tuple[float, float, float, float] | None = None  # 音量包络 (起音, 保持, 衰减, 持续电平) 秒 / 0~1
     release: float | None = None  # 松开后的淡出时间，不设则用乐器的
+    off_fade: float = 0.02  # 被互斥组切断时的淡出时间
+    silent: bool = False  # 无声区域：不发声，只用来触发互斥组
 
 
 @dataclass
@@ -67,6 +69,7 @@ class Instrument:
     sfz: bool = False  # 采样原样使用（不裁静音、不对齐响度），音量按区域的 volume 和力度曲线
     loop: bool = True  # 持续音比采样长时循环中段延长；自然衰减的乐器（电钢琴、吉他）不循环
     kit: bool = False  # 鼓组：每个音高是一件鼓，没有采样的音高不能移调代替
+    source: str = "vsco2"  # 采样来源，显示在渲染报告里
 
     def voices(self, pitch: int, vel: int, rr_state: dict) -> list[Zone]:
         """这个音要发声的区域。SFZ 乐器可能叠好几层（同一轮替位置的区域一起发声）。"""
@@ -78,11 +81,15 @@ class Instrument:
             near = min(self.zones, key=lambda z: (max(z.keys[0] - pitch, pitch - z.keys[1], 0),
                                                   max(z.vels[0] - vel, vel - z.vels[1], 0)))
             cands = [z for z in self.zones if z.keys == near.keys and z.vels == near.vels]
+        silent = [z for z in cands if z.silent]  # 无声区域每次都触发，不参与轮替
+        cands = [z for z in cands if not z.silent]
+        if not cands:
+            return silent
         slots = sorted({z.seq for z in cands})
         k = ("sfz", cands[0].keys, cands[0].vels)
         slot = slots[rr_state[k] % len(slots)]
         rr_state[k] += 1
-        return [z for z in cands if z.seq == slot]
+        return [z for z in cands if z.seq == slot] + silent
 
     def pick(self, pitch: int, vel: int, rr_state: dict) -> Zone:
         zones = self.zones
@@ -202,12 +209,16 @@ def _extend(audio: np.ndarray, needed: int) -> np.ndarray:
 
 # ---------- 乐器定义 ----------
 
-def load_instrument(name: str, folder: Path, **kwargs) -> Instrument | None:
-    """从文件夹按文件名建乐器。音高以频谱检测为准，结果缓存在 .pitch.json。"""
+def load_instrument(name: str, folder: Path, include=lambda f: True, layer_of=None, recursive: bool = False,
+                    **kwargs) -> Instrument | None:
+    """从文件夹按文件名建乐器。音高以频谱检测为准，结果缓存在 .pitch.json。
+    include 筛选用哪些文件；layer_of(文件) 给出力度层（越大越响），不给就用文件名里的 _vN；
+    recursive 表示连子文件夹里的采样一起用（如颤音琴的软槌、硬槌两个文件夹）。"""
     named = {}
-    for f in sorted(folder.glob("*.wav")):
-        if m := _NOTE_RE.search(f.name):
-            named[f] = (12 * (int(m.group(2)) + 1) + _PC[m.group(1)], int(m.group(3) or 1))
+    for f in sorted(folder.rglob("*.wav") if recursive else folder.glob("*.wav")):
+        if include(f) and (m := _NOTE_RE.search(f.name)):
+            layer = layer_of(f) if layer_of else int(m.group(3) or 1)
+            named[f] = (12 * (int(m.group(2)) + 1) + _PC[m.group(1)], layer)
     if not named:
         return None
     cache_path = folder / ".pitch.json"
@@ -245,13 +256,17 @@ def _sample_level(path: Path, offset: float) -> float:
     return float(10 * np.log10(np.mean(k ** 2) + 1e-12))
 
 
+RR_SPREAD_DB = 1.5  # 同一力度的几个轮替采样之间最多差多少（dB）
+
+
 def _smooth_layers(zones: list[Zone], cache_path: Path) -> None:
     """让相邻力度层在交界处音量连续：以最响的一层为准，逐层往下调整增益。
     采样库的力度层是分别录的，交界处常常跳 5~10 dB（多一点力度，音量却突然变大或变小）。
     校准后整体力度曲线接近标准曲线，音色仍随力度换层。每个采样的响度只测一次，存在 cache_path。"""
     groups: dict[tuple, list[Zone]] = defaultdict(list)
     for z in zones:
-        groups[z.keys].append(z)
+        if not z.silent:
+            groups[z.keys].append(z)
     if all(len({z.vels for z in g}) < 2 for g in groups.values()):
         return
     cache = json.loads(cache_path.read_text()) if cache_path.exists() else {}
@@ -269,7 +284,15 @@ def _smooth_layers(zones: list[Zone], cache_path: Path) -> None:
                     cache[key] = _sample_level(z.path, z.offset)
                     dirty = True
                 slots[z.seq] += 10 ** ((cache[key] + z.gain_db) / 10)
-            level.append(float(np.mean([10 * np.log10(p) for p in slots.values()])))
+            db = {seq: 10 * np.log10(p) for seq, p in slots.items()}
+            mean = float(np.mean(list(db.values())))
+            # 同一力度的几个轮替：保留 ±1.5 dB 以内的自然起伏，超出的拉回来（刷子鼓有的轮替差 5 dB 以上）
+            for seq, x in db.items():
+                fix = float(np.clip(x, mean - RR_SPREAD_DB, mean + RR_SPREAD_DB)) - x
+                for z in group:
+                    if z.vels == vels and z.seq == seq:
+                        z.gain_db += fix
+            level.append(float(np.mean([np.clip(x, mean - RR_SPREAD_DB, mean + RR_SPREAD_DB) for x in db.values()])))
         rep = {vels: next(z for z in group if z.vels == vels) for vels in layers}
         correction = [0.0] * len(layers)
         for i in range(len(layers) - 2, -1, -1):  # 从最响的一层往下
@@ -296,8 +319,10 @@ def load_sfz(name: str, path: Path, key_offset: int = 0, remap: dict | None = No
         return None
     zones, releases, one_shot = [], [], []
     for r in sfz.playable(sfz.parse(path)):
+        r = sfz.apply_cc(r)
+        silent = r["_sample"] == "*silence"
         sample = Path(r["_sample"])
-        if not sample.exists():
+        if not silent and not sample.exists():
             continue
         key = r.get("key")
         lo = sfz.note_number(r.get("lokey", key if key is not None else 0)) + key_offset
@@ -305,10 +330,10 @@ def load_sfz(name: str, path: Path, key_offset: int = 0, remap: dict | None = No
         center = sfz.note_number(r.get("pitch_keycenter", key if key is not None else 60)) + key_offset
         gain = float(r.get("volume", 0)) + (20 * np.log10(max(float(r["amplitude"]), 1e-3) / 100)
                                             if "amplitude" in r else 0.0)
-        sr = sf.info(sample).samplerate
+        sr = sf.info(sample).samplerate if not silent else SR
         mode = r.get("loop_mode")
         loop = None
-        if mode not in ("no_loop", "one_shot"):
+        if mode not in ("no_loop", "one_shot") and not silent:
             points = ((int(r["loop_start"]), int(r["loop_end"])) if "loop_start" in r and "loop_end" in r
                       else sfz.wav_loop(sample))
             if points:  # 没写 loop_mode 但采样里有循环点时，SFZ 默认循环播放
@@ -321,17 +346,21 @@ def load_sfz(name: str, path: Path, key_offset: int = 0, remap: dict | None = No
             sample, float(center), 0, center,
             keys=(lo, hi), vels=(int(r.get("lovel", 0)), int(r.get("hivel", 127))),
             seq=float(r["lorand"]) if "lorand" in r else float(r.get("seq_position", 1)),
-            gain_db=gain, offset=int(r.get("offset", 0)) / sr,
+            gain_db=gain, offset=float(r.get("offset", 0)) / sr,
             keytrack=float(r.get("pitch_keytrack", 100)) / 100,
             shift=float(r.get("transpose", 0)) + float(r.get("tune", 0)) / 100,
             veltrack=float(r.get("amp_veltrack", 100)) / 100, velcurve=sfz.velcurve(r),
             choke=r.get("group"), off_by=r.get("off_by"), pan=float(r.get("pan", 0)) / 100,
-            end=(int(r["end"]) + 1) / sr if "end" in r else None, loop=loop, env=env,
+            end=(float(r["end"]) + 1) / sr if "end" in r else None, loop=loop, env=env,
             release=float(r["ampeg_release"]) if "ampeg_release" in r else None,
+            off_fade=float(r.get("ampeg_release", 0.02)) if r.get("off_mode") == "normal" else 0.006,
+            silent=silent,
         ))
+        if silent:
+            continue
         releases.append(float(r.get("ampeg_release", 0.3)))
         one_shot.append(mode == "one_shot")
-    if not zones:
+    if not any(not z.silent for z in zones):
         return None
     if remap:
         from dataclasses import replace
@@ -344,7 +373,7 @@ def load_sfz(name: str, path: Path, key_offset: int = 0, remap: dict | None = No
     _smooth_layers(zones, path.parent / ".onbgm-levels.json")
     settings = {"sustain": not all(one_shot), "release": max(0.05, float(np.median(releases))),
                 "legato_skip": 0.0, "loop": False, **kwargs}
-    return Instrument(name, zones, sfz=True, **settings)
+    return Instrument(name, zones, sfz=True, source="sfz", **settings)
 
 
 def unpitched(name: str, files: list[Path], layer_of=lambda p: 0, **kwargs) -> Instrument | None:
@@ -439,6 +468,8 @@ def render_part(score: Score, part: Part, route, n: int) -> np.ndarray:
 
 def _voice(out, score, note, inst: Instrument, zone: Zone, ends, starts, choke_at, next_any, group_starts, line, n):
     """把一个区域的声音叠加到 out 上。"""
+    if zone.silent:
+        return
     loop = None
     if inst.sfz:
         data, peak_t = _load_raw(zone.path)
@@ -484,7 +515,7 @@ def _voice(out, score, note, inst: Instrument, zone: Zone, ends, starts, choke_a
             times = group_starts.get(zone.off_by, [])
             i = bisect_left(times, t0 + 1e-6)
             if i < len(times) and (cut is None or times[i] < cut):
-                cut, fade_s = times[i], 0.02
+                cut, fade_s = times[i], max(zone.off_fade, 0.006)
         if inst.line_choke:
             # 跳弓这类短音：最多响到谱面写的长度（至少 0.12 秒），旋律线上下一个音出来也立刻收掉
             limits = [t0 + max(score.duration(note.start, note.dur), 0.12)]

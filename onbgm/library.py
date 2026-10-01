@@ -70,7 +70,7 @@ MIX = {
 }
 
 
-KIT_SOUNDS = ("drums", "drums-room", "drums-jazz")
+KIT_SOUNDS = ("drums", "drums-room", "drums-jazz", "drums-brush")
 
 
 def mix_for(sound: str, texture: str = "") -> Mix:
@@ -93,10 +93,15 @@ AVL_KIT = {36: 36, 37: 37, 38: 38, 39: 39, 42: 42, 44: 44, 46: 46, 45: 41, 47: 4
            49: 49, 51: 51, 53: 53, 54: 54, 56: 56, 69: 61, 70: 61}
 
 
-def _sfz_instruments(root: Path) -> dict[str, Instrument]:
-    from .fetch import SFZ_LIBS, sfz_path
+# 刷子鼓组（Swirly Drums）有的鼓：底鼓、军鼓、鼓边、三种踩镲、吊镲、叮叮镲、三个嗵鼓。键位在生成程序时已按 GM 排好
+SWIRLY_KIT = {k: k for k in (36, 37, 38, 42, 44, 46, 45, 47, 50, 49, 51)}
+VIBES_LAYERS = {"soft_v1": 0, "soft_v2": 1, "hard_v2": 2, "hard_v3": 3}  # 软槌两层，硬槌两层：越响越亮
 
-    libs = {lib.name: sfz_path(lib, root) for lib in SFZ_LIBS}
+
+def _sample_libs(root: Path) -> dict[str, Instrument]:
+    from .fetch import SAMPLE_LIBS, lib_path
+
+    libs = {lib.name: lib_path(lib, root) for lib in SAMPLE_LIBS}
     insts = {
         "jrhodes": load_sfz("jrhodes", libs["jrhodes"]),
         "fss-guitar": load_sfz("fss-guitar", libs["fss-guitar"]),
@@ -104,6 +109,16 @@ def _sfz_instruments(root: Path) -> dict[str, Instrument]:
         "black-and-blue": load_sfz("black-and-blue", libs["black-and-blue"], key_offset=-12),
         "black-pearl": load_sfz("black-pearl", libs["black-pearl"], remap=AVL_KIT, kit=True),
         "blonde-bop": load_sfz("blonde-bop", libs["blonde-bop"], remap=AVL_KIT, kit=True),
+        "swirly-drums": load_sfz("swirly-drums", libs["swirly-drums"], remap=SWIRLY_KIT, kit=True),
+        # 颤音琴：按谱面时值收音（相当于每个和弦踩一次踏板），自然衰减，不循环延长
+        "vibraphone": load_instrument(
+            "vibraphone", libs["vcsl-vibraphone"],
+            layer_of=lambda f: VIBES_LAYERS[re.search(r"_(soft|hard)_[A-G]#?\d_(v\d)", f.name).expand(r"\1_\2")],
+            recursive=True, sustain=True, loop=False, release=0.3, legato_skip=0.0, source="vcsl"),
+        "marimba": load_instrument(
+            "marimba", libs["vcsl-marimba"],
+            layer_of=lambda f: {"soft": 0, "med": 1, "loud": 2}[re.search(r"_(soft|med|loud)_", f.name).group(1)],
+            sustain=False, source="vcsl"),
     }
     return {k: i for k, i in insts.items() if i is not None}
 
@@ -135,7 +150,7 @@ def _hq_instruments(root: Path) -> dict[str, Instrument]:
                                pan=insts[legato].pan if insts[legato] else 0.0)
         if insts[legato] and spic:
             insts[legato].articulations = {"staccato": spic}
-    return {k: i for k, i in insts.items() if i is not None} | _sfz_instruments(root)
+    return {k: i for k, i in insts.items() if i is not None} | _sample_libs(root)
 
 
 # 高质量实现：SF2 文件，或采样乐器名，或 [(最高音, 乐器名), ...] 按音区分给不同乐器，
@@ -151,6 +166,9 @@ HQ = {
     "drums": ({49: "crash", 57: "crash"}, "black-pearl"),  # 只有镲时用管弦乐的镲，否则用整套鼓
     "drums-room": "black-pearl",
     "drums-jazz": "blonde-bop",
+    "drums-brush": "swirly-drums",
+    "vibraphone": "vibraphone",
+    "marimba": "marimba",
     "glockenspiel": "glock",
     "epiano": "jrhodes",
     "guitar-steel": "fss-guitar",
@@ -164,7 +182,7 @@ def _route(spec, insts: dict[str, Instrument], pitches: set[int]):
         return next((r for s in spec if (r := _route(s, insts, pitches)) is not None), None)
     if isinstance(spec, str) and spec in insts:
         inst = insts[spec]
-        if inst.kit and not all(any(z.keys[0] <= p <= z.keys[1] for z in inst.zones) for p in pitches):
+        if inst.kit and not all(any(z.keys[0] <= p <= z.keys[1] for z in inst.zones if not z.silent) for p in pitches):
             return None
         return lambda pitch, i=inst: i
     if isinstance(spec, list) and all(name in insts for _, name in spec):

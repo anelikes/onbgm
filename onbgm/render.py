@@ -78,7 +78,7 @@ def _describe(impl) -> str:
         return impl.file
     insts = list({id(i): i for i in (impl(p) for p in range(21, 109))}.values())
     names = "/".join(sorted(i.name for i in insts))
-    return f"sfz: {names}" if any(i.sfz for i in insts) else f"vsco2: {names}"
+    return f"{insts[0].source}: {names}"
 
 
 def render_stems(score: Score, parts: list[Part], soundset: str):
