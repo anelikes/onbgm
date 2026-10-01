@@ -211,7 +211,14 @@ def _parse_melody(text: str, section: Section, where: str, problems: list[str]) 
 
 
 def load(path: str | Path) -> Score:
-    raw = yaml.safe_load(Path(path).read_text(encoding="utf-8")) or {}
+    try:
+        raw = yaml.safe_load(Path(path).read_text(encoding="utf-8")) or {}
+    except yaml.YAMLError as e:
+        raise ScoreError([f"YAML 语法错误: {e}"]) from None
+    from .schema import validate
+
+    if problems := validate(raw):
+        raise ScoreError(problems)
     problems: list[str] = []
     meta = raw.get("meta") or {}
 

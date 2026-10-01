@@ -1,7 +1,7 @@
 # 咖啡馆爵士 BGM：钢琴三重奏（钢琴和弦 + 低音提琴走低音 + 刷子鼓），约 45 秒，可循环
 # 第 30 秒进入高潮段，加入旋律。结尾两小节是 ii-V 回到开头的 Fmaj7，便于无缝循环。
+title: cafe_jazz
 meta:
-  title: cafe_jazz
   bpm: auto
   length: "0:45"
   swing: 0.62

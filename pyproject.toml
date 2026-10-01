@@ -12,6 +12,7 @@ dependencies = [
     "pyloudnorm",
     "matplotlib",
     "soxr",
+    "jsonschema",
 ]
 
 [project.optional-dependencies]

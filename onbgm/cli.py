@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import argparse
+import json
 import sys
 from pathlib import Path
 
@@ -12,6 +13,7 @@ from .arrange import arrange
 from .fetch import fetch_all
 from .library import SOUNDS_DIR
 from .render import SR, render
+from .schema import score_schema
 from .score import ScoreError, load
 
 
@@ -25,10 +27,14 @@ def main() -> None:
     sub.choices["render"].add_argument("--soundset", choices=["hq", "gm"], default="hq",
                                        help="hq：高质量采样（缺的乐器自动退回 gm）；gm：只用 GeneralUser GS")
     sub.add_parser("fetch", help="下载音源到 sounds/")
+    sub.add_parser("schema", help="输出乐谱格式的 JSON Schema")
     args = ap.parse_args()
 
     if args.cmd == "fetch":
         fetch_all(SOUNDS_DIR)
+        return
+    if args.cmd == "schema":
+        print(json.dumps(score_schema(), ensure_ascii=False, indent=2))
         return
 
     try:
