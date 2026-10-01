@@ -5,7 +5,7 @@ from onbgm.midi_io import _expand
 from onbgm.score import load
 from onbgm.theory import GUITAR_STRINGS, guitar_voicing, parse_chord
 
-EXAMPLES = Path(__file__).resolve().parent.parent / "examples"
+EXAMPLES = Path(__file__).resolve().parent.parent / "onbgm" / "examples"
 
 
 def _notes(parts):

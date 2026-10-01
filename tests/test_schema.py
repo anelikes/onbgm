@@ -19,7 +19,7 @@ def test_texture_field_table_covers_every_texture():
     assert set(TEXTURE_FIELDS) == set(TEXTURES)
 
 
-@pytest.mark.parametrize("path", sorted((ROOT / "examples").glob("*.yaml")) + sorted((ROOT / "experiments").glob("*/*.yaml")))
+@pytest.mark.parametrize("path", sorted((ROOT / "onbgm" / "examples").glob("*.yaml")) + sorted((ROOT / "experiments").glob("*/*.yaml")))
 def test_examples_and_agent_scores_validate(path):
     load(path)
 
@@ -78,3 +78,18 @@ def test_by_section_must_name_real_sections_and_overridable_fields(write_score):
     """)
     assert any("by_section.bridge: 没有这个段落" in p for p in problems)
     assert any("by_section.chorus: bassline 的段落覆盖里不能写 'low'" in p for p in problems)
+
+
+def _doc_scores():
+    """skill 文档里完整的乐谱示例（含 sections 的 yaml 代码块）。"""
+    import re
+    for md in sorted((ROOT / "skills").rglob("*.md")):
+        for block in re.findall(r"```yaml\n(.*?)```", md.read_text(encoding="utf-8"), re.S):
+            if "sections:" in block:
+                yield pytest.param(block, id=md.name)
+
+
+@pytest.mark.parametrize("text", list(_doc_scores()))
+def test_scores_in_skill_docs_are_valid(write_score, text):
+    from onbgm.arrange import arrange
+    arrange(load(write_score(text)))
