@@ -196,14 +196,16 @@ def _solve_tempo(meta: dict, sections: list[Section], problems: list[Problem]) -
         problems.append(Problem("missing_bpm", "meta.bpm",
                                 "缺少速度：写一个数字（如 90），或写 auto 并用 meta.length 或段落的 at 约束时间"))
         bpm = 90.0
-    elif bpm == "auto":
-        usable = [c for c in constraints if c[1] > 0 and c[2] > 0]
-        solved = tempo.solve_base(bounds, specs, usable[0][1], usable[0][2]) if usable else None
+    auto = bpm == "auto"
+    if auto:
+        # 依次尝试每个时间约束，用第一个基准速度影响得到的那个来反推
+        solved = next((b for _, beats, secs in constraints if beats > 0 and secs > 0
+                       for b in [tempo.solve_base(bounds, specs, beats, secs)] if b is not None), None)
         if solved is None:
             problems.append(Problem("no_time_constraint", "meta.bpm",
                                     "为 auto 时需要至少一个基准速度影响得到的时间约束（meta.length 或某个段落的 at；"
                                     "如果它之前的段落都设了自己的 tempo，基准速度就影响不到它）"))
-            solved = 90.0
+            return 90.0, tempo.build(bounds, specs, 90.0)
         bpm = solved
     base = float(bpm)
     tmap = tempo.build(bounds, specs, base)
@@ -211,12 +213,19 @@ def _solve_tempo(meta: dict, sections: list[Section], problems: list[Problem]) -
         actual = tmap.seconds(beats)
         if abs(actual - secs) <= 0.01:
             continue
-        msg = f"要求 {fmt_time(secs)}，但在 {base:g} BPM 下实际是 {fmt_time(actual)}。可以："
+        msg = f"要求 {fmt_time(secs)}，但在 {base:g} BPM 下实际是 {fmt_time(actual)}。"
+        if auto:
+            msg += "几个时间约束在同一个主速度下互相矛盾（主速度已按第一个约束算出）。"
+        msg += "可以："
         options, fix = [], {}
-        need_base = tempo.solve_base(bounds, specs, beats, secs) if secs > 0 else None
+        if where == "meta.length" and 0 < secs - actual <= 4:
+            # 视频结尾通常是停留画面：差几秒用余音补齐最自然，也不会打乱前面的时间点
+            fix["tail"] = round(secs - actual, 3)
+            options.append(f"如果结尾是停留画面，删掉 meta.length、写 meta.tail: {secs - actual:.2f}，用余音补齐（推荐，不影响其他时间点）")
+        need_base = tempo.solve_base(bounds, specs, beats, secs) if secs > 0 and not auto else None
         if need_base is not None:
             fix["bpm"] = round(need_base, 2)
-            options.append(f"把 bpm 改为 {need_base:.2f}（或 auto）")
+            options.append(f"把 bpm 改为 {need_base:.2f}（会改变其他时间点）")
         # 保持基准速度：前面需要多少小节（设了 tempo 的段落时长不变）
         before = [(s, seg) for s, seg in zip(sections, tmap.segments) if s.end <= beats]
         fixed_s = sum(seg.seconds_into(seg.end) for s, seg in before if s.tempo is not None)

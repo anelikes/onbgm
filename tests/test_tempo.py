@@ -86,3 +86,31 @@ def test_bad_tempo_is_reported(write_score):
       - {name: b, bars: 2}
       - {name: c, bars: 2}""")
     assert err.value.problems[0].path == "sections.0.tempo"
+
+
+def test_auto_bpm_conflict_does_not_suggest_changing_bpm(write_score):
+    """回归测试：bpm 已经是 auto，报错却同时建议"把 bpm 改为 X（或 auto）"。"""
+    with pytest.raises(ScoreError) as err:
+        load(write_score("""
+            meta: {bpm: auto}
+            sections:
+              - {name: a, bars: 2}
+              - {name: b, bars: 2, at: "0:04"}
+              - {name: c, bars: 2, at: "0:09"}
+            harmony: {a: "C", b: "G", c: "C"}
+        """))
+    p = err.value.problems[0]
+    assert p.path == "sections.c.at" and "互相矛盾" in p.message and "把 bpm 改为" not in p.message
+
+
+def test_length_shortfall_suggests_a_tail(write_score):
+    with pytest.raises(ScoreError) as err:
+        load(write_score("""
+            meta: {bpm: 120, length: "0:13"}
+            sections:
+              - {name: a, bars: 2}
+              - {name: b, bars: 4}
+            harmony: {a: "C", b: "G"}
+        """))
+    p = err.value.problems[0]
+    assert p.path == "meta.length" and p.fix["tail"] == 1.0

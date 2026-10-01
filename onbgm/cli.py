@@ -157,17 +157,22 @@ def cmd_fit(args) -> None:
     if times != sorted(times) or len(set(times)) != len(times) or (times and times[0] <= 0) or \
             (length and times and times[-1] >= length):
         _fail([Problem("out_of_range", "", "节点要按时间递增、大于 0、且都在总时长之内")], args.json)
-    result = fit(cues, length, bpm_range, hits, args.top)
+    result = fit(cues, length, bpm_range, hits, args.top, args.ending_tempo)
     plans = result["plans"]
     if args.write and plans:
         Path(args.write).write_text(plans[0]["skeleton"], encoding="utf-8")
     lines = []
     for i, p in enumerate(plans, 1):
         changes = sum(1 for s in p["sections"] if s["tempo"] is not None)
-        lines.append(f"方案 {i}：基准 {p['bpm']:g} BPM，" + (f"{changes} 段单独变速，最大偏差 {p['max_deviation_pct']:g}%"
-                                                         if changes else "所有节点都正好落在小节线上，不用变速"))
+        lines.append(f"方案 {i}：主速度 {p['bpm']:g} BPM，" + (
+            f"{changes} 段单独设速度，相邻段落最大速度跳变 {p['max_jump_pct']:g}%" if changes
+            else "所有节点都在同一个速度下正好落在小节线上"))
         for s in p["sections"]:
-            extra = f"  速度 {s['tempo']:g}（{s['deviation_pct']:+g}%）" if s["tempo"] is not None else ""
+            extra = f"  速度 {s['tempo']:g}" if s["tempo"] is not None else ""
+            if s["jump_pct"]:
+                extra += f"（比上一段{'快' if s['jump_pct'] > 0 else '慢'} {abs(s['jump_pct']):g}%）"
+            if s["ramp_to"]:
+                extra += f"  渐慢到 {s['ramp_to']:g} BPM"
             if s["tail_s"] > 0.01:
                 extra += f"  之后余音 {s['tail_s']:g} 秒"
             lines.append(f"  {s['name']:<10} {fmt_time(s['start_s'])}–{fmt_time(s['end_s'])}  {s['bars']:>2} 小节{extra}")
@@ -304,6 +309,7 @@ def main() -> None:
     p.add_argument("--bpm", default="80-140", help="基准速度范围，如 100-130（默认 80-140）")
     p.add_argument("--hit", action="append", default=[], help="只放音效、不分段的时间点（报告它落在第几拍），可重复")
     p.add_argument("--top", type=int, default=3, help="给出几个方案")
+    p.add_argument("--ending-tempo", type=float, help="结尾渐慢到这个速度（如 60），最后一段会按渐慢后的实际时长排")
     p.add_argument("--write", help="把方案 1 的乐谱骨架写到这个文件")
     p = add("catalog", cmd_catalog, "搜索现成的写法（鼓组、扫弦、低音、和弦伴奏、和弦进行）和可用的构件")
     p.add_argument("-q", "--query", help="用自然语言描述，如 \"慵懒的 lo-fi 鼓\"")
