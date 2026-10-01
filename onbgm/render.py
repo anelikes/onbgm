@@ -76,8 +76,9 @@ def _describe(impl) -> str:
         return f"synth: {impl.name}"
     if isinstance(impl, library.SF2):
         return impl.file
-    names = sorted({impl(p).name for p in range(21, 109)})
-    return "vsco2: " + "/".join(names)
+    insts = list({id(i): i for i in (impl(p) for p in range(21, 109))}.values())
+    names = "/".join(sorted(i.name for i in insts))
+    return f"sfz: {names}" if any(i.sfz for i in insts) else f"vsco2: {names}"
 
 
 def render_stems(score: Score, parts: list[Part], soundset: str):
@@ -263,7 +264,7 @@ def _place(audio: np.ndarray, m: library.Mix, bpm: float) -> np.ndarray:
 
 
 def mix(stems: dict[str, np.ndarray], parts: list[Part], bpm: float) -> np.ndarray:
-    placed = {p.name: _place(stems[p.name], library.mix_for(p.sound_name), bpm) * _db(p.gain_db) for p in parts}
+    placed = {p.name: _place(stems[p.name], library.mix_for(p.sound_name, p.texture), bpm) * _db(p.gain_db) for p in parts}
     dry = sum(placed.values())
     send = sum(placed[p.name] * p.sound.reverb for p in parts)
     send = Pedalboard([HighpassFilter(200), LowpassFilter(9000)])(np.ascontiguousarray(send.T), SR).T

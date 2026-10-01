@@ -83,4 +83,4 @@ climax 段声部平衡: lead -14.6  piano -18.1  pad -18.4 …            ← �
 - 时长、循环、淡出、收尾都在乐谱里表达，不要用 ffmpeg 等工具剪辑或拼接输出的音频。
 - 不要为了"修"结果去改 onbgm 的源码或音源。
 - 乐谱格式以 `onbgm schema` 输出的 JSON Schema 为准，本文档和它不一致时以 schema 为准。
-- 渲染需要 fluidsynth 和音源（`onbgm fetch`，约 700MB）。`onbgm doctor` 会检查这两样。缺了高质量音源会自动退回 GM 音色；也可以用 `--soundset gm` 快速出草稿。
+- 渲染需要 fluidsynth 和音源（`onbgm fetch`，约 1GB）。`onbgm doctor` 会检查这两样。缺了高质量音源会自动退回 GM 音色；也可以用 `--soundset gm` 快速出草稿。

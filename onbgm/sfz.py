@@ -5,12 +5,17 @@
 - #define 变量替换和 #include；
 - 区域选择：key / lokey / hikey、lovel / hivel、pitch_keycenter；轮替：seq_length / seq_position、lorand / hirand；
 - 音量和音高：volume（dB）、amplitude（%）、amp_veltrack、tune（音分）、transpose、pitch_keytrack；
-- 播放：offset、loop_mode（one_shot / no_loop / loop_continuous）、ampeg_release、trigger（只用 attack，跳过 release 采样）；
+- 力度：amp_veltrack 和 amp_velcurve_N（按力度层分段的力度曲线）；
+- 播放：offset、end、loop_mode（one_shot / no_loop / loop_continuous），循环点取 loop_start / loop_end
+  或 WAV 文件里的 smpl 块；包络 ampeg_attack / hold / decay / sustain / release；pan；
+- trigger：只用按键发声的区域，跳过松键声；
 - 互斥：group / off_by（踩镲闭合时切断开镲）。
+滤波器、LFO 和按控制器调制的参数都不支持，按默认值（不调制）处理。
 """
 from __future__ import annotations
 
 import re
+import struct
 from pathlib import Path
 
 _NOTE = {"c": 0, "d": 2, "e": 4, "f": 5, "g": 7, "a": 9, "b": 11}
@@ -63,7 +68,9 @@ def _opcodes(chunk: str) -> dict[str, str]:
 def parse(path: Path) -> list[dict]:
     """返回每个 region 合并了上层设定之后的 opcode 字典，并补上 _sample（音频的绝对路径）。"""
     text = _preprocess(path, {})
-    levels = {"global": {}, "master": {}, "group": {}}
+    first = text.find("<")
+    # 写在第一个头之前的设定（不规范，但有的库这么写），当作最外层的默认值
+    levels = {"global": _opcodes(text[:first] if first >= 0 else text), "master": {}, "group": {}}
     control: dict[str, str] = {}
     regions = []
     for header, body in re.findall(r"<(\w+)>([^<]*)", text):
@@ -107,3 +114,37 @@ def playable(regions: list[dict]) -> list[dict]:
         if ok:
             out.append(r)
     return out
+
+
+def wav_loop(path: Path) -> tuple[int, int] | None:
+    """WAV 文件 smpl 块里的第一个循环（起点, 终点），单位是采样点，终点包含在循环内。"""
+    try:
+        with open(path, "rb") as f:
+            head = f.read(12)
+            if head[:4] != b"RIFF" or head[8:12] != b"WAVE":
+                return None
+            while chunk := f.read(8):
+                if len(chunk) < 8:
+                    return None
+                cid, size = chunk[:4], struct.unpack("<I", chunk[4:])[0]
+                if cid != b"smpl":
+                    f.seek(size + (size & 1), 1)
+                    continue
+                data = f.read(size)
+                if struct.unpack("<I", data[28:32])[0] < 1:
+                    return None
+                start, end = struct.unpack("<II", data[44:52])
+                return (start, end) if end > start else None
+    except OSError:
+        return None
+    return None
+
+
+def velcurve(region: dict) -> list[tuple[int, float]] | None:
+    """amp_velcurve_N 定义的力度曲线点（力度, 增益），补上两端 (0, 0) 和 (127, 1)；没有定义返回 None。"""
+    points = {int(m.group(1)): float(v) for k, v in region.items() if (m := re.fullmatch(r"amp_velcurve_(\d+)", k))}
+    if not points:
+        return None
+    points.setdefault(0, 0.0)
+    points.setdefault(127, 1.0)
+    return sorted(points.items())

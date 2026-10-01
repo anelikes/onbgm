@@ -6,6 +6,7 @@ import soundfile as sf
 
 from onbgm import sfz
 from onbgm.arrange import Note, Part, SOUNDS
+from onbgm.library import SOUNDS_DIR
 from onbgm.sampler import SR, detect_pitch, load_sfz, render_part
 from onbgm.score import load
 
@@ -65,7 +66,7 @@ def test_voices_select_by_key_and_velocity_and_alternate_round_robins(lib):
     assert inst.sfz and inst.sustain and inst.release == 0.4 and len(inst.zones) == 4
     state = defaultdict(int)
     soft = inst.voices(62, 40, state)
-    assert [z.path.name for z in soft] == ["c4 soft.wav"] and soft[0].gain_db == -6
+    assert [z.path.name for z in soft] == ["c4 soft.wav"]
     loud = [inst.voices(62, 100, state)[0].path.name for _ in range(3)]
     assert loud == ["c4 loud.wav", "c4 loud rr2.wav", "c4 loud.wav"]
     assert inst.voices(70, 100, state)[0].path.name == "g4.wav"
@@ -124,3 +125,54 @@ def test_closed_hat_chokes_the_open_hat(tmp_path, write_score):
     open_hat = both - closed
     assert np.abs(open_hat[round(0.4 * SR): round(0.45 * SR)]).max() > 0.01  # 闭镲之前开镲一直在响
     assert np.abs(open_hat[round(0.53 * SR):]).max() < 1e-4  # 0.5 秒闭镲一出来，开镲 20ms 内收掉
+
+
+def test_sample_preroll_is_compensated_so_the_attack_lands_on_the_beat(tmp_path, write_score):
+    """回归测试：贝斯采样开头有约 25ms 的手指预备音，原样播放时整条贝斯拖拍。"""
+    t = np.arange(SR) / SR
+    pre = int(0.025 * SR)
+    audio = np.concatenate([np.full(pre, 0.01), np.sin(2 * np.pi * 110 * t) * np.exp(-3 * t)])
+    sf.write(tmp_path / "a2.wav", audio, SR)
+    (tmp_path / "b.sfz").write_text("<region> key=45 sample=a2.wav")
+    inst = load_sfz("b", tmp_path / "b.sfz")
+    score = load(write_score("""
+        meta: {bpm: 120}
+        sections: [{name: a, bars: 1}]
+        harmony: {a: "C"}
+    """))
+    part = Part("x", "piano", SOUNDS["piano"], 0.0, [Note(1.0, 1.0, 45, 127)], [], texture="line")
+    out = np.abs(render_part(score, part, lambda p: inst, SR)).max(axis=1)
+    attack = int(np.argmax(out > out.max() * 0.1))
+    assert abs(attack - round(0.5 * SR)) < round(0.001 * SR)  # 第 2 拍 = 0.5 秒，误差 1ms 内
+
+
+def test_velocity_layers_are_level_matched_at_their_boundary(tmp_path, write_score):
+    """回归测试：贝斯库的 f 层没写力度曲线，力度从 95 到 96 音量反而掉了 4~6 dB。
+    加载时校准各层增益，让相邻层在交界处音量连续，最响的一层保持原样。"""
+    _sine(tmp_path / "soft.wav", 45, amp=0.3)
+    _sine(tmp_path / "loud.wav", 45, amp=0.1)  # 响的那层采样反而录得轻
+    (tmp_path / "b.sfz").write_text("""
+        <region> key=45 hivel=63 sample=soft.wav
+        <region> key=45 lovel=64 sample=loud.wav
+    """)
+    inst = load_sfz("b", tmp_path / "b.sfz")
+    score = load(write_score("""
+        meta: {bpm: 120}
+        sections: [{name: a, bars: 1}]
+        harmony: {a: "C"}
+    """))
+    def peak(vel):
+        part = Part("x", "piano", SOUNDS["piano"], 0.0, [Note(0.0, 1.0, 45, vel)], [], texture="line")
+        return 20 * np.log10(np.abs(render_part(score, part, lambda p: inst, SR)).max())
+    assert abs(peak(64) - peak(63)) < 0.5
+    assert peak(127) == pytest.approx(20 * np.log10(0.1), abs=0.5)  # 最响的一层不动
+    assert (tmp_path / ".onbgm-levels.json").exists()
+
+
+@pytest.mark.skipif(not (SOUNDS_DIR / "sfz/black-pearl").exists(), reason="需要 AVL 鼓组（onbgm fetch）")
+def test_drum_kit_uses_samples_only_when_every_piece_is_in_the_kit():
+    from onbgm.library import SF2, resolve
+    kit = resolve("drums", "hq", {36, 38, 42, 50, 70})  # 高嗵鼓、沙锤在 AVL 里换了键位
+    assert kit(36).name == "black-pearl"
+    assert isinstance(resolve("drums", "hq", {36, 62}), SF2)  # conga 没有采样：整套退回 GM
+    assert resolve("drums", "hq", {49})(49).name == "crash"  # 只有镲：用管弦乐的镲

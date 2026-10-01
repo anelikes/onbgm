@@ -13,7 +13,7 @@ from pathlib import Path
 
 from pedalboard import HighpassFilter, HighShelfFilter, PeakFilter
 
-from .sampler import Instrument, load_instrument, pitched_hits, unpitched
+from .sampler import Instrument, load_instrument, load_sfz, pitched_hits, unpitched
 
 def _sounds_dir() -> Path:
     """音源目录：环境变量 ONBGM_SOUNDS 优先；在源码仓库里开发时用仓库下的 sounds/；
@@ -55,7 +55,8 @@ MIX = {
     "contrabass": Mix(0.35, 0.4, [HighpassFilter(30), PeakFilter(220, -2, 1.0)]),
     "pizzicato": Mix(0.3, 0.5, [HighpassFilter(40)]),
     "timpani": Mix(-0.15, 0.6, [HighpassFilter(35)]),
-    "drums": Mix(0.15, 0.8, [HighpassFilter(250)]),
+    "drums": Mix(0.15, 0.8, [HighpassFilter(250)]),  # 单独的镲轨（crash 织体），管弦乐里的位置
+    "drum-kit": Mix(0.0, 0.9, [HighpassFilter(30)]),  # 完整鼓组：每件鼓的左右位置由采样库定
     "synth-pluck": Mix(0.0, 0.8, [HighpassFilter(120)], delay_beats=0.75, delay_feedback=0.35, delay_mix=0.25),
     "synth-pad": Mix(0.0, 1.0, [HighpassFilter(150), PeakFilter(400, -2, 0.8)]),
     "supersaw": Mix(0.0, 1.0, [HighpassFilter(150)]),
@@ -69,7 +70,12 @@ MIX = {
 }
 
 
-def mix_for(sound: str) -> Mix:
+KIT_SOUNDS = ("drums", "drums-room", "drums-jazz")
+
+
+def mix_for(sound: str, texture: str = "") -> Mix:
+    if sound in KIT_SOUNDS and texture == "groove":
+        return MIX["drum-kit"]
     return MIX.get(sound, Mix())
 
 
@@ -79,6 +85,27 @@ def _vel_layer(f: Path) -> int:
 
 def _dyn_layer(f: Path) -> int:
     return {"pp": 0, "mp": 1, "mf": 2, "ff": 3}[re.search(r"_(pp|mp|mf|ff)_", f.name).group(1)]
+
+
+# 我们的鼓名（GM 键位）→ AVL 鼓组的键位。AVL 只有一个落地嗵鼓和一个嗵鼓：高嗵鼓用嗵鼓升 3 个半音；
+# 沙锤和卡巴萨都用库里的沙锤。conga 没有，用到时整套鼓退回 GM。
+AVL_KIT = {36: 36, 37: 37, 38: 38, 39: 39, 42: 42, 44: 44, 46: 46, 45: 41, 47: 45, 50: (45, 3),
+           49: 49, 51: 51, 53: 53, 54: 54, 56: 56, 69: 61, 70: 61}
+
+
+def _sfz_instruments(root: Path) -> dict[str, Instrument]:
+    from .fetch import SFZ_LIBS, sfz_path
+
+    libs = {lib.name: sfz_path(lib, root) for lib in SFZ_LIBS}
+    insts = {
+        "jrhodes": load_sfz("jrhodes", libs["jrhodes"]),
+        "fss-guitar": load_sfz("fss-guitar", libs["fss-guitar"]),
+        # 这个库按贝斯的记谱习惯映射（比实际发声高一个八度），我们的音高是实际发声的音高
+        "black-and-blue": load_sfz("black-and-blue", libs["black-and-blue"], key_offset=-12),
+        "black-pearl": load_sfz("black-pearl", libs["black-pearl"], remap=AVL_KIT, kit=True),
+        "blonde-bop": load_sfz("blonde-bop", libs["blonde-bop"], remap=AVL_KIT, kit=True),
+    }
+    return {k: i for k, i in insts.items() if i is not None}
 
 
 @lru_cache(maxsize=None)
@@ -108,10 +135,11 @@ def _hq_instruments(root: Path) -> dict[str, Instrument]:
                                pan=insts[legato].pan if insts[legato] else 0.0)
         if insts[legato] and spic:
             insts[legato].articulations = {"staccato": spic}
-    return {k: i for k, i in insts.items() if i is not None}
+    return {k: i for k, i in insts.items() if i is not None} | _sfz_instruments(root)
 
 
-# 高质量实现：SF2 文件，或采样乐器名，或 [(最高音, 乐器名), ...] 按音区分给不同乐器
+# 高质量实现：SF2 文件，或采样乐器名，或 [(最高音, 乐器名), ...] 按音区分给不同乐器，
+# 或 {音高: 乐器名}（只有用到的音高都在表里时才用），或 (方案, 方案, ...) 依次尝试
 HQ = {
     "piano": SF2("SalamanderGrandPiano.sf2", 0),
     "strings": "violins",
@@ -120,9 +148,30 @@ HQ = {
     "contrabass": "basses",
     "pizzicato": [(35, "bass-pizz"), (127, "cello-pizz")],
     "timpani": "timpani",
-    "drums": {49: "crash", 57: "crash"},
+    "drums": ({49: "crash", 57: "crash"}, "black-pearl"),  # 只有镲时用管弦乐的镲，否则用整套鼓
+    "drums-room": "black-pearl",
+    "drums-jazz": "blonde-bop",
     "glockenspiel": "glock",
+    "epiano": "jrhodes",
+    "guitar-steel": "fss-guitar",
+    "electric-bass": "black-and-blue",
 }
+
+
+def _route(spec, insts: dict[str, Instrument], pitches: set[int]):
+    """按 HQ 里的写法返回 route(pitch) -> Instrument；需要的乐器不全、或鼓组缺用到的鼓时返回 None。"""
+    if isinstance(spec, tuple):
+        return next((r for s in spec if (r := _route(s, insts, pitches)) is not None), None)
+    if isinstance(spec, str) and spec in insts:
+        inst = insts[spec]
+        if inst.kit and not all(any(z.keys[0] <= p <= z.keys[1] for z in inst.zones) for p in pitches):
+            return None
+        return lambda pitch, i=inst: i
+    if isinstance(spec, list) and all(name in insts for _, name in spec):
+        return lambda pitch: insts[next(name for top, name in spec if pitch <= top)]
+    if isinstance(spec, dict) and pitches <= set(spec) and all(name in insts for name in spec.values()):
+        return lambda pitch: insts[spec.get(pitch, next(iter(spec.values())))]
+    return None
 
 
 def resolve(sound: str, soundset: str, pitches: set[int] = frozenset(), root: Path = SOUNDS_DIR):
@@ -139,12 +188,6 @@ def resolve(sound: str, soundset: str, pitches: set[int] = frozenset(), root: Pa
         if isinstance(spec, SF2):
             if (root / spec.file).exists():
                 return spec
-        else:
-            insts = _hq_instruments(root)
-            if isinstance(spec, str) and spec in insts:
-                return lambda pitch, i=insts[spec]: i
-            if isinstance(spec, list) and all(name in insts for _, name in spec):
-                return lambda pitch: insts[next(name for top, name in spec if pitch <= top)]
-            if isinstance(spec, dict) and pitches <= set(spec) and all(name in insts for name in spec.values()):
-                return lambda pitch: insts[spec.get(pitch, next(iter(spec.values())))]
+        elif (route := _route(spec, _hq_instruments(root), set(pitches))) is not None:
+            return route
     return SF2(GM_SF2)
