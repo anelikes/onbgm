@@ -102,3 +102,21 @@ def test_timeline_and_render_report_sfx(write_score, tmp_path):
                          capture_output=True, text=True)
     data = json.loads(out.stdout)
     assert data["ok"] and len(data["sfx"]) == 2 and (tmp_path / "o" / "stems" / "sfx.wav").exists()
+    assert all("level_db" in x and "vs_music_db" in x for x in data["sfx"])
+
+
+@pytest.mark.parametrize("kind", ["riser", "reverse-cymbal", "downlifter", "impact", "sub-drop", "whoosh", "pop", "ding"])
+def test_same_level_sounds_equally_loud(write_score, kind):
+    """回归测试：同样 level 0.8，pop 曾比上升音响 8 dB（按 400ms 窗口定音量，短音效被窗口里的静音骗了）。"""
+    from onbgm.sfx import TARGET_DB, peak_level
+    _, audio, _, _ = _render(write_score, f"      - {{type: {kind}, at: drop, level: 0.8}}")
+    nz = audio[np.abs(audio).max(axis=1) > 1e-6]
+    assert abs(peak_level(nz) - (TARGET_DB + 20 * np.log10(0.8))) < 0.5
+
+
+def test_removing_one_sfx_leaves_the_others_identical(write_score):
+    """回归测试：随机种子曾按列表序号取，删掉前面一个音效，后面没动的上升音波形也会变。"""
+    _, both, _, _ = _render(write_score, "      - {type: whoosh, at: \"0:02\"}\n      - {type: riser, at: drop, length: 8}")
+    _, alone, _, _ = _render(write_score, "      - {type: riser, at: drop, length: 8}")
+    riser = slice(at(4.0), at(8.0))  # whoosh 在 2.5 秒前就结束了，和上升音不重叠
+    assert np.array_equal(both[riser], alone[riser])

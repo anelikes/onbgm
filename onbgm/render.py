@@ -293,7 +293,14 @@ def render(score: Score, parts: list[Part], out: Path, soundset: str = "hq") -> 
     if score.sfx:
         sfx_audio, duck, placed_sfx = sfx.render(score, score.sfx, len(full))
         wet = Pedalboard([HighpassFilter(200), LowpassFilter(9000)])(np.ascontiguousarray(sfx_audio.T), SR).T
-        full = full * duck[:, None] + sfx_audio + _convolve(wet, hall_ir()) * 0.25
+        music = full * duck[:, None]
+        for row in placed_sfx:  # 音效比当时的音乐响多少（同样的 K 计权），用来核对"再轻一点"之类的修改
+            a, b = round(row["start_s"] * SR), round(row["end_s"] * SR)
+            if b - a < int(0.4 * SR):
+                mid = (a + b) // 2
+                a, b = max(0, mid - int(0.2 * SR)), mid + int(0.2 * SR)
+            row["vs_music_db"] = round(row["level_db"] - sfx.average_level(music[a:b]), 1)
+        full = music + sfx_audio + _convolve(wet, hall_ir()) * 0.25
         stems["sfx"] = sfx_audio
         sf.write(out / "stems" / "sfx.wav", sfx_audio, SR, subtype="PCM_24")
     files: dict[str, Path] = {}

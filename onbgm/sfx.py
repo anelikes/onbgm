@@ -11,8 +11,7 @@ import zlib
 from dataclasses import dataclass
 
 import numpy as np
-import pyloudnorm as pyln
-from pedalboard import HighpassFilter, LadderFilter, LowpassFilter, Pedalboard
+from pedalboard import HighpassFilter, HighShelfFilter, LadderFilter, LowpassFilter, Pedalboard
 
 from .synth import PRESETS, SR, drum_hit, oscillator, render_note
 from .theory import place
@@ -36,7 +35,7 @@ SFX_TYPES = {
     "pop": SfxType("start", None, "pop：短促的音调气泡声，和当前和弦同调（图标、文字出现）", 0.15),
     "ding": SfxType("start", None, "ding：FM 钟声提示音，弹当前和弦的根音（完成、logo、通知）", 0.9),
 }
-TARGET_LUFS = -15.0  # level = 1 时，音效最响的 400ms 的响度（和高潮段的音乐相当）
+TARGET_DB = -14.0  # level = 1 时，音效 K 计权后最响 100ms 的均方根（dB）。level 0.8 约等于高潮段的冲击
 
 
 @dataclass
@@ -139,34 +138,41 @@ def synthesize(ev: SfxEvent, seconds: float, root_pc: int, seed) -> np.ndarray:
     raise ValueError(ev.type)
 
 
-def _momentary_peak(audio: np.ndarray) -> float:
-    """最响的 400ms 窗口的响度（LUFS）。"""
-    meter = pyln.Meter(SR, block_size=0.4)
-    win, hop = int(0.4 * SR), int(0.1 * SR)
-    if len(audio) < win:
-        audio = np.pad(audio, ((0, win - len(audio)), (0, 0)))
-    best = -np.inf
-    for i in range(0, len(audio) - win + 1, hop):
-        seg = audio[i:i + win]
-        if np.abs(seg).max() > 1e-5:
-            best = max(best, meter.integrated_loudness(seg))
-    return best
+def _kweight(audio: np.ndarray) -> np.ndarray:
+    """近似 K 计权：人耳对很低的频率不敏感，对 2kHz 以上更敏感。返回单声道。"""
+    return Pedalboard([HighpassFilter(60), HighShelfFilter(1500, 4.0)])(np.ascontiguousarray(audio.T), SR).T.mean(axis=1)
+
+
+def peak_level(audio: np.ndarray) -> float:
+    """K 计权后最响 100ms 的均方根（dB）。用短窗口，0.15 秒的 pop 和 4 秒的上升音才能按同一标准比较。"""
+    k = _kweight(audio)
+    win, hop = int(0.1 * SR), int(0.02 * SR)
+    if len(k) < win:
+        k = np.pad(k, (0, win - len(k)))
+    best = max(float(np.mean(k[i:i + win] ** 2)) for i in range(0, len(k) - win + 1, hop))
+    return 10 * np.log10(best + 1e-20)
+
+
+def average_level(audio: np.ndarray) -> float:
+    """K 计权后整段的均方根（dB），用来衡量音效发生时音乐有多响。"""
+    k = _kweight(audio)
+    return 10 * np.log10(float(np.mean(k ** 2)) + 1e-20)
 
 
 def render(score, events: list[SfxEvent], n: int) -> tuple[np.ndarray, np.ndarray, list[dict]]:
-    """渲染所有音效。返回 (音效轨, 给音乐用的增益包络, 每个音效实际的起止时间)。"""
+    """渲染所有音效。返回 (音效轨, 给音乐用的增益包络, 每个音效实际的起止时间和音量)。"""
     out = np.zeros((n, 2), np.float32)
     duck = np.zeros(n, np.float32)  # dB，≤ 0
     placed = []
-    for i, ev in enumerate(events):
+    for ev in events:
         root = score.chord_at(min(ev.at, score.total_beats - 1e-6)).chord.root
         length_s = score.seconds(ev.length) if ev.length else 0.0
-        audio = synthesize(ev, length_s, root, (i, round(ev.at, 4), ev.type))
+        # 随机种子按内容定（类型、时间点、长度），删掉或增加别的音效不会让它变
+        audio = synthesize(ev, length_s, root, (round(ev.at, 4), ev.type, round(ev.length, 4)))
         natural = len(audio) / SR * score.bpm / 60
         start_beat, end_beat = ev.span(natural)
-        loud = _momentary_peak(audio)
-        if np.isfinite(loud):
-            audio = audio * 10 ** ((TARGET_LUFS + 20 * np.log10(max(ev.level, 1e-3)) - loud) / 20)
+        target = TARGET_DB + 20 * np.log10(max(ev.level, 1e-3))
+        audio = audio * 10 ** ((target - peak_level(audio)) / 20)
         start = round(score.seconds(start_beat) * SR)
         a, b = max(0, start), min(n, start + len(audio))
         if b > a:
@@ -178,5 +184,5 @@ def render(score, events: list[SfxEvent], n: int) -> tuple[np.ndarray, np.ndarra
             duck = np.minimum(duck, -ev.duck * shape)
         placed.append({"type": ev.type, "at_s": round(score.seconds(ev.at), 3),
                        "start_s": round(score.seconds(start_beat), 3), "end_s": round(score.seconds(end_beat), 3),
-                       "path": ev.path})
+                       "level_db": round(target, 1), "path": ev.path})
     return out, (10 ** (duck / 20)).astype(np.float32), placed

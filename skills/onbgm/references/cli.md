@@ -15,7 +15,7 @@
 | `onbgm init <目录> [--example 名字]` | 在目录里创建 `score.yaml`（默认是一份最小模板）和 `.gitignore` |
 | `onbgm example [名字]` | 不带名字时列出示例；带名字时输出完整乐谱 |
 | `onbgm catalog -q "描述"` | 用自然语言搜现成的写法：鼓组、扫弦、低音、和弦伴奏、和弦进行，返回可以直接粘贴的片段 |
-| `onbgm catalog --kind 类别` | 浏览某一类：`drums strum bassline comp progression texture sound drum chord example` |
+| `onbgm catalog --kind 类别` | 浏览某一类：`drums strum bassline comp arp progression sfx texture sound drum chord example` |
 | `onbgm check score.yaml` | 校验乐谱，输出时间轴 |
 | `onbgm timeline score.yaml [--at 秒 …]` | 输出每段的起止时间和每小节的和弦；`--at 0:23.4` 查某个时间点在第几小节第几拍 |
 | `onbgm render score.yaml -o 目录 [--soundset gm]` | 渲染 |
@@ -71,7 +71,7 @@
                "sections": [{"section": "climax", "energy": 1.0, "lufs": -12.9}]},
   "balance": [{"section": "climax", "tracks": [{"track": "lead", "lufs": -14.6}, {"track": "piano", "lufs": -18.1}]}],
   "warnings": [],
-  "sfx": [{"type": "riser", "at_s": 8.0, "start_s": 4.0, "end_s": 8.0, "path": "sfx.0"}]
+  "sfx": [{"type": "riser", "at_s": 8.0, "start_s": 4.0, "end_s": 8.0, "level_db": -15.9, "vs_music_db": 2.4, "path": "sfx.0"}]
 }
 ```
 
@@ -79,6 +79,9 @@
 - `automix` 里的 `gain_db` 是相对原始渲染电平的增益，数值大（比如 +20）也正常。
 - `balance` 列出每一段里各声部的响度，从响到轻排列，可以检查旋律有没有被伴奏盖住。
 - `timeline --at` 查到乐谱结束后的余音（`meta.tail`）里时，返回 `{"in_tail": true, "note": …}`。
+- `files.stems` 目录里有每个声部的分轨；有音效时还有 `sfx.wav`（所有音效，不含混响）。
+- `render` 的 `sfx` 里，`level_db` 是音效自己的音量（K 计权后最响 100ms），`vs_music_db` 是它比当时的音乐响多少 dB。用户说"再轻一点"时，可以用它核对改了多少。
+- `loudness` 里的各段响度是最终混音的响度，包含音效，也包含从上一段延续过来的余音。
 - `timeline` 和 `render` 都会列出 `sfx`：每个音效的对准点 `at_s` 和实际起止 `start_s` / `end_s`。`timeline` 里还有 `anchor`，表示怎么对准：`end` 在 at 结束，`start` 从 at 开始，`center` 最响处在 at。
 
 ## 错误码

@@ -1,0 +1,117 @@
+# App 宣传短视频 —— 30 秒、不循环、轻快科技感
+# v2：只改音效 —— 0:15 冲击减弱（impact 0.8→0.5、duck 4→2 dB、sub-drop 0.7→0.45），删掉 0:12 转场 whoosh；音乐一个音没改
+# 画面节点：0:00 logo 闪现 / 0:03 0:06 0:09 三个图标弹出 / 0:12 转场 / 0:15 主打功能亮相 / 0:27 结尾 logo / 0:30 结束
+# 80 BPM 下 1 小节 = 3 秒，所有画面节点都落在小节第一拍
+title: App Promo
+meta:
+  bpm: auto
+  length: "0:30"
+  tail: 0
+  key: D major
+  seed: 0
+
+sections:
+  - { name: logo,  bars: 1, energy: 0.3 }                      # 0:00 logo 闪现
+  - { name: f1,    bars: 1, energy: 0.4,  at: "0:03" }         # 图标 1：琶音进入
+  - { name: f2,    bars: 1, energy: 0.5,  at: "0:06" }         # 图标 2：踩镲、贝斯进入
+  - { name: f3,    bars: 1, energy: 0.6,  at: "0:09" }         # 图标 3：底鼓、拍手进入
+  - { name: trans, bars: 1, energy: "0.65->0.9", at: "0:12" }  # 转场：军鼓加密推进
+  - { name: main,  bars: 4, energy: 0.95, at: "0:15" }         # 主打功能大亮相
+  - { name: outro, bars: 1, energy: "0.4->0.1", at: "0:27" }   # 结尾 logo，主和弦收尾
+
+harmony:
+  logo:  "Dadd9"
+  f1:    "Bm7"
+  f2:    "Gmaj7"
+  f3:    "Em7"
+  trans: "Asus4 A"
+  main:  "D | A/C# | Bm7 | G A"
+  outro: "D"
+
+tracks:
+  pad:
+    sound: synth-pad
+    texture: comp
+    range: [48, 72]
+    in: all
+    rhythm: "x--- ---- ---- ----"
+    by_section:
+      outro: {rhythm: "x--- ---- ---- ...."}   # 最后一拍松开，让余音在 0:30 前自然消失
+
+  arp:
+    sound: synth-pluck
+    texture: arp
+    mode: updown
+    range: [60, 84]
+    in: [f1, f2, f3, trans, main]
+    rhythm: "xxxx xxxx xxxx xxxx"
+
+  bass:
+    sound: synth-bass
+    texture: bassline
+    in: [f2, f3, trans, main, outro]
+    rhythm: "1..1 ..1. 1..1 ..8."
+    by_section:
+      f2:    {rhythm: "1--- ---- 1--- ----"}
+      outro: {rhythm: "1--- ---- .... ...."}
+
+  hit:
+    sound: supersaw
+    texture: comp
+    range: [55, 76]
+    in: [main]
+    rhythm: "X..x ..x. ..x. ...."
+
+  lead:
+    sound: synth-bell
+    texture: melody
+    in: [main, outro]
+    notes:
+      main: >-
+        F#6/8> A6/8 r/16 A6/16 D7/8 C#7/8 A6/8 F#6/4 |
+        E6/8 A6/8 r/16 A6/16 C#7/8 B6/8 A6/8 E6/4 |
+        D6/8 F#6/8 r/16 F#6/16 B6/8 A6/8 F#6/8 D6/4 |
+        G6/8 B6/8 D7/8 B6/8 A6/8 C#7/8 E7/4
+      outro: "D7/4 r/4 r/2"
+
+  drums:
+    sound: drums-synth
+    texture: groove
+    in: [f2, f3, trans, main, outro]
+    pattern:
+      kick:     "x... x... x... x..."
+      clap:     ".... x... .... x..."
+      open-hat: "..x. ..x. ..x. ..x."
+      hat:      "xgxg xgxg xgxg xgxg"
+    by_section:
+      f2:
+        pattern:
+          hat:      "x.g. x.g. x.g. x.g."
+      f3:
+        pattern:
+          kick:     "x... .... x... ...."
+          clap:     ".... x... .... x..."
+          hat:      "xgxg xgxg xgxg xgxg"
+      trans:
+        pattern:
+          kick:     "x... x... x... ...."
+          hat:      "xgxg xgxg xxxx ...."
+          snare:    "..g. ..g. x.x. xxxx"
+      outro:
+        pattern:
+          kick:     "X... .... .... ...."
+
+  cymbal:
+    sound: drums-synth
+    texture: crash
+    in: [main, outro]
+
+# 音效时间线
+sfx:
+  - { type: ding,   at: logo, level: 0.8 }             # 0:00 logo 闪现的提示音
+  - { type: pop,    at: f1, level: 0.5 }               # 0:03 图标 1 弹出
+  - { type: pop,    at: f2, level: 0.5 }               # 0:06 图标 2 弹出
+  - { type: pop,    at: f3, level: 0.5 }               # 0:09 图标 3 弹出
+  - { type: riser,  at: main, length: 2, level: 0.6 }  # 0:13.5–0:15 短上升音，在亮相一刻戛然而止
+  - { type: impact, at: main, level: 0.5, duck: 2 }    # 0:15 主打功能亮相：冲击减弱（原 level 0.8、duck 4）
+  - { type: sub-drop, at: main, level: 0.45 }          # 下坠低音托底（原 0.7）
