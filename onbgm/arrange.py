@@ -11,7 +11,7 @@ from dataclasses import dataclass, field
 import math
 
 from .score import ChordSpan, Problem, Score, ScoreError, Section, Track
-from .theory import Chord, guitar_voicing, pitch_name, place, voice_lead
+from .theory import Chord, guitar_voicing, pitch_name, place, ukulele_voicing, voice_lead
 
 
 @dataclass(frozen=True)
@@ -49,6 +49,11 @@ SOUNDS: dict[str, Sound] = {
     "electric-bass": Sound(33, 28, 67, 0.08),
     "saxophone": Sound(66, 44, 77, 0.25, sustained=True),  # 次中音萨克斯
     "zither": Sound(107, 45, 88, 0.3),  # 越南筝（音色接近古筝），弹拨
+    "erhu": Sound(110, 62, 86, 0.3, sustained=True),  # 二胡（D4 以上）
+    "guitar-electric": Sound(27, 40, 86, 0.2),  # 干净的电吉他
+    "guitar-distorted": Sound(30, 40, 81, 0.12),  # 失真电吉他（摇滚、强力和弦）
+    "ukulele": Sound(24, 60, 86, 0.2),  # 尤克里里
+    "accordion": Sound(21, 47, 84, 0.25, sustained=True),  # 手风琴（高音键盘）
     "whistle": Sound(78, 60, 96, 0.3, sustained=True),
     # 合成器音色：由 onbgm.synth 直接合成，program 只用于导出 MIDI
     "synth-pluck": Sound(81, 24, 108, 0.25),
@@ -449,7 +454,7 @@ def t_strum(score: Score, track: Track, part: Part, perf: Performer) -> None:
             if c == ".":
                 continue
             span = score.chord_at(b)
-            voicing = guitar_voicing(span.chord)
+            voicing = (ukulele_voicing if track.sound == "ukulele" else guitar_voicing)(span.chord)
             strings = [i for i, p in enumerate(voicing) if p is not None]
             e = score.energy_at(b)
             if c == "x":

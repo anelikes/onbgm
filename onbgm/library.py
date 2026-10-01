@@ -11,7 +11,7 @@ from dataclasses import dataclass, field
 from functools import lru_cache
 from pathlib import Path
 
-from pedalboard import HighpassFilter, HighShelfFilter, PeakFilter
+from pedalboard import Distortion, Gain, HighpassFilter, HighShelfFilter, LowpassFilter, PeakFilter
 
 from .sampler import Instrument, load_instrument, load_sfz, pitched_hits, unpitched
 
@@ -131,6 +131,22 @@ def _sample_libs(root: Path) -> dict[str, Instrument]:
             "zither", libs["vcsl-zither"], note_re=ZITHER_NOTE,
             layer_of=lambda f: {"mf": 0, "f": 1, "ff": 2}[f.name.split("_")[1]], sustain=False, source="vcsl"),
     }
+    # 二胡：原库的颤音靠播放器实时加，这里用采样器的延迟颤音；手拉的音准有偏差，逐个采样校音；
+    # 原库用控制器管强弱、力度不影响音量，这里改成按力度响应
+    insts["erhu"] = load_sfz("erhu", libs["aliexpress-erhu"], key_offset=12, veltrack=0.8, retune=True,
+                             vibrato=(28, 5.5, 0.25), release=0.18)
+    erhu_short = load_sfz("erhu-short", libs["aliexpress-erhu"].with_name("03-erhu_short.sfz"), key_offset=12,
+                          veltrack=0.8, retune=True, sustain=False, line_choke=True)
+    if insts["erhu"] and erhu_short:
+        insts["erhu"].articulations = {"staccato": erhu_short}
+    guitar = dict(key_range=(28, 88), legato_skip=0.0, release=0.12)
+    insts["guitar-electric"] = load_sfz("guitar-electric", libs["emilyguitar"], **guitar)
+    # 失真吉他：同一套干声采样，过失真和箱体（高通、失真、去刺耳高频、中频突出），再把电平拉回干声附近
+    insts["guitar-distorted"] = load_sfz("guitar-distorted", libs["emilyguitar"], **guitar, post=[
+        HighpassFilter(100), Distortion(drive_db=30), LowpassFilter(5200), PeakFilter(1600, 3, 0.9),
+        HighpassFilter(80), Gain(-18)])
+    insts["ukulele"] = load_sfz("ukulele", libs["freepats-ukulele"], key_range=(55, 90), legato_skip=0.0)
+    insts["accordion"] = load_sfz("accordion", libs["freepats-accordion"], retune=True, legato_skip=0.03)
     stacc = load_instrument("saxophone-staccato", libs["vcsl-sax"].parent / "Staccato", sustain=False, line_choke=True,
                             layer_of=lambda f: int(re.search(r"_vl(\d)_", f.name).group(1)), source="vcsl")
     if insts["saxophone"] and stacc:
@@ -187,6 +203,11 @@ HQ = {
     "harp": "harp",
     "saxophone": "saxophone",
     "zither": "zither",
+    "erhu": "erhu",
+    "guitar-electric": "guitar-electric",
+    "guitar-distorted": "guitar-distorted",
+    "ukulele": "ukulele",
+    "accordion": "accordion",
     "glockenspiel": "glock",
     "epiano": "jrhodes",
     "guitar-steel": "fss-guitar",

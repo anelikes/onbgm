@@ -55,6 +55,7 @@ QUALITIES: dict[str, tuple[int, ...]] = {
     "7#9": (0, 4, 7, 10, 15),
     "maj7#11": (0, 4, 7, 11, 18),
     "6add9": (0, 4, 7, 9, 14),
+    "5": (0, 7, 12),  # 强力和弦（只有根音和五音，摇滚、失真吉他）
 }
 
 
@@ -71,8 +72,8 @@ class Chord:
 
     @property
     def third(self) -> int:
-        """决定和弦色彩的音；sus 和弦用 4 度 / 2 度代替。"""
-        return next(i for i in (3, 4, 5, 2) if i in self.intervals)
+        """决定和弦色彩的音；sus 和弦用 4 度 / 2 度代替；强力和弦没有三音，用五音代替。"""
+        return next((i for i in (3, 4, 5, 2) if i in self.intervals), 7)
 
     @property
     def fifth(self) -> int:
@@ -103,6 +104,31 @@ def place(pc: int, lo: int) -> int:
 
 
 GUITAR_STRINGS = (40, 45, 50, 55, 59, 64)  # 标准调弦 E2 A2 D3 G3 B3 E4
+UKULELE_STRINGS = (67, 60, 64, 69)  # 尤克里里标准调弦 G4 C4 E4 A4（四弦 G 比三弦 C 高：高音 G 调弦）
+
+
+@lru_cache(maxsize=None)
+def ukulele_voicing(chord: Chord) -> tuple[int, ...]:
+    """尤克里里和弦：四根弦都弹，没有"最低音必须是低音"的限制（高音 G 调弦本来就不是从低到高）。
+    必须有根音和三音（七和弦还要七音），品位跨度不超过 3 品，偏好空弦多、把位低。"""
+    options = [[f for f in range(0, 8) if (s + f) % 12 in chord.pcs] for s in UKULELE_STRINGS]
+    required = {chord.root % 12, (chord.root + chord.third) % 12}
+    if chord.seventh is not None:
+        required.add((chord.root + chord.seventh) % 12)
+    best, best_cost = None, float("inf")
+    for frets in itertools.product(*options):
+        pitches = [s + f for s, f in zip(UKULELE_STRINGS, frets)]
+        if not required <= {p % 12 for p in pitches}:
+            continue
+        pressed = [f for f in frets if f > 0]
+        if pressed and max(pressed) - min(pressed) > 3:
+            continue
+        cost = -0.7 * frets.count(0) + 0.5 * max(frets) - 0.3 * len({p % 12 for p in pitches})
+        if cost < best_cost:
+            best, best_cost = tuple(pitches), cost
+    if best is None:
+        raise ValueError(f"找不到 {chord.symbol} 的尤克里里按法")
+    return best
 
 
 @lru_cache(maxsize=None)
@@ -112,6 +138,13 @@ def guitar_voicing(chord: Chord) -> tuple[int | None, ...]:
     规则：只允许最低的一两根弦闷掉；最低音必须是和弦的低音；必须有根音和三音（七和弦还要有七音）；
     不重复同一个音；按弦的品位跨度不超过 3 品，手指不超过 4 根（横按算一根），横按范围内不能有空弦。偏好：弦多、空弦多、把位低（像真吉他手会选的开放和弦）。
     """
+    if chord.intervals == QUALITIES["5"]:
+        # 强力和弦：根音在六弦（7 品以内）或五弦上，往上叠五音和八度，其余弦不弹
+        for string in (0, 1):
+            fret = (chord.bass - GUITAR_STRINGS[string]) % 12
+            if string == 1 or fret <= 7:
+                root = GUITAR_STRINGS[string] + fret
+                return tuple([None] * string + [root, root + 7, root + 12] + [None] * (3 - string))
     options = []
     for open_pitch in GUITAR_STRINGS:
         frets = [f for f in range(0, 8) if (open_pitch + f) % 12 in chord.pcs]
@@ -152,6 +185,11 @@ def guitar_voicing(chord: Chord) -> tuple[int | None, ...]:
 
 def voice_lead(chord: Chord, prev: tuple[int, ...] | None, lo: int, hi: int, n: int = 4) -> tuple[int, ...]:
     """在 [lo, hi] 内为和弦选 n 个声部，使其与上一个和弦的总移动距离最小。"""
+    if chord.intervals == QUALITIES["5"]:
+        # 强力和弦只有原位（根音—五音—八度）好听：选最接近上一个和弦低音的根音
+        roots = [r for r in range(lo, hi - 11) if r % 12 == chord.bass] or [place(chord.bass, lo)]
+        root = min(roots, key=lambda r: abs(r - (prev[0] if prev else (lo + hi - 12) / 2)))
+        return (root, root + 7, root + 12)
     tones = [p for p in range(lo, hi + 1) if p % 12 in chord.pcs]
     required = {(chord.root + chord.third) % 12}
     if chord.seventh is not None:

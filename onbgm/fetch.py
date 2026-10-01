@@ -143,6 +143,21 @@ SAMPLE_LIBS = [
               "越南筝（音色接近古筝）", "Normal", repo=VCSL["repo"], sha=VCSL["sha"],
               select=r"Chordophones/Zithers/Dan Tranh/Normal/[A-Ga-g]#?\d_(mf|f|ff)_\d\.wav$",
               strip="Chordophones/Zithers/Dan Tranh/"),
+    SampleLib("aliexpress-erhu", "AliExpress Erhu", "sfzinstruments", "CC0",
+              "https://github.com/sfzinstruments/aliexpress-erhu", "二胡（长音、短音）", "Programs/02-erhu_long.sfz",
+              archive="https://github.com/sfzinstruments/aliexpress-erhu/releases/download/v1.000/aliexpress-erhu_v1000.zip"),
+    SampleLib("emilyguitar", "Karoryfer Emilyguitar", "Karoryfer Samples", "CC0",
+              "https://github.com/sfzinstruments/karoryfer.emilyguitar", "电吉他（直录干声；失真吉他也用它）",
+              "Emilyguitar/emily_basic.sfz",
+              archive="https://github.com/sfzinstruments/karoryfer.emilyguitar/releases/download/v1.001/"
+                      "Karoryfer.Emilyguitar.v1.001.zip"),
+    SampleLib("freepats-ukulele", "FreePats Ukulele", "FreePats", "CC0", "https://github.com/freepats/ukulele1",
+              "尤克里里", "Ukulele 20260811.sfz", repo="freepats/ukulele1",
+              sha="86d345f6f7b79a106ace98eca0da19b087786dba", select=r".*\.(sfz|flac)$"),
+    SampleLib("freepats-accordion", "FreePats Button Accordion HN", "FreePats", "CC0",
+              "https://github.com/freepats/button-accordion-HN", "手风琴", "PRESET Button Accordion HN tuned.sfz",
+              repo="freepats/button-accordion-HN", sha="d70d16456fd99305d1c24c612b205ab38846eb0f",
+              select=r".*\.(sfz|flac)$"),
 ]
 
 

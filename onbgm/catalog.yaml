@@ -412,3 +412,32 @@
     sound: guitar-steel
     texture: strum
     pattern: "D.uDuu"
+
+- name: rock-power-chords
+  kind: comp
+  tags: [rock, 摇滚, power chord, 强力和弦, 失真, distortion, 燃, 运动, 极限]
+  description: 失真吉他的八分音符强力和弦（和弦写成 E5、C5、D5 这类强力和弦），配摇滚鼓和指弹贝斯跟根音
+  snippet: |
+    sound: guitar-distorted
+    texture: comp
+    range: [40, 64]
+    rhythm: "x.xx x.xx x.xx x.x."
+
+- name: funk-clean-guitar
+  kind: comp
+  tags: [funk, 放克, city pop, 切音, 电吉他, clean guitar, 律动]
+  description: 干净电吉他的放克切音：十六分音符的短和弦，空拍多、反拍突出
+  snippet: |
+    sound: guitar-electric
+    texture: comp
+    range: [55, 76]
+    rhythm: ".x.x ..x. .x.. x.x."
+
+- name: ukulele-island-strum
+  kind: strum
+  tags: [ukulele, 尤克里里, 夏威夷, 海岛, 阳光, 可爱, 轻快]
+  description: 尤克里里的轻快扫弦（"下 下上 上下上"），阳光、度假、萌宠视频
+  snippet: |
+    sound: ukulele
+    texture: strum
+    pattern: "D.DU .UDU D.DU .UDU"

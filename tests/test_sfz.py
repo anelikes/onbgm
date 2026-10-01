@@ -211,3 +211,56 @@ def test_silent_regions_only_trigger_choke_groups(tmp_path, write_score):
     closed = Part("x", "drums", SOUNDS["drums"], 0.0, [Note(1.0, 0.25, 42, 100)], [], texture="groove")
     open_hat = render_part(score, part, lambda p: inst, 2 * SR) - render_part(score, closed, lambda p: inst, 2 * SR)
     assert np.abs(open_hat[round(0.53 * SR):]).max() < 1e-4  # 闭镲的无声区域切断了开镲
+
+
+def test_power_chords_voice_as_root_fifth_octave():
+    from onbgm.theory import guitar_voicing, parse_chord, voice_lead
+
+    c5 = parse_chord("C5")
+    assert c5.intervals == (0, 7, 12) and c5.third == 7  # 没有三音：用五音代替，织体不会出错
+    assert guitar_voicing(parse_chord("E5")) == (40, 47, 52, None, None, None)
+    assert voice_lead(c5, None, 40, 64) == (48, 55, 60)
+    assert voice_lead(parse_chord("D5"), (48, 55, 60), 40, 64)[0] == 50  # 根音就近
+
+
+def test_ukulele_voicings_match_real_shapes():
+    from onbgm.theory import parse_chord, ukulele_voicing
+
+    shapes = {c: tuple(p - s for p, s in zip(ukulele_voicing(parse_chord(c)), (67, 60, 64, 69)))
+              for c in ("C", "Am", "F", "G", "G7")}
+    assert shapes == {"C": (0, 0, 0, 3), "Am": (2, 0, 0, 0), "F": (2, 0, 1, 0), "G": (0, 2, 3, 2), "G7": (0, 2, 1, 2)}
+
+
+def test_vibrato_wobbles_pitch_after_the_delay():
+    from onbgm.sampler import _vibrato
+
+    t = np.arange(2 * SR) / SR
+    tone = np.stack([np.sin(2 * np.pi * 440 * t)] * 2, axis=1).astype(np.float32)
+    out = _vibrato(tone, 50, 5.0, 0.5)
+    assert np.allclose(out[: SR // 4], tone[: SR // 4], atol=1e-4)  # 延迟之前不变
+    late = out[int(1.2 * SR): int(1.8 * SR), 0]
+    zero_cross = np.diff(np.signbit(late)).nonzero()[0]
+    periods = np.diff(zero_cross[::2]) / SR
+    assert periods.max() / periods.min() > 1.03  # 音高在起伏（50 音分约 ±3%）
+
+
+def test_key_range_retune_and_post_effects(tmp_path, write_score):
+    from pedalboard import Gain
+
+    _sine(tmp_path / "a.wav", 69.3)  # 偏高 30 音分的采样
+    _sine(tmp_path / "noise.wav", 90)
+    (tmp_path / "x.sfz").write_text("<region> lokey=60 hikey=80 pitch_keycenter=69 sample=a.wav\n"
+                                    "<region> key=96 sample=noise.wav")
+    inst = load_sfz("x", tmp_path / "x.sfz", key_range=(0, 88), retune=True, post=[Gain(-6)])
+    assert len(inst.zones) == 1 and inst.zones[0].shift == pytest.approx(-0.3, abs=0.05)
+    score = load(write_score("""
+        meta: {bpm: 120}
+        sections: [{name: a, bars: 1}]
+        harmony: {a: "C"}
+    """))
+    part = Part("x", "piano", SOUNDS["piano"], 0.0, [Note(0.0, 2.0, 69, 100)], [], texture="line")
+    audio = render_part(score, part, lambda p: inst, SR)
+    assert detect_pitch(audio, hint=69, window=1) == pytest.approx(69.0, abs=0.05)  # 校准后正好 A4
+    plain = load_sfz("y", tmp_path / "x.sfz", key_range=(0, 88), retune=True)
+    ratio = np.abs(audio).max() / np.abs(render_part(score, part, lambda p: plain, SR)).max()
+    assert ratio == pytest.approx(10 ** (-6 / 20), rel=0.02)  # 效果链作用在整个声部上

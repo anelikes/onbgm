@@ -30,7 +30,7 @@ agent 用的说明在 [`skills/onbgm/`](skills/onbgm/SKILL.md)，按 skill 格�
 ```bash
 brew install fluid-synth                  # Debian/Ubuntu: sudo apt install fluidsynth
 uv tool install git+https://github.com/anelikes/onbgm
-onbgm fetch                               # 下载音源到 ~/.onbgm/sounds（约 1.5GB；可用 ONBGM_SOUNDS 指定位置）
+onbgm fetch                               # 下载音源到 ~/.onbgm/sounds（约 1.7GB；可用 ONBGM_SOUNDS 指定位置）
 onbgm doctor                              # 检查环境
 
 onbgm init my_bgm --example late_study    # 从示例起步
@@ -101,6 +101,9 @@ onbgm review out/my_bgm_v2 --compare out/my_bgm   # 新旧两版 A/B 对比
 | [AVL Drumkits](https://www.bandshed.net/avldrumkits/)（Black Pearl、Blonde Bop），Glen MacArthur | CC-BY-SA 3.0，用它做的音乐不需要署名 | 标准鼓组、爵士鼓组 |
 | [Swirly Drums](https://github.com/sfzinstruments/karoryfer.swirly-drums)，Karoryfer Samples | CC0 | 刷子鼓组（只用干声） |
 | [Versilian Community Sample Library](https://github.com/sgossner/VCSL)，Versilian Studios | CC0 | 颤音琴、马林巴、竖琴、次中音萨克斯、越南筝 |
+| [AliExpress Erhu](https://github.com/sfzinstruments/aliexpress-erhu)，sfzinstruments | CC0 | 二胡 |
+| [Emilyguitar](https://github.com/sfzinstruments/karoryfer.emilyguitar)，Karoryfer Samples | CC0 | 电吉他（干净音色和失真音色） |
+| [FreePats Ukulele](https://github.com/freepats/ukulele1)、[Button Accordion HN](https://github.com/freepats/button-accordion-HN) | CC0 | 尤克里里、手风琴 |
 | 内置合成器（`onbgm/synth.py`） | — | 合成器音色（pluck、pad、supersaw、lead、bass、808、FM 钟声和电钢琴）和合成鼓组，不需要下载 |
 
 采样由内置采样器（`onbgm/sampler.py`）直接读取，用 soxr 做高质量重采样来变调。
