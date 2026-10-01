@@ -250,6 +250,7 @@
               "comp",
               "crash",
               "groove",
+              "line",
               "melody",
               "pad",
               "strum",
@@ -568,6 +569,31 @@
               "properties": {
                 "texture": {
                   "const": "melody"
+                }
+              }
+            },
+            "then": {
+              "propertyNames": {
+                "enum": [
+                  "by_section",
+                  "gain",
+                  "gate",
+                  "in",
+                  "notes",
+                  "sound",
+                  "texture"
+                ]
+              }
+            }
+          },
+          {
+            "if": {
+              "required": [
+                "texture"
+              ],
+              "properties": {
+                "texture": {
+                  "const": "line"
                 }
               }
             },

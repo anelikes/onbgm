@@ -27,3 +27,22 @@ def test_automix_ignores_note_jittered_into_previous_section(write_score):
     log = automix(score, parts, stems)
     assert [x for x in log if "@" in x] == [log[0]] and log[0].startswith("lead@b")
     assert not any(x.startswith("⚠") for x in log)
+
+
+def test_line_texture_is_leveled_as_accompaniment_not_automixed(write_score):
+    """line（逐音写的伴奏线，如 walking bass）不应被自动混音当成主旋律推到前面。"""
+    score = load(write_score("""
+        meta: {bpm: 120}
+        sections: [{name: a, bars: 1}]
+        harmony: {a: "C"}
+        tracks:
+          walk: {sound: acoustic-bass, texture: line, notes: {a: "C2/4 D2/4 E2/4 G2/4"}}
+          lead: {sound: piano, notes: {a: "C5/1"}}
+    """))
+    parts, _ = arrange(score)
+    n = round(score.seconds(score.total_beats) * SR)
+    rng = np.random.default_rng(1)
+    stems = {p.name: (rng.standard_normal((n, 2)) * 0.05).astype(np.float32) for p in parts}
+    log = automix(score, parts, stems)
+    assert any(x.startswith("lead@") for x in log)
+    assert not any(x.startswith("walk@") for x in log)

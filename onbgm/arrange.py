@@ -431,6 +431,7 @@ TEXTURES = {
     "timpani": t_timpani,
     "crash": t_crash,
     "melody": t_melody,
+    "line": t_melody,  # 逐音写的伴奏线（walking bass、副旋律）：和 melody 写法相同，但按伴奏定音量
     "groove": t_groove,
     "bassline": t_bassline,
     "comp": t_comp,
@@ -456,8 +457,8 @@ def arrange(score: Score) -> tuple[list[Part], list[str]]:
             problems.append(f"tracks.{t.name}.sound: 不认识 {t.sound!r}（可用: {', '.join(SOUNDS)}）")
         if t.texture not in TEXTURES:
             problems.append(f"tracks.{t.name}.texture: 不认识 {t.texture!r}（可用: {', '.join(TEXTURES)}）")
-        elif t.texture == "melody" and not t.melody:
-            problems.append(f"tracks.{t.name}: melody 织体需要 notes")
+        elif t.texture in ("melody", "line") and not t.melody:
+            problems.append(f"tracks.{t.name}: {t.texture} 织体需要 notes")
         if "roll_into" in t.options and t.options["roll_into"] not in [s.name for s in score.sections]:
             problems.append(f"tracks.{t.name}.roll_into: 没有段落 {t.options['roll_into']}")
     if problems:

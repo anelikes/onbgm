@@ -20,6 +20,7 @@ TEXTURE_FIELDS = {
     "timpani": {"low", "roll_into"},
     "crash": set(),
     "melody": {"notes", "gate"},
+    "line": {"notes", "gate"},
     "groove": {"pattern", "laid_back"},
     "bassline": {"rhythm", "low"},
     "comp": {"rhythm", "range", "roll"},
