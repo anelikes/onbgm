@@ -24,9 +24,9 @@ def test_automix_ignores_note_jittered_into_previous_section(write_score):
     stems = {"keys": (rng.standard_normal((n, 2)) * 0.05).astype(np.float32),
              "lead": np.zeros((n, 2), np.float32)}
     stems["lead"][first:] = rng.standard_normal((n - first, 2)) * 0.05
-    log = automix(score, parts, stems)
-    assert [x for x in log if "@" in x] == [log[0]] and log[0].startswith("lead@b")
-    assert not any(x.startswith("⚠") for x in log)
+    log, warnings = automix(score, parts, stems)
+    assert [(x["track"], x["section"]) for x in log] == [("lead", "b")]
+    assert warnings == []
 
 
 def test_line_texture_is_leveled_as_accompaniment_not_automixed(write_score):
@@ -43,6 +43,6 @@ def test_line_texture_is_leveled_as_accompaniment_not_automixed(write_score):
     n = round(score.seconds(score.total_beats) * SR)
     rng = np.random.default_rng(1)
     stems = {p.name: (rng.standard_normal((n, 2)) * 0.05).astype(np.float32) for p in parts}
-    log = automix(score, parts, stems)
-    assert any(x.startswith("lead@") for x in log)
-    assert not any(x.startswith("walk@") for x in log)
+    log, _ = automix(score, parts, stems)
+    assert any(x["track"] == "lead" for x in log)
+    assert not any(x["track"] == "walk" for x in log)

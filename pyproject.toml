@@ -29,7 +29,7 @@ build-backend = "setuptools.build_meta"
 packages = ["onbgm"]
 
 [tool.setuptools.package-data]
-onbgm = ["examples/*.yaml"]
+onbgm = ["examples/*.yaml", "catalog.yaml"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

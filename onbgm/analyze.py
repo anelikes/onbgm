@@ -15,49 +15,103 @@ from .render import SR
 from .score import BEATS_PER_BAR, Score, fmt_time
 
 
+def _r(x: float, nd: int = 2) -> float:
+    return round(float(x), nd)
+
+
+def timeline_data(score: Score) -> dict:
+    """时间轴：每段从第几秒开始、每小节是什么和弦、哪些声部在哪些段落出现。agent 不用自己算时间。"""
+    return {
+        "title": score.title,
+        "bpm": _r(score.bpm, 3),
+        "key": score.key,
+        "loop": score.loop,
+        "bars": int(score.total_beats // BEATS_PER_BAR),
+        "duration_s": _r(score.seconds(score.total_beats), 3),
+        "seconds_per_bar": _r(score.seconds(BEATS_PER_BAR), 4),
+        "sections": [
+            {"name": s.name, "bars": [s.start_bar + 1, s.start_bar + s.bars],
+             "start_s": _r(score.seconds(s.start), 3), "end_s": _r(score.seconds(s.end), 3),
+             "energy": [s.energy[0], s.energy[1]]}
+            for s in score.sections
+        ],
+        "chords": [
+            {"bar": int(c.start // BEATS_PER_BAR) + 1, "beat": _r(c.start % BEATS_PER_BAR + 1, 3),
+             "start_s": _r(score.seconds(c.start), 3), "chord": c.chord.symbol, "section": c.section}
+            for c in score.chords
+        ],
+        "tracks": [{"name": t.name, "sound": t.sound, "texture": t.texture, "sections": t.sections}
+                   for t in score.tracks],
+    }
+
+
+def locate(score: Score, seconds: float) -> dict:
+    """某个时间点在乐谱里的位置：第几小节第几拍、哪一段、什么和弦。"""
+    beat = seconds * score.bpm / 60
+    end = score.seconds(score.total_beats)
+    if 0 <= seconds - end < score.tail:
+        return {"time_s": _r(seconds, 3), "in_tail": True,
+                "note": f"在乐谱结束（{fmt_time(end)}）之后的余音（meta.tail）里，这里不会有新的音符起音"}
+    if not 0 <= beat < score.total_beats:
+        return {"time_s": _r(seconds, 3),
+                "error": f"超出乐谱范围（0 ~ {fmt_time(end)}{f'，加余音到 {fmt_time(end + score.tail)}' if score.tail else ''}）"}
+    sec, chord = score.section_at(beat), score.chord_at(beat)
+    return {"time_s": _r(seconds, 3), "bar": int(beat // BEATS_PER_BAR) + 1, "beat": _r(beat % BEATS_PER_BAR + 1, 3),
+            "section": sec.name, "bar_in_section": int((beat - sec.start) // BEATS_PER_BAR) + 1,
+            "chord": chord.chord.symbol, "energy": _r(score.energy_at(beat), 3)}
+
+
 def timeline(score: Score) -> str:
-    total = score.seconds(score.total_beats)
-    bars = int(score.total_beats // BEATS_PER_BAR)
-    lines = [f"《{score.title}》 {score.bpm:g} BPM · {score.key} · {bars} 小节 · {fmt_time(total)}"
-             + (" · 可无缝循环" if score.loop else "")]
-    for s in score.sections:
-        a, b = s.energy
+    d = timeline_data(score)
+    lines = [f"《{d['title']}》 {score.bpm:g} BPM · {d['key']} · {d['bars']} 小节 · {fmt_time(d['duration_s'])}"
+             + (" · 可无缝循环" if d["loop"] else "")]
+    for s in d["sections"]:
+        a, b = s["energy"]
         energy = f"{a:.2f}" if a == b else f"{a:.2f}→{b:.2f}"
-        lines.append(f"  {s.name:<8} 第 {s.start_bar + 1:>2}–{s.start_bar + s.bars:<2} 小节  "
-                     f"{fmt_time(score.seconds(s.start))}  能量 {energy}")
+        lines.append(f"  {s['name']:<8} 第 {s['bars'][0]:>2}–{s['bars'][1]:<2} 小节  {fmt_time(s['start_s'])}  能量 {energy}")
     return "\n".join(lines)
 
 
-def loudness_report(score: Score, audio: np.ndarray) -> str:
-    """各段实测响度 vs 目标能量，检查"该响的地方是否真的响"。"""
+def loudness_data(score: Score, audio: np.ndarray) -> dict:
+    """各段实测响度 vs 目标能量，检查"该响的地方是否真的响"（能量差小于 0.15 的两段不比较）。"""
     meter = pyln.Meter(SR)
     rows = []
     for s in score.sections:
         seg = audio[round(score.seconds(s.start) * SR): round(score.seconds(s.end) * SR)]
-        rows.append((s, sum(s.energy) / 2, meter.integrated_loudness(seg)))
-    loudest = max(r[2] for r in rows)
+        rows.append({"section": s.name, "energy": _r(sum(s.energy) / 2, 3), "lufs": _r(meter.integrated_loudness(seg), 1)})
+    issues = [f"{a['section']} 目标能量比 {b['section']} 高，实测却更轻"
+              for a in rows for b in rows if a["energy"] > b["energy"] + 0.15 and a["lufs"] < b["lufs"]]
+    return {"integrated_lufs": _r(meter.integrated_loudness(audio), 1), "sections": rows,
+            "follows_energy": not issues, "issues": issues}
+
+
+def loudness_report(score: Score, audio: np.ndarray) -> str:
+    d = loudness_data(score, audio)
+    loudest = max(r["lufs"] for r in d["sections"])
     lines = ["各段响度（目标能量 → 实测）:"]
-    for s, target, lufs in rows:
-        bar = "█" * max(1, round((lufs - loudest + 24) / 1.2))
-        lines.append(f"  {s.name:<8} 能量 {target:.2f} → {lufs:6.1f} LUFS  {bar}")
-    issues = [f"{a[0].name} 目标能量比 {b[0].name} 高，实测却更轻"
-              for a in rows for b in rows if a[1] > b[1] + 0.15 and a[2] < b[2]]
-    lines.append("  ✓ 响度走向与能量曲线一致" if not issues else "  ✗ " + "；".join(issues))
+    for r in d["sections"]:
+        bar = "█" * max(1, round((r["lufs"] - loudest + 24) / 1.2))
+        lines.append(f"  {r['section']:<8} 能量 {r['energy']:.2f} → {r['lufs']:6.1f} LUFS  {bar}")
+    lines.append("  ✓ 响度走向与能量曲线一致" if d["follows_energy"] else "  ✗ " + "；".join(d["issues"]))
     return "\n".join(lines)
 
 
-def balance_report(score: Score, stems: dict[str, np.ndarray], parts: list[Part], section: str) -> str:
-    """某一段里各声部的响度，检查旋律有没有被伴奏盖住。"""
+def balance_data(score: Score, stems: dict[str, np.ndarray], parts: list[Part], section: str) -> list[dict]:
+    """某一段里各声部的响度（从响到轻），检查旋律有没有被伴奏盖住。"""
     s = score.section(section)
     a, b = round(score.seconds(s.start) * SR), round(score.seconds(s.end) * SR)
     meter = pyln.Meter(SR)
     levels = []
     for p in parts:
         seg = stems[p.name][a:b] * 10 ** (p.gain_db / 20)
-        if np.abs(seg).max() > 1e-4 and np.isfinite(meter.integrated_loudness(seg)):
-            levels.append((meter.integrated_loudness(seg), p.name))
-    levels.sort(reverse=True)
-    return f"{section} 段声部平衡: " + "  ".join(f"{name} {lufs:.1f}" for lufs, name in levels)
+        if np.abs(seg).max() > 1e-4 and np.isfinite(lufs := meter.integrated_loudness(seg)):
+            levels.append({"track": p.name, "lufs": _r(lufs, 1)})
+    return sorted(levels, key=lambda x: -x["lufs"])
+
+
+def balance_report(score: Score, stems: dict[str, np.ndarray], parts: list[Part], section: str) -> str:
+    rows = balance_data(score, stems, parts, section)
+    return f"{section} 段声部平衡: " + "  ".join(f"{r['track']} {r['lufs']:.1f}" for r in rows)
 
 
 def pianoroll(score: Score, parts: list[Part], path: Path) -> None:

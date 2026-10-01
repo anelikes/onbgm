@@ -72,3 +72,19 @@ def test_arpeggio_notes_do_not_ring_into_the_next_chord():
     for n in piano.notes:
         span = score.chord_at(n.start + 0.05)
         assert n.start + n.dur <= span.end + 0.05, f"{n} 拖过了 {span.chord.symbol} 的结尾"
+
+
+def test_adding_notes_in_one_section_keeps_velocities_elsewhere(write_score):
+    """回归测试：旋律力度曾参照整个声部的平均音高，在一段里加一串高音，别的段落的力度也会变。"""
+    base = """
+        meta: {{bpm: 120}}
+        sections: [{{name: a, bars: 1}}, {{name: b, bars: 1}}]
+        harmony: {{a: "C", b: "C"}}
+        tracks:
+          lead: {{sound: piano, notes: {{a: "C5/4 D5/4 E5/4 G5/4", b: "{b}"}}}}
+    """
+    def vels(b):
+        score = load(write_score(base.format(b=b)))
+        lead = next(p for p in arrange(score)[0] if p.name == "lead")
+        return [n.vel for n in sorted(lead.notes, key=lambda n: n.start) if score.section_of(n.start).name == "a"]
+    assert vels("C5/1") == vels("C6/8 E6/8 G6/8 C7/8 E7/8 G7/8 C7/4")

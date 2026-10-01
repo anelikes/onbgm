@@ -12,22 +12,31 @@ description: >
 你听不到声音，所以每次渲染后都要读报告和卷帘图，靠这些来"听"。
 
 命令写作 `onbgm ...`。如果项目给了包装命令（比如 `.venv/bin/onbgm`），就用包装命令。
+每个命令都支持 `--json`，优先用它：输出更稳定、更省 token，出错时带错误码、出错位置，以及能直接套用的修正值。
+命令、JSON 结构和错误码见 [references/cli.md](references/cli.md)。
 
 ## 工作流程
 
+0. **第一次用**，先运行 `onbgm doctor --json`。缺什么，它会给出安装命令。
 1. **把需求翻译成结构。** 先定下总时长、是否循环、速度、调性、有哪些段落、每段的能量（0~1）。
    用户提了时间要求（"第 12 秒进副歌""正好 60 秒"），就写成段落的 `at` 或 `meta.length`，再配上 `bpm: auto`，让引擎反推速度，不要自己算。
-2. **从示例起步。** 运行 `onbgm example` 列出示例，再用 `onbgm example <名字> > score.yaml` 取一份风格最接近的，在上面改，比从零写更可靠。
-   格式细节见 [references/score-format.md](references/score-format.md)；怎么写得好听，见 [references/arranging.md](references/arranging.md)。
-3. **校验。** 运行 `onbgm check score.yaml`。报错会写明位置、原因和改法，改到没有报错为止。这一步很快，可以反复跑。
-4. **渲染。** 运行 `onbgm render score.yaml -o out/<版本名>`，每个版本用不同的输出目录，方便对比。
-5. **读报告**（见下文），需要时用读图工具看 `out/<版本名>/pianoroll.png`。发现问题就回到第 2 步改乐谱。
+   给视频配乐时，用户给的是视频时间点；写好结构后用 `onbgm timeline score.yaml --at 0:23.4 --json` 核对，看那个时间点落在第几小节、哪一段。
+2. **从示例和写法库起步。**
+   - 运行 `onbgm example` 列出示例，再用 `onbgm init <目录> --example <名字>` 或 `onbgm example <名字> > score.yaml`，取一份风格最接近的，在上面改。
+   - 需要某种鼓型、扫弦、低音、和弦进行时，先运行 `onbgm catalog -q "描述" --json`，比如"慵懒的 lo-fi 鼓""追逐 紧张""收尾"。它会返回验证过、可以直接粘贴的片段。
+   - 格式细节见 [references/score-format.md](references/score-format.md)；怎么写得好听，见 [references/arranging.md](references/arranging.md)。
+3. **校验。** 运行 `onbgm check score.yaml --json`。每个问题都有 `path`（出错位置）和改法，有些还带 `fix`（可以直接套用的值）。改到没有报错为止。这一步很快，可以反复跑。
+4. **渲染。** 运行 `onbgm render score.yaml -o out/<版本名> --json`，每个版本用不同的输出目录，方便对比。
+5. **读报告**（见下文），需要时用读图工具看 `files.pianoroll`。发现问题就回到第 2 步改乐谱。
 6. **交付。** 把文件路径告诉用户，并说明你能确认的事实：时长、高潮在第几秒、响度走向、各段用了哪些乐器。
    不要说"很好听"，因为你听不到。请用户试听并给意见。
 7. **修改。** 用户提意见后，用文件编辑工具只改相关的几行，另存为新版本（如 `score_v2.yaml`），不要整份重写。
-   `meta.seed` 保持不变，没改的部分就会逐音保持原样，力度和人性化细节也一样。
+   `meta.seed` 保持不变，没改的段落就会逐音保持原样，力度和人性化细节也一样。
+   例外是音量平衡：改动所在段落里的伴奏变响或变轻了，这一段旋律的自动音量会跟着调整，其他段落不受影响。
 
 ## 读懂渲染报告
+
+用 `--json` 时，下面这些内容在 `timeline`、`sources`、`automix`、`warnings`、`lufs`、`duration_s`、`loudness`、`balance` 字段里。文字版是这样的：
 
 ```
 《Night Rain》 90 BPM · D minor · 24 小节 · 1:04.00 · 可无缝循环     ← 时间轴：每段从第几秒开始
@@ -55,7 +64,7 @@ climax 段声部平衡: lead -14.6  piano -18.1  pad -18.4 …            ← �
 |---|---|
 | `loop.wav` | 循环曲（`meta.loop: true`）的精确循环段，结尾溢出的余音已叠回开头，首尾无缝 |
 | `song.wav` | 不循环的曲子，时长 = 乐谱时长 + `meta.tail`，结尾带短淡出 |
-| `preview.m4a` / `preview.wav` | 试听用；循环曲会连放两遍再结束，可以听接缝 |
+| `preview.mp3` | 试听用；循环曲会连放两遍再结束，可以听接缝 |
 | `song.mid` | 带段落标记的 MIDI，可导入 DAW |
 | `stems/` | 各声部分轨 |
 | `pianoroll.png` | 卷帘图 |
@@ -65,4 +74,4 @@ climax 段声部平衡: lead -14.6  piano -18.1  pad -18.4 …            ← �
 - 时长、循环、淡出、收尾都在乐谱里表达，不要用 ffmpeg 等工具剪辑或拼接输出的音频。
 - 不要为了"修"结果去改 onbgm 的源码或音源。
 - 乐谱格式以 `onbgm schema` 输出的 JSON Schema 为准，本文档和它不一致时以 schema 为准。
-- 渲染需要 fluidsynth（`brew install fluid-synth`）和音源（`onbgm fetch`，约 650MB）。缺了高质量音源会自动退回 GM 音色；也可以用 `--soundset gm` 快速出草稿。
+- 渲染需要 fluidsynth 和音源（`onbgm fetch`，约 700MB）。`onbgm doctor` 会检查这两样。缺了高质量音源会自动退回 GM 音色；也可以用 `--soundset gm` 快速出草稿。

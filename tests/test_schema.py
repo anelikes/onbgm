@@ -27,7 +27,7 @@ def test_examples_and_agent_scores_validate(path):
 def _problems(write_score, text):
     with pytest.raises(ScoreError) as err:
         load(write_score(text))
-    return err.value.problems
+    return [str(p) for p in err.value.problems]
 
 
 BASE = """
@@ -43,7 +43,7 @@ def test_mistakes_fresh_agents_made_get_actionable_errors(write_score):
     tracks:
       lead: {sound: glockenspiel, notes: "G5/4 E5/8"}
     """)
-    assert any("'title' 应该写在顶层" in p for p in problems)
+    assert "meta.title: 应该写在顶层" in problems
     assert any(p.startswith("tracks.lead.notes: 应为键值对") and "chorus" in p for p in problems)
 
 
@@ -54,7 +54,7 @@ def test_typos_get_suggestions(write_score):
       drums: {sound: drums, texture: groove, pattern: {kik: "x... ...."}}
     """)
     assert any("是不是想写 epiano" in p for p in problems)
-    assert any("是不是想写 'rhythm'" in p for p in problems)
+    assert any(p.startswith("tracks.keys.rythm: 不认识这个字段，是不是想写 'rhythm'") for p in problems)
     assert any("是不是想写 kick" in p for p in problems)
 
 
@@ -63,7 +63,7 @@ def test_field_from_another_texture_names_the_right_textures(write_score):
     tracks:
       drums: {sound: drums, texture: groove, rhythm: "x... ...."}
     """)
-    assert problems == ["tracks.drums: groove 织体不使用字段 'rhythm'（bassline、comp 才用）；"
+    assert problems == ["tracks.drums.rhythm: groove 织体不使用这个字段（bassline、comp 才用）；"
                         "groove 可用: by_section, gain, in, laid_back, pattern, sound, texture"]
 
 
@@ -77,7 +77,7 @@ def test_by_section_must_name_real_sections_and_overridable_fields(write_score):
         by_section: {bridge: {rhythm: "1---"}, chorus: {low: 30}}
     """)
     assert any("by_section.bridge: 没有这个段落" in p for p in problems)
-    assert any("by_section.chorus: bassline 的段落覆盖里不能写 'low'" in p for p in problems)
+    assert any("by_section.chorus.low: bassline 的段落覆盖里不能写这个字段" in p for p in problems)
 
 
 def _doc_scores():
@@ -93,3 +93,13 @@ def _doc_scores():
 def test_scores_in_skill_docs_are_valid(write_score, text):
     from onbgm.arrange import arrange
     arrange(load(write_score(text)))
+
+
+def test_every_problem_code_is_documented():
+    import re
+    codes = set()
+    for py in (ROOT / "onbgm").glob("*.py"):
+        codes |= set(re.findall(r'Problem\("([a-z_]+)"', py.read_text(encoding="utf-8")))
+    doc = (ROOT / "skills" / "onbgm" / "references" / "cli.md").read_text(encoding="utf-8")
+    missing = sorted(c for c in codes - {"invalid"} if f"`{c}`" not in doc)
+    assert not missing, f"cli.md 没写这些错误码: {missing}"

@@ -87,7 +87,7 @@ tracks:
 piano:     {sound: piano, texture: arpeggio, in: [intro, theme]}
 piano_end: {sound: piano, texture: comp, in: [final], rhythm: "x--- ---- ---- ----"}
 ```
-| `by_section` | 某些段落换一套节奏型：`{段落名: {rhythm: …}}` 或 `{段落名: {pattern: …}}`，只用于 groove、bassline、comp、strum |
+| `by_section` | 某些段落换一套节奏型：`{段落名: {rhythm: …}}` 或 `{段落名: {pattern: …}}`，只用于 groove、bassline、comp、strum。groove 的 pattern 是整套替换：这一段要用的每件鼓都得写上，没写的鼓在这一段不打 |
 
 音量不用你管：伴奏按角色自动定音量；`melody` 在每段自动调到比伴奏略响。
 

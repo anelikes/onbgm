@@ -10,6 +10,8 @@ from functools import lru_cache
 
 from jsonschema import Draft202012Validator
 
+from .score import Problem
+
 # 各织体除公共字段外能用的字段；by_section 里能覆盖的字段
 COMMON_TRACK_FIELDS = {"sound", "texture", "in", "gain", "by_section"}
 TEXTURE_FIELDS = {
@@ -205,9 +207,12 @@ def _track_texture(raw: dict, path: str) -> str | None:
     return texture if texture in TEXTURE_FIELDS else None
 
 
-def _friendly(err, raw: dict) -> list[str]:
+def _at(path: str, key: str) -> str:
+    return f"{path}.{key}" if path else key
+
+
+def _friendly(err, raw: dict) -> list[Problem]:
     path, schema, v = _path(err), err.schema, err.validator
-    where = path or "顶层"
     texture = _track_texture(raw, path)
     if v == "enum" and "propertyNames" in err.schema_path and texture:
         # 某个织体不该用的字段（字段本身存在于其他织体）；完全不认识的字段由 additionalProperties 报告
@@ -216,7 +221,8 @@ def _friendly(err, raw: dict) -> list[str]:
             return []
         users = [t for t, f in TEXTURE_FIELDS.items() if key in f]
         allowed = sorted(COMMON_TRACK_FIELDS | TEXTURE_FIELDS[texture])
-        return [f"{where}: {texture} 织体不使用字段 '{key}'（{'、'.join(users)} 才用）；{texture} 可用: {', '.join(allowed)}"]
+        return [Problem("field_not_for_texture", _at(path, key),
+                        f"{texture} 织体不使用这个字段（{'、'.join(users)} 才用）；{texture} 可用: {', '.join(allowed)}")]
     if v == "additionalProperties" and isinstance(err.instance, dict):
         allowed = sorted(schema.get("properties", {}))
         if texture:
@@ -226,60 +232,62 @@ def _friendly(err, raw: dict) -> list[str]:
             if key in schema.get("properties", {}):
                 continue
             if (path, key) in _MISPLACED:
-                out.append(f"{where}: '{key}' 应该写在{_MISPLACED[(path, key)]}")
+                out.append(Problem("misplaced_field", _at(path, key), f"应该写在{_MISPLACED[(path, key)]}"))
                 continue
             guess = difflib.get_close_matches(key, allowed, n=1)
-            out.append(f"{where}: 不认识字段 '{key}'" + (f"，是不是想写 '{guess[0]}'？" if guess else "")
-                       + f"（可用: {', '.join(allowed)}）")
+            out.append(Problem("unknown_field", _at(path, key),
+                               "不认识这个字段" + (f"，是不是想写 '{guess[0]}'？" if guess else "")
+                               + f"（可用: {', '.join(allowed)}）", {"replace_with": guess[0]} if guess else None))
         return out
     if v == "required":
         missing = err.message.split("'")[1]
         sub = schema.get("properties", {}).get(missing, {})
-        return [f"{where}: 缺少字段 '{missing}'" + (f"（{sub['description']}）" if "description" in sub else "")
-                + _example(sub)]
+        return [Problem("missing_field", _at(path, missing), "缺少这个字段"
+                        + (f"（{sub['description']}）" if "description" in sub else "") + _example(sub))]
     if v == "type":
         expected = err.validator_value if isinstance(err.validator_value, str) else err.validator_value[0]
-        return [f"{where}: 应为{_TYPE_NAMES.get(expected, expected)}，当前是{_kind(err.instance)}"
-                + (f"。{schema['description']}" if "description" in schema else "") + _example(schema)]
+        return [Problem("wrong_type", path, f"应为{_TYPE_NAMES.get(expected, expected)}，当前是{_kind(err.instance)}"
+                        + (f"。{schema['description']}" if "description" in schema else "") + _example(schema))]
     if v == "enum" or v == "const":
         options = err.validator_value if v == "enum" else [err.validator_value]
         guess = difflib.get_close_matches(str(err.instance), [str(o) for o in options], n=1)
-        return [f"{where}: 不认识 {_dump(err.instance)}" + (f"，是不是想写 {guess[0]}？" if guess else "")
-                + f"（可用: {', '.join(str(o) for o in options)}）"]
+        return [Problem("unknown_value", path, f"不认识 {_dump(err.instance)}"
+                        + (f"，是不是想写 {guess[0]}？" if guess else "")
+                        + f"（可用: {', '.join(str(o) for o in options)}）", {"replace_with": guess[0]} if guess else None)]
     if v in ("anyOf", "oneOf"):
         # 实例类型对上了某个分支、但在更深处出错（如鼓件名拼错）：报那个具体错误
         deeper = [e for e in err.context if e.validator not in ("type", "pattern", "const")]
         if deeper:
             return [m for e in deeper for m in _friendly(e, raw)]
         fmt = schema.get("x-format") or schema.get("description")
-        return [f"{where}: 格式不对" + (f"，应为{fmt}" if fmt else "")
-                + _example(schema) + f"（当前是 {_dump(err.instance)}）"]
+        return [Problem("bad_format", path, "格式不对" + (f"，应为{fmt}" if fmt else "")
+                        + _example(schema) + f"（当前是 {_dump(err.instance)}）")]
     if v in ("minimum", "maximum", "exclusiveMinimum", "exclusiveMaximum"):
         sign = {"minimum": "≥", "maximum": "≤", "exclusiveMinimum": ">", "exclusiveMaximum": "<"}[v]
-        return [f"{where}: 须 {sign} {err.validator_value}，当前是 {err.instance}"]
+        return [Problem("out_of_range", path, f"须 {sign} {err.validator_value}，当前是 {err.instance}")]
     if v in ("minItems", "maxItems"):
-        return [f"{where}: 项数不对" + (f"，应为{schema['description']}" if "description" in schema else "")
-                + _example(schema)]
-    return [f"{where}: {err.message}"]
+        return [Problem("wrong_length", path, "项数不对"
+                        + (f"，应为{schema['description']}" if "description" in schema else "") + _example(schema))]
+    return [Problem("invalid", path, err.message)]
 
 
-def validate(raw) -> list[str]:
+def validate(raw) -> list[Problem]:
     """按 schema 校验乐谱的结构；返回写给 agent 看的问题列表（空列表表示通过）。"""
     if not isinstance(raw, dict):
-        return ["乐谱应是一个 YAML 映射，至少包含 meta、sections、harmony"]
+        return [Problem("wrong_type", "", "乐谱应是一个 YAML 映射，至少包含 meta、sections、harmony")]
     validator = Draft202012Validator(score_schema())
-    problems = []
+    problems: list[Problem] = []
     for err in sorted(validator.iter_errors(raw), key=lambda e: (list(map(str, e.absolute_path)), e.validator)):
         if err.validator == "allOf":
             continue  # 由内部的 propertyNames 错误报告
-        for msg in _friendly(err, raw):
-            if msg not in problems:
-                problems.append(msg)
+        for problem in _friendly(err, raw):
+            if all(str(problem) != str(p) for p in problems):
+                problems.append(problem)
     problems += _check_texture_specifics(raw)
     return problems
 
 
-def _check_texture_specifics(raw: dict) -> list[str]:
+def _check_texture_specifics(raw: dict) -> list[Problem]:
     """schema 不方便表达的部分：织体缺省、by_section 的段落名和可覆盖字段、pattern 在不同织体下的类型。"""
     names = [s.get("name") for s in raw.get("sections") or [] if isinstance(s, dict)]
     out = []
@@ -289,22 +297,25 @@ def _check_texture_specifics(raw: dict) -> list[str]:
         where = f"tracks.{name}"
         texture = cfg.get("texture", "melody" if "notes" in cfg else None)
         if texture is None:
-            out.append(f"{where}: 缺少 texture（或用 notes 逐音写旋律）；可用织体: {', '.join(TEXTURE_FIELDS)}")
+            out.append(Problem("missing_texture", f"{where}.texture",
+                               f"缺少织体（或用 notes 逐音写旋律）；可用织体: {', '.join(TEXTURE_FIELDS)}"))
             continue
         if texture not in TEXTURE_FIELDS:
             continue  # 已由 enum 报告
         pattern = cfg.get("pattern")
         if texture == "groove" and pattern is not None and not isinstance(pattern, dict):
-            out.append(f"{where}.pattern: groove 的 pattern 应是 {{鼓件名: 节奏型}}，例如 "
-                       f"{{\"kick\": \"x... ...x ..x. ....\", \"snare\": \".... x... .... x...\"}}")
+            out.append(Problem("wrong_type", f"{where}.pattern", "groove 的 pattern 应是 {鼓件名: 节奏型}，例如 "
+                               "{\"kick\": \"x... ...x ..x. ....\", \"snare\": \".... x... .... x...\"}"))
         if texture == "strum" and pattern is not None and not isinstance(pattern, str):
-            out.append(f"{where}.pattern: strum 的 pattern 应是一行扫弦节奏型，例如 \"D... x.U. D.U. x.U.\"")
+            out.append(Problem("wrong_type", f"{where}.pattern", "strum 的 pattern 应是一行扫弦节奏型，例如 \"D... x.U. D.U. x.U.\""))
         for sec, override in (cfg.get("by_section") or {}).items():
             if sec not in names:
-                out.append(f"{where}.by_section.{sec}: 没有这个段落（现有: {', '.join(map(str, names))}）")
+                out.append(Problem("unknown_section", f"{where}.by_section.{sec}",
+                                   f"没有这个段落（现有: {', '.join(map(str, names))}）"))
             allowed = SECTION_OVERRIDES.get(texture, set())
             for key in override or {}:
                 if key not in allowed:
-                    out.append(f"{where}.by_section.{sec}: {texture} 的段落覆盖里不能写 '{key}'"
-                               + (f"（只能写 {', '.join(sorted(allowed))}）" if allowed else "（这个织体没有可按段落覆盖的字段）"))
+                    out.append(Problem("not_overridable", f"{where}.by_section.{sec}.{key}",
+                                       f"{texture} 的段落覆盖里不能写这个字段"
+                                       + (f"（只能写 {', '.join(sorted(allowed))}）" if allowed else "（这个织体没有可按段落覆盖的字段）")))
     return out

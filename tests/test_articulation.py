@@ -51,7 +51,7 @@ def test_articulation_is_rejected_for_textures_that_do_not_use_it(write_score):
             tracks:
               keys: {sound: piano, texture: comp, articulation: staccato, rhythm: "x--- ---- ---- ----"}
         """))
-    assert "comp 织体不使用字段 'articulation'" in str(err.value)
+    assert "tracks.keys.articulation: comp 织体不使用这个字段" in str(err.value)
 
 
 @pytest.fixture
