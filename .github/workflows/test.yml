@@ -31,21 +31,20 @@ jobs:
           key: generaluser-${{ hashFiles('onbgm/fetch.py') }}
       - name: 下载 GM 音源
         run: python -c "from pathlib import Path; from onbgm.fetch import fetch_generaluser; fetch_generaluser(Path('sounds'))"
-      # pedalboard 的 Linux 预编译包按打包机器的 CPU 编译（上游已修复，等 0.9.26 发布），
-      # 分到不同型号的 CPU 时一导入就崩溃（Illegal instruction）。遇到时从源码编译一份通用版本
+      # pedalboard 的 Linux 预编译包按打包机器的 CPU 编译（spotify/pedalboard#454，上游已修复、等待发布），
+      # 分到某些型号的 CPU 时一导入就崩溃（Illegal instruction）。遇到时从修复了这个问题的提交编译，约 4 分钟
       - name: 检查 pedalboard
         run: |
-          if [ "${FORCE_PEDALBOARD_BUILD:-}" = 1 ] || ! python -c "import pedalboard" 2>/dev/null; then
-            echo "预编译的 pedalboard 在这台机器的 CPU 上不能用，从源码编译"
-            # PyPI 上只有预编译包，没有源码包：用上游修复了这个问题的提交编译（子模块用 SSH 地址，改走 HTTPS）
-            git config --global url."https://github.com/".insteadOf git@github.com:
+          if ! python -c "import pedalboard" 2>/dev/null; then
+            echo "预编译的 pedalboard 在这台机器的 CPU（$(grep -m1 'model name' /proc/cpuinfo | cut -d: -f2)）上不能用，从源码编译"
             sudo apt-get install -y --no-install-recommends pkg-config libx11-dev libxrandr-dev libxinerama-dev \
               libxrender-dev libxcomposite-dev libxcb-xinerama0-dev libxcursor-dev libfreetype6-dev libasound2-dev
-            time USE_PORTABLE_SIMD=1 pip install --force-reinstall --no-deps "pedalboard @ git+https://github.com/spotify/pedalboard@8dd91c687ae96995ba90f4f928e3baa5e047fe96"
+            commit=$(python -c "from onbgm.entry import PORTABLE_COMMIT; print(PORTABLE_COMMIT)")
+            # 子模块是 SSH 地址，用环境变量临时改走 HTTPS
+            GIT_CONFIG_COUNT=1 GIT_CONFIG_KEY_0=url.https://github.com/.insteadOf GIT_CONFIG_VALUE_0=git@github.com: \
+              USE_PORTABLE_SIMD=1 pip install --force-reinstall --no-deps "pedalboard @ git+https://github.com/spotify/pedalboard@$commit"
           fi
           python -c "import pedalboard; print('pedalboard', pedalboard.__version__)"
-        env:
-          FORCE_PEDALBOARD_BUILD: 1  # 临时：验证源码编译能成功
       - name: onbgm doctor
         run: onbgm doctor
       - name: 测试

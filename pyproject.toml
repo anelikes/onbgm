@@ -27,7 +27,7 @@ dependencies = [
 dev = ["pytest"]
 
 [project.scripts]
-onbgm = "onbgm.cli:main"
+onbgm = "onbgm.entry:main"
 
 [build-system]
 requires = ["setuptools>=64"]

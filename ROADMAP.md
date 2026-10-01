@@ -40,6 +40,7 @@ onbgm 是给 AI agent 用的配乐工具。agent 写文本乐谱，onbgm 按视�
 - 已完成：演奏法记号（断奏、重音），因为试听反馈提前做了。
 - 待做：增量渲染（现在渲染一首约 10 秒，优先级不高）。
 - 待做：去掉 FluidSynth 这个系统依赖（自己写 SF2 渲染器）。
+- 待做：pedalboard 发布修复了 Linux CPU 兼容性的新版本（0.9.26）后，把依赖下限提到这个版本，去掉 `onbgm/entry.py` 里的启动检查和 CI 里的源码编译。
 
 **阶段 3：配乐时间线**（进行中）
 - 已完成：`sfx` 音效时间线，和音乐共用一个时钟。8 种合成音效：riser、reverse-cymbal、whoosh、impact、sub-drop、downlifter、pop、ding。按剪辑惯例对准，有音高的自动和当时的和弦同调，可以压低音乐。

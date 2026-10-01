@@ -53,6 +53,14 @@ onbgm render my_bgm/score.yaml -o my_bgm/out/v1 --soundset gm # 只用 GM 音源
 - `stems/`：分轨；
 - `pianoroll.png`：卷帘图。
 
+### 常见问题
+
+**Linux 上一运行就报 `Illegal instruction`，或者 `onbgm` 提示 `pedalboard_illegal_instruction`**
+
+这是音频处理库 pedalboard 的已知问题（[spotify/pedalboard#454](https://github.com/spotify/pedalboard/issues/454)）：它 0.9.25 及以前的 Linux x86 预编译包，是按打包机器的 CPU 编译的，在部分 CPU 上（比如一些 AMD EPYC 服务器）一导入就崩溃。上游已经修复，等待发布新版本。
+
+在这之前，`onbgm` 会在启动时发现这个问题并给出修复命令：从上游修复了这个问题的提交编译 pedalboard，需要编译工具，大约 4 分钟。
+
 ## 示例
 
 | 示例 | 风格 |
