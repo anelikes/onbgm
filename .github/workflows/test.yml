@@ -37,8 +37,8 @@ jobs:
         run: |
           if [ "${FORCE_PEDALBOARD_BUILD:-}" = 1 ] || ! python -c "import pedalboard" 2>/dev/null; then
             echo "预编译的 pedalboard 在这台机器的 CPU 上不能用，从源码编译"
-            version=$(pip show pedalboard | awk '/^Version/{print $2}')
-            time USE_PORTABLE_SIMD=1 pip install --no-binary pedalboard --force-reinstall --no-deps "pedalboard==$version"
+            # PyPI 上只有预编译包，没有源码包：用上游修复了这个问题的提交编译
+            time USE_PORTABLE_SIMD=1 pip install --force-reinstall --no-deps "pedalboard @ git+https://github.com/spotify/pedalboard@8dd91c687ae96995ba90f4f928e3baa5e047fe96"
           fi
           python -c "import pedalboard; print('pedalboard', pedalboard.__version__)"
         env:
