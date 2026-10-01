@@ -12,7 +12,11 @@ dependencies = [
     "pyloudnorm",
     "matplotlib",
     "soxr",
+    "jsonschema",
 ]
+
+[project.optional-dependencies]
+dev = ["pytest"]
 
 [project.scripts]
 onbgm = "onbgm.cli:main"
@@ -23,3 +27,10 @@ build-backend = "setuptools.build_meta"
 
 [tool.setuptools]
 packages = ["onbgm"]
+
+[tool.setuptools.package-data]
+onbgm = ["examples/*.yaml"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["tests"]

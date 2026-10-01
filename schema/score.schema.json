@@ -1,0 +1,719 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "onbgm score",
+  "description": "onbgm 乐谱：LLM 逐音编写、引擎渲染成纯器乐 BGM",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "meta",
+    "sections",
+    "harmony"
+  ],
+  "properties": {
+    "title": {
+      "type": "string",
+      "description": "曲名"
+    },
+    "meta": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "bpm": {
+          "anyOf": [
+            {
+              "type": "number",
+              "exclusiveMinimum": 0
+            },
+            {
+              "const": "auto"
+            }
+          ],
+          "description": "速度；写 auto 则由 length 或段落的 at 反推",
+          "examples": [
+            90,
+            "auto"
+          ]
+        },
+        "length": {
+          "anyOf": [
+            {
+              "type": "number",
+              "minimum": 0
+            },
+            {
+              "type": "string",
+              "pattern": "^\\s*(\\d+:)?\\d+(\\.\\d+)?\\s*$"
+            }
+          ],
+          "description": "总时长约束（配合 bpm: auto）",
+          "x-format": "秒数，或 \"分:秒\" 字符串",
+          "examples": [
+            "0:32",
+            12.5
+          ]
+        },
+        "key": {
+          "type": "string",
+          "description": "调性，仅作记录",
+          "examples": [
+            "D minor"
+          ]
+        },
+        "loop": {
+          "type": "boolean",
+          "description": "true：输出可无缝循环的 loop.wav；false：输出 song.wav"
+        },
+        "seed": {
+          "type": "integer",
+          "description": "人性化随机种子"
+        },
+        "swing": {
+          "type": "number",
+          "minimum": 0.5,
+          "maximum": 0.75,
+          "description": "摇摆：0.5 平直，0.58 左右是 lo-fi 的晃动感"
+        },
+        "swing_unit": {
+          "enum": [
+            8,
+            16
+          ],
+          "description": "16：十六分音符摇摆；8：八分音符摇摆"
+        },
+        "tail": {
+          "anyOf": [
+            {
+              "type": "number",
+              "minimum": 0
+            },
+            {
+              "type": "string",
+              "pattern": "^\\s*(\\d+:)?\\d+(\\.\\d+)?\\s*$"
+            }
+          ],
+          "description": "不循环时，乐谱结束后再留几秒余音",
+          "x-format": "秒数，或 \"分:秒\" 字符串",
+          "examples": [
+            "0:32",
+            12.5
+          ]
+        }
+      }
+    },
+    "fx": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "lofi": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1,
+          "description": "lo-fi 质感：磁带抖动、低通、轻微失真、黑胶底噪"
+        }
+      }
+    },
+    "sections": {
+      "type": "array",
+      "minItems": 1,
+      "description": "段落，按播放顺序",
+      "examples": [
+        [
+          {
+            "name": "intro",
+            "bars": 4,
+            "energy": 0.3
+          },
+          {
+            "name": "chorus",
+            "bars": 8,
+            "energy": 0.9,
+            "at": "0:12"
+          }
+        ]
+      ],
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "name",
+          "bars"
+        ],
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "bars": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "energy": {
+            "anyOf": [
+              {
+                "type": "number",
+                "minimum": 0,
+                "maximum": 1
+              },
+              {
+                "type": "string",
+                "pattern": "^\\s*(0(\\.\\d+)?|1(\\.0+)?)\\s*->\\s*(0(\\.\\d+)?|1(\\.0+)?)\\s*$"
+              }
+            ],
+            "description": "0~1 的能量，或段内渐变 \"起->止\"",
+            "x-format": "0~1 的数字，或 \"起->止\" 渐变",
+            "examples": [
+              0.6,
+              "0.4->0.9"
+            ]
+          },
+          "at": {
+            "anyOf": [
+              {
+                "type": "number",
+                "minimum": 0
+              },
+              {
+                "type": "string",
+                "pattern": "^\\s*(\\d+:)?\\d+(\\.\\d+)?\\s*$"
+              }
+            ],
+            "description": "这一段必须从这个时间开始",
+            "x-format": "秒数，或 \"分:秒\" 字符串",
+            "examples": [
+              "0:32",
+              12.5
+            ]
+          }
+        }
+      }
+    },
+    "harmony": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "string"
+      },
+      "description": "每段一行和弦：{段落名: \"C | Am | F G | G7\"}，| 分小节，同小节多个和弦平分",
+      "examples": [
+        {
+          "verse": "G | D/F# | Em | C"
+        }
+      ]
+    },
+    "tracks": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "object",
+        "required": [
+          "sound"
+        ],
+        "additionalProperties": false,
+        "properties": {
+          "sound": {
+            "enum": [
+              "acoustic-bass",
+              "brass",
+              "cello",
+              "choir",
+              "contrabass",
+              "drums",
+              "drums-808",
+              "drums-brush",
+              "drums-electronic",
+              "drums-jazz",
+              "drums-room",
+              "electric-bass",
+              "epiano",
+              "flute",
+              "glockenspiel",
+              "guitar-nylon",
+              "guitar-steel",
+              "harp",
+              "horn",
+              "marimba",
+              "oboe",
+              "piano",
+              "pizzicato",
+              "strings",
+              "strings-slow",
+              "timpani",
+              "tremolo",
+              "vibraphone",
+              "whistle"
+            ],
+            "description": "音色"
+          },
+          "texture": {
+            "enum": [
+              "arpeggio",
+              "bass-pizz",
+              "bass-sustain",
+              "bassline",
+              "comp",
+              "crash",
+              "groove",
+              "line",
+              "melody",
+              "pad",
+              "strum",
+              "timpani"
+            ],
+            "description": "织体：这个声部怎么演奏"
+          },
+          "in": {
+            "anyOf": [
+              {
+                "const": "all"
+              },
+              {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
+            ],
+            "description": "出现在哪些段落",
+            "x-format": "段落名列表，或 \"all\"",
+            "examples": [
+              [
+                "verse",
+                "chorus"
+              ]
+            ]
+          },
+          "gain": {
+            "type": "number",
+            "description": "在自动混音结果上再加减的音量（dB）"
+          },
+          "by_section": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "object"
+            },
+            "description": "某些段落换一套节奏型：{段落名: {pattern 或 rhythm: …}}",
+            "examples": [
+              {
+                "chorus": {
+                  "rhythm": "1-1- 1-1- 1-1- 5-8-"
+                }
+              }
+            ]
+          },
+          "notes": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            },
+            "description": "按段落逐音写旋律：{段落名: \"音符 音符 | 下一小节 …\"}",
+            "examples": [
+              {
+                "chorus": "G5/4 E5/8 G5/8 r/2 | A5/1"
+              }
+            ]
+          },
+          "pattern": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "节奏型：每小节 8/12/16/24/32 个字符（16 个即一个字符一个十六分音符），| 分小节，空格可随意加",
+                "examples": [
+                  "x... ..x. ..x. ...."
+                ]
+              },
+              {
+                "type": "object",
+                "propertyNames": {
+                  "enum": [
+                    "cabasa",
+                    "clap",
+                    "conga-high",
+                    "conga-low",
+                    "cowbell",
+                    "crash",
+                    "hat",
+                    "kick",
+                    "open-hat",
+                    "pedal-hat",
+                    "ride",
+                    "ride-bell",
+                    "rim",
+                    "shaker",
+                    "snare",
+                    "tambourine",
+                    "tom-high",
+                    "tom-low",
+                    "tom-mid"
+                  ]
+                },
+                "additionalProperties": {
+                  "type": "string",
+                  "description": "节奏型：每小节 8/12/16/24/32 个字符（16 个即一个字符一个十六分音符），| 分小节，空格可随意加",
+                  "examples": [
+                    "x... ..x. ..x. ...."
+                  ]
+                }
+              }
+            ],
+            "description": "strum：一行扫弦节奏型；groove：{鼓件名: 节奏型}",
+            "examples": [
+              "D... x.U. D.U. x.U.",
+              {
+                "kick": "x... ...x ..x. ....",
+                "snare": ".... x... .... x..."
+              }
+            ]
+          },
+          "rhythm": {
+            "type": "string",
+            "description": "节奏型：每小节 8/12/16/24/32 个字符（16 个即一个字符一个十六分音符），| 分小节，空格可随意加",
+            "examples": [
+              "x... ..x. ..x. ...."
+            ]
+          },
+          "low": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 127,
+            "description": "最低音区起点（MIDI 音高，60 = C4）"
+          },
+          "range": {
+            "type": "array",
+            "items": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 127
+            },
+            "minItems": 2,
+            "maxItems": 2,
+            "description": "音区 [最低, 最高]（MIDI 音高）",
+            "examples": [
+              [
+                48,
+                67
+              ]
+            ]
+          },
+          "roll": {
+            "type": "number",
+            "minimum": 0,
+            "description": "和弦从低到高依次拨开的间隔（拍）"
+          },
+          "roll_into": {
+            "type": "string",
+            "description": "在这个段落之前一小节做渐强滚奏"
+          },
+          "gate": {
+            "type": "number",
+            "exclusiveMinimum": 0,
+            "maximum": 1.5,
+            "description": "音符实际长度占时值的比例"
+          },
+          "laid_back": {
+            "type": "number",
+            "description": "军鼓/拍手往后拖的拍数"
+          },
+          "spread": {
+            "type": "number",
+            "minimum": 0,
+            "description": "扫弦相邻两根弦的时间差（秒）"
+          }
+        },
+        "allOf": [
+          {
+            "if": {
+              "required": [
+                "texture"
+              ],
+              "properties": {
+                "texture": {
+                  "const": "arpeggio"
+                }
+              }
+            },
+            "then": {
+              "propertyNames": {
+                "enum": [
+                  "by_section",
+                  "gain",
+                  "in",
+                  "low",
+                  "sound",
+                  "texture"
+                ]
+              }
+            }
+          },
+          {
+            "if": {
+              "required": [
+                "texture"
+              ],
+              "properties": {
+                "texture": {
+                  "const": "pad"
+                }
+              }
+            },
+            "then": {
+              "propertyNames": {
+                "enum": [
+                  "by_section",
+                  "gain",
+                  "in",
+                  "range",
+                  "sound",
+                  "texture"
+                ]
+              }
+            }
+          },
+          {
+            "if": {
+              "required": [
+                "texture"
+              ],
+              "properties": {
+                "texture": {
+                  "const": "bass-sustain"
+                }
+              }
+            },
+            "then": {
+              "propertyNames": {
+                "enum": [
+                  "by_section",
+                  "gain",
+                  "in",
+                  "low",
+                  "sound",
+                  "texture"
+                ]
+              }
+            }
+          },
+          {
+            "if": {
+              "required": [
+                "texture"
+              ],
+              "properties": {
+                "texture": {
+                  "const": "bass-pizz"
+                }
+              }
+            },
+            "then": {
+              "propertyNames": {
+                "enum": [
+                  "by_section",
+                  "gain",
+                  "in",
+                  "low",
+                  "sound",
+                  "texture"
+                ]
+              }
+            }
+          },
+          {
+            "if": {
+              "required": [
+                "texture"
+              ],
+              "properties": {
+                "texture": {
+                  "const": "timpani"
+                }
+              }
+            },
+            "then": {
+              "propertyNames": {
+                "enum": [
+                  "by_section",
+                  "gain",
+                  "in",
+                  "low",
+                  "roll_into",
+                  "sound",
+                  "texture"
+                ]
+              }
+            }
+          },
+          {
+            "if": {
+              "required": [
+                "texture"
+              ],
+              "properties": {
+                "texture": {
+                  "const": "crash"
+                }
+              }
+            },
+            "then": {
+              "propertyNames": {
+                "enum": [
+                  "by_section",
+                  "gain",
+                  "in",
+                  "sound",
+                  "texture"
+                ]
+              }
+            }
+          },
+          {
+            "if": {
+              "required": [
+                "texture"
+              ],
+              "properties": {
+                "texture": {
+                  "const": "melody"
+                }
+              }
+            },
+            "then": {
+              "propertyNames": {
+                "enum": [
+                  "by_section",
+                  "gain",
+                  "gate",
+                  "in",
+                  "notes",
+                  "sound",
+                  "texture"
+                ]
+              }
+            }
+          },
+          {
+            "if": {
+              "required": [
+                "texture"
+              ],
+              "properties": {
+                "texture": {
+                  "const": "line"
+                }
+              }
+            },
+            "then": {
+              "propertyNames": {
+                "enum": [
+                  "by_section",
+                  "gain",
+                  "gate",
+                  "in",
+                  "notes",
+                  "sound",
+                  "texture"
+                ]
+              }
+            }
+          },
+          {
+            "if": {
+              "required": [
+                "texture"
+              ],
+              "properties": {
+                "texture": {
+                  "const": "groove"
+                }
+              }
+            },
+            "then": {
+              "propertyNames": {
+                "enum": [
+                  "by_section",
+                  "gain",
+                  "in",
+                  "laid_back",
+                  "pattern",
+                  "sound",
+                  "texture"
+                ]
+              }
+            }
+          },
+          {
+            "if": {
+              "required": [
+                "texture"
+              ],
+              "properties": {
+                "texture": {
+                  "const": "bassline"
+                }
+              }
+            },
+            "then": {
+              "propertyNames": {
+                "enum": [
+                  "by_section",
+                  "gain",
+                  "in",
+                  "low",
+                  "rhythm",
+                  "sound",
+                  "texture"
+                ]
+              }
+            }
+          },
+          {
+            "if": {
+              "required": [
+                "texture"
+              ],
+              "properties": {
+                "texture": {
+                  "const": "comp"
+                }
+              }
+            },
+            "then": {
+              "propertyNames": {
+                "enum": [
+                  "by_section",
+                  "gain",
+                  "in",
+                  "range",
+                  "rhythm",
+                  "roll",
+                  "sound",
+                  "texture"
+                ]
+              }
+            }
+          },
+          {
+            "if": {
+              "required": [
+                "texture"
+              ],
+              "properties": {
+                "texture": {
+                  "const": "strum"
+                }
+              }
+            },
+            "then": {
+              "propertyNames": {
+                "enum": [
+                  "by_section",
+                  "gain",
+                  "in",
+                  "pattern",
+                  "sound",
+                  "spread",
+                  "texture"
+                ]
+              }
+            }
+          }
+        ]
+      }
+    }
+  }
+}

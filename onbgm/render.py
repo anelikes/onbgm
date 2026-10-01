@@ -19,13 +19,16 @@ from .midi_io import write_midi
 from .score import Score
 
 SR = 44100
-TAIL_SEC = 4.0
-TARGET_LUFS = -16.0
+TAIL_SEC = 4.0  # 渲染时在乐谱结束后多渲染的秒数（混响和释音）
+# 固定的总增益：各声部已经按角色电平对齐，整体响度天然稳定在 -16 LUFS 左右。
+# 不按每首的平均响度去归一化，这样改一处只影响那一处，不会牵动整首的音量。
+MASTER_GAIN_DB = 1.0
 PEAK_CEILING_DB = -1.0
+LIMIT_WARN_DB = 6.0  # 限幅器需要压掉超过这么多时提醒：多半是某个声部太响或叠得太厚
 # 每种伴奏角色在自己出现的段落里的目标响度（LUFS）。按实际渲染结果测量后对齐，
 # 所以换音源、换织体密度（扫弦一下 6 根弦、鼓一下一下）都不会打乱平衡。数值从《夜雨》认可的混音反推。
 ROLE_LUFS = {
-    "arpeggio": -21.0, "pad": -21.0, "comp": -21.0, "strum": -19.0,
+    "arpeggio": -21.0, "pad": -21.0, "comp": -21.0, "strum": -19.0, "line": -21.0,
     "bass-sustain": -22.0, "bass-pizz": -21.0, "bassline": -20.0,
     "groove": -19.0, "timpani": -22.0, "crash": -29.0,
 }
@@ -42,7 +45,7 @@ def _fit(audio: np.ndarray, n: int) -> np.ndarray:
 def _fluidsynth(score: Score, part: Part, sf2: Path, n: int) -> np.ndarray:
     with tempfile.TemporaryDirectory() as tmp:
         mid, wav = Path(tmp) / "part.mid", Path(tmp) / "part.wav"
-        write_midi(mid, score, [part], TAIL_SEC * score.bpm / 60)
+        write_midi(mid, score, [part], _tail_sec(score) * score.bpm / 60)
         subprocess.run(
             ["fluidsynth", "-ni", "-q", "-R", "0", "-C", "0", "-g", "0.5", "-r", str(SR),
              "-O", "float", "-T", "wav", "-F", str(wav), str(sf2), str(mid)],
@@ -70,7 +73,7 @@ def _describe(impl) -> str:
 def render_stems(score: Score, parts: list[Part], soundset: str):
     if not shutil.which("fluidsynth"):
         raise RuntimeError("找不到 fluidsynth，请先安装：brew install fluid-synth")
-    n = round((score.seconds(score.total_beats) + TAIL_SEC) * SR)
+    n = round((score.seconds(score.total_beats) + _tail_sec(score)) * SR)
     stems, sources = {}, {}
     for part in parts:
         impl = library.resolve(part.sound_name, soundset, {n.pitch for n in part.notes})
@@ -79,9 +82,18 @@ def render_stems(score: Score, parts: list[Part], soundset: str):
     return stems, sources
 
 
+def _tail_sec(score: Score) -> float:
+    return max(TAIL_SEC, score.tail)
+
+
+def _sections_with_notes(score: Score, part: Part) -> set[str]:
+    return {score.section_of(x.start).name for x in part.notes}
+
+
 def _active(score: Score, part: Part, audio: np.ndarray) -> np.ndarray:
     """只取这个声部有音符的那些段落。"""
-    secs = [s for s in score.sections if any(s.start <= x.start < s.end for x in part.notes)]
+    names = _sections_with_notes(score, part)
+    secs = [s for s in score.sections if s.name in names]
     return np.concatenate([audio[round(score.seconds(s.start) * SR): round(score.seconds(s.end) * SR)] for s in secs])
 
 
@@ -107,8 +119,10 @@ def automix(score: Score, parts: list[Part], stems: dict[str, np.ndarray]) -> li
     accomp = [p for p in parts if p.texture != "melody"]
     for mel in (p for p in parts if p.texture == "melody"):
         points = []  # (采样位置, 增益 dB)
+        gains: dict[str, float] = {}
+        names = _sections_with_notes(score, mel)
         for s in score.sections:
-            if not any(s.start <= x.start < s.end for x in mel.notes):
+            if s.name not in names:
                 continue
             a, b = round(score.seconds(s.start) * SR), round(score.seconds(s.end) * SR)
             levels = [lufs(stems[p.name][a:b] * _db(p.gain_db)) for p in accomp]
@@ -119,7 +133,14 @@ def automix(score: Score, parts: list[Part], stems: dict[str, np.ndarray]) -> li
             total = 10 * np.log10(sum(10 ** (x / 10) for x in levels))
             g = max(max(levels) + 3, total - 1.5) - own
             points += [(a + round(0.15 * SR), g), (b - round(0.15 * SR), g)]
+            gains[s.name] = g
             log.append(f"{mel.name}@{s.name} {g:+.1f} dB")
+        if gains:
+            mid = float(np.median(list(gains.values())))
+            for s, g in gains.items():
+                if abs(g - mid) > 18:
+                    log.append(f"⚠ {mel.name} 在 {s} 段的自动增益和其他段相差 {g - mid:+.0f} dB，"
+                               f"请检查这一段的旋律是否只有零星几个音，或写错了段落")
         if points:
             x, g = zip(*points)
             env = _db(np.interp(np.arange(len(stems[mel.name])), x, g)).astype(np.float32)
@@ -208,9 +229,6 @@ def lofi(x: np.ndarray, amount: float, loop_len: int | None = None) -> np.ndarra
 _BUS = [HighpassFilter(30), Compressor(threshold_db=-18, ratio=2.0, attack_ms=30, release_ms=250)]
 
 
-MAX_LIMIT_DB = 4.0  # 限幅器最多压掉的峰值，超过就宁可整体轻一点，保留动态
-
-
 def limit(x: np.ndarray, ceiling_db: float = PEAK_CEILING_DB, lookahead_ms: float = 3.0,
           release_ms: float = 80.0) -> np.ndarray:
     """透明的预读限幅器：提前几毫秒看到峰值、平滑压下，峰值以外的部分不动。"""
@@ -230,25 +248,20 @@ def limit(x: np.ndarray, ceiling_db: float = PEAK_CEILING_DB, lookahead_ms: floa
     return x * gain[:, None]
 
 
-def _master(x: np.ndarray, gain_db: float) -> np.ndarray:
-    board = Pedalboard(_BUS + [Gain(gain_db)])
-    return np.clip(limit(board(np.ascontiguousarray(x.T), SR).T), -1.0, 1.0)
-
-
-def _loudness_gain(x: np.ndarray) -> float:
-    """推到目标响度；峰值超出上限的部分交给限幅器，但最多压 MAX_LIMIT_DB。"""
-    bussed = Pedalboard(_BUS)(np.ascontiguousarray(x.T), SR).T
-    lufs = pyln.Meter(SR).integrated_loudness(bussed)
-    peak_db = 20 * np.log10(np.abs(bussed).max())
-    return min(TARGET_LUFS - lufs, PEAK_CEILING_DB + MAX_LIMIT_DB - peak_db)
+def _master(x: np.ndarray, notes: list[str] | None = None) -> np.ndarray:
+    pre = Pedalboard(_BUS + [Gain(MASTER_GAIN_DB)])(np.ascontiguousarray(x.T), SR).T
+    over = 20 * np.log10(max(float(np.abs(pre).max()), 1e-9)) - PEAK_CEILING_DB
+    if notes is not None and over > LIMIT_WARN_DB:
+        notes.append(f"⚠ 限幅器压掉了 {over:.1f} dB 峰值，可能有声部太响或叠得太厚")
+    return np.clip(limit(pre), -1.0, 1.0)
 
 
 @dataclass
 class Rendered:
-    main: np.ndarray  # 可循环时是精确到采样的循环段，否则是整首带尾音
+    main: np.ndarray  # 可循环时是精确到采样的循环段；否则是乐谱时长（加 meta.tail）
     stems: dict[str, np.ndarray]
     sources: dict[str, str]
-    automix: list[str]
+    notes: list[str]  # 自动混音的结果和警告
     files: list[Path]
 
 
@@ -269,16 +282,18 @@ def render(score: Score, parts: list[Part], out: Path, soundset: str = "hq") -> 
         body = full[:length].copy()
         body[: len(full) - length] += full[length:]
         preview_raw = np.concatenate([body, full])  # 播放两遍再自然结束，第一遍到第二遍就是循环接缝
-        gain = _loudness_gain(preview_raw)
-        main = _master(np.concatenate([body, body]), gain)[length:]  # 预热一遍，让压缩器状态也首尾一致
-        preview = _master(preview_raw, gain)
+        main = _master(np.concatenate([body, body]), mix_log)[length:]  # 预热一遍，让压缩器状态也首尾一致
+        preview = _master(preview_raw)
         sf.write(out / "loop.wav", main, SR, subtype="PCM_24")
         files.append(out / "loop.wav")
     else:
-        fade = np.linspace(1.0, 0.0, SR)[:, None]
-        full[-SR:] *= fade
-        gain = _loudness_gain(full)
-        main = preview = _master(full, gain)
+        # 时长精确等于乐谱时长（加 meta.tail），结尾淡出避免硬切
+        body = full[: length + round(score.tail * SR)].copy()
+        fade = min(len(body), round(max(0.3, score.tail) * SR))
+        body[-fade:] *= np.linspace(1.0, 0.0, fade, dtype=np.float32)[:, None]
+        main = preview = _master(body, mix_log)
+        sf.write(out / "song.wav", main, SR, subtype="PCM_24")
+        files.append(out / "song.wav")
     sf.write(out / "preview.wav", preview, SR, subtype="PCM_24")
     subprocess.run(["ffmpeg", "-y", "-loglevel", "error", "-i", str(out / "preview.wav"),
                     "-c:a", "aac", "-b:a", "192k", str(out / "preview.m4a")], check=True)

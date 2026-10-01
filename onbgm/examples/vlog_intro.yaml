@@ -1,0 +1,80 @@
+# vlog 片头 —— 正好 20 秒、不循环、0:12 进副歌、用和弦与长音做收尾
+# 由一个只读过 README 的全新 agent 编写（2026-10-01 的可用性测试），原样收录
+title: vlog_intro
+meta:
+  bpm: auto
+  length: "0:20"
+  key: G
+  swing: 0.5
+
+# 120 BPM 下 1 小节 = 2 秒：intro 2 + verse 4 = 12 秒，chorus 3 + outro 1 = 8 秒
+sections:
+  - name: intro
+    bars: 2
+    energy: 0.4
+  - name: verse
+    bars: 4
+    energy: "0.5->0.7"
+  - name: chorus
+    bars: 3
+    energy: 0.9
+    at: "0:12"
+  - name: outro
+    bars: 1
+    energy: 0.5
+
+harmony:
+  intro: G | C
+  verse: G | D/F# | Em | C D
+  chorus: G | C | C D
+  outro: G
+
+tracks:
+  guitar:
+    sound: guitar-steel
+    texture: strum
+    in: [intro, verse, chorus, outro]
+    pattern: "D.DU .UDU"
+    by_section:
+      # 一小节两个和弦时第 3 拍要扫下去，否则换和弦会拖后半拍
+      verse:  {pattern: "D.DU .UDU | D.DU .UDU | D.DU .UDU | D.DU D.DU"}
+      chorus: {pattern: "D.DU .UDU | D.DU .UDU | D.DU D.DU"}
+      outro:  {pattern: "D... ...."}
+  bass:
+    sound: acoustic-bass
+    texture: bassline
+    in: [verse, chorus, outro]
+    rhythm: "1... 5... 1... 5..."
+    by_section:
+      outro: {rhythm: "1--- ---- ---- ----"}
+  drums:
+    sound: drums
+    texture: groove
+    in: [intro, verse, chorus, outro]
+    pattern:
+      kick:   "x... .... x... .... | x... .... x... .... | x... .... x... .... | x... .... x... x.x."
+      clap:   ".... x... .... x... | .... x... .... x... | .... x... .... x... | .... x... .... xxXX"
+      shaker: "xgxg xgxg xgxg xgxg"
+    by_section:
+      intro:
+        pattern:
+          clap: ".... g... .... g..."
+      chorus:
+        pattern:
+          kick:   "X... ..x. x... .... | X... ..x. x... .... | X... ..x. x... x.x."
+          clap:   ".... X... .... X... | .... X... .... X... | .... X... .... XXXX"
+          shaker: "xgxg xgxg xgxg xgxg"
+          crash:  "X... .... .... .... | .... .... .... .... | .... .... .... ...."
+      outro:
+        pattern:
+          kick:  "X... .... .... ...."
+          clap:  "X... .... .... ...."
+          crash: "X... .... .... ...."
+  glock:
+    sound: glockenspiel
+    texture: melody
+    in: [verse, chorus, outro]
+    notes:
+      verse:  "r/1 | r/1 | r/1 | r/2 r/4 B5/8 C6/8"
+      chorus: "D6/8 G6/8 B6/4 A6/8 G6/8 D6/4 | E6/8 G6/8 C7/4 B6/8 A6/8 G6/4 | E6/8 G6/8 C7/4 B6/8 A6/8 F#6/4"
+      outro:  "G6/1"

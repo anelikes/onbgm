@@ -152,7 +152,8 @@ def t_arpeggio(score: Score, track: Track, part: Part, perf: Performer) -> None:
         base = 44 + 42 * e
         for i in range(int(round(span.dur / step))):
             b, p = span.start + i * step, pattern[i % len(pattern)]
-            part.notes.append(Note(perf.time(b, p, 0.008), step * 1.6, p, perf.vel(base + (6 if i == 0 else 0), b, p)))
+            dur = min(step * 1.6, span.end - b)  # 允许同一和弦内的音互相叠响，但不拖进下一个和弦
+            part.notes.append(Note(perf.time(b, p, 0.008), dur, p, perf.vel(base + (6 if i == 0 else 0), b, p)))
         # 换和弦时抬踏板再踩下，避免和声糊在一起
         part.ccs.append((max(0.0, span.start - 0.03), 64, 0))
         part.ccs.append((span.start + 0.08, 64, 127))
@@ -431,6 +432,7 @@ TEXTURES = {
     "timpani": t_timpani,
     "crash": t_crash,
     "melody": t_melody,
+    "line": t_melody,  # 逐音写的伴奏线（walking bass、副旋律）：和 melody 写法相同，但按伴奏定音量
     "groove": t_groove,
     "bassline": t_bassline,
     "comp": t_comp,
@@ -456,8 +458,8 @@ def arrange(score: Score) -> tuple[list[Part], list[str]]:
             problems.append(f"tracks.{t.name}.sound: 不认识 {t.sound!r}（可用: {', '.join(SOUNDS)}）")
         if t.texture not in TEXTURES:
             problems.append(f"tracks.{t.name}.texture: 不认识 {t.texture!r}（可用: {', '.join(TEXTURES)}）")
-        elif t.texture == "melody" and not t.melody:
-            problems.append(f"tracks.{t.name}: melody 织体需要 notes")
+        elif t.texture in ("melody", "line") and not t.melody:
+            problems.append(f"tracks.{t.name}: {t.texture} 织体需要 notes")
         if "roll_into" in t.options and t.options["roll_into"] not in [s.name for s in score.sections]:
             problems.append(f"tracks.{t.name}.roll_into: 没有段落 {t.options['roll_into']}")
     if problems:

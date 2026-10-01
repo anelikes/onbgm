@@ -10,7 +10,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pyloudnorm as pyln
 
-from .arrange import Part
+from .arrange import DRUM_KEYS, Part
 from .render import SR
 from .score import BEATS_PER_BAR, Score, fmt_time
 
@@ -65,11 +65,18 @@ def pianoroll(score: Score, parts: list[Part], path: Path) -> None:
     colors = plt.get_cmap("tab10")
     pitched = [p for p in parts if not p.sound.drum]
     top = max(n.pitch for p in pitched for n in p.notes) + 3
+    # 鼓每件一行，画在音高区上方，方便看清节奏型和摇摆
+    drum_names = {v: k for k, v in DRUM_KEYS.items()}
+    keys = sorted({n.pitch for p in parts if p.sound.drum for n in p.notes})
+    row = {k: top + 2 + 1.6 * i for i, k in enumerate(keys)}
+    for k, y in row.items():
+        ax.text(0.15, y, drum_names.get(k, str(k)), fontsize=7, va="center", color="0.3")
+    top = top + 2 + 1.6 * len(keys)
     for i, p in enumerate(parts):
         c = colors(i % 10)
         if p.sound.drum:
-            xs = [score.seconds(n.start) for n in p.notes]
-            ax.scatter(xs, [top] * len(xs), marker="x", s=80, color=c, label=p.name, zorder=3)
+            ax.scatter([score.seconds(n.start) for n in p.notes], [row[n.pitch] for n in p.notes],
+                       s=[8 + 40 * n.vel / 127 for n in p.notes], marker="|", color=c, label=p.name, zorder=3)
             continue
         for n in p.notes:
             ax.add_patch(plt.Rectangle((score.seconds(n.start), n.pitch - 0.4), score.seconds(n.dur), 0.8,
@@ -89,7 +96,7 @@ def pianoroll(score: Score, parts: list[Part], path: Path) -> None:
     ax2.plot([score.seconds(b) for b in beats], [score.energy_at(b) for b in beats], color="crimson", linewidth=2)
     ax2.set_ylim(0, 1.6)
     ax2.set_ylabel("energy", color="crimson")
-    ax.legend(loc="upper left", ncol=len(parts), fontsize=8)
+    ax.legend(loc="upper center", bbox_to_anchor=(0.5, -0.09), ncol=len(parts), fontsize=8, frameon=False)
     fig.tight_layout()
     fig.savefig(path)
     plt.close(fig)

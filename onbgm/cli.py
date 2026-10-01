@@ -2,15 +2,37 @@
 from __future__ import annotations
 
 import argparse
+import json
 import sys
 from pathlib import Path
 
+import pyloudnorm as pyln
+
 from .analyze import balance_report, loudness_report, pianoroll, timeline
 from .arrange import arrange
-from .render import render
 from .fetch import fetch_all
 from .library import SOUNDS_DIR
+from .render import SR, render
+from .schema import score_schema
 from .score import ScoreError, load
+
+
+EXAMPLES = Path(__file__).resolve().parent / "examples"
+
+
+def _example(name: str | None) -> None:
+    files = {p.stem: p for p in sorted(EXAMPLES.glob("*.yaml"))}
+    if name is None:
+        for stem, path in files.items():
+            first = next((ln.lstrip("# ").strip() for ln in path.read_text(encoding="utf-8").splitlines()
+                          if ln.startswith("#")), "")
+            print(f"{stem:<16} {first}")
+        print("\n用法: onbgm example <名字> > my_score.yaml")
+        return
+    if name not in files:
+        print(f"没有示例 {name!r}（可用: {', '.join(files)}）", file=sys.stderr)
+        sys.exit(1)
+    print(files[name].read_text(encoding="utf-8"), end="")
 
 
 def main() -> None:
@@ -23,10 +45,20 @@ def main() -> None:
     sub.choices["render"].add_argument("--soundset", choices=["hq", "gm"], default="hq",
                                        help="hq：高质量采样（缺的乐器自动退回 gm）；gm：只用 GeneralUser GS")
     sub.add_parser("fetch", help="下载音源到 sounds/")
+    sub.add_parser("schema", help="输出乐谱格式的 JSON Schema")
+    ex = sub.add_parser("example", help="列出示例乐谱，或输出某个示例（可重定向成起手乐谱）")
+    ex.add_argument("name", nargs="?")
     args = ap.parse_args()
+
+    if args.cmd == "example":
+        _example(args.name)
+        return
 
     if args.cmd == "fetch":
         fetch_all(SOUNDS_DIR)
+        return
+    if args.cmd == "schema":
+        print(json.dumps(score_schema(), ensure_ascii=False, indent=2))
         return
 
     try:
@@ -48,8 +80,13 @@ def main() -> None:
     print("\n音源:")
     for name, src in result.sources.items():
         print(f"  {name:<8} {src}")
-    if result.automix:
-        print("自动混音: " + "，".join(result.automix))
+    gains = [x for x in result.notes if not x.startswith("⚠")]
+    if gains:
+        print("自动混音: " + "，".join(gains))
+    for x in result.notes:
+        if x.startswith("⚠"):
+            print(x)
+    print(f"整体响度: {pyln.Meter(SR).integrated_loudness(result.main):.1f} LUFS，时长 {len(result.main) / SR:.3f} 秒")
     print()
     print(loudness_report(score, result.main))
     loudest = max(score.sections, key=lambda s: sum(s.energy))

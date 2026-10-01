@@ -4,6 +4,7 @@
 """
 from __future__ import annotations
 
+import math
 import re
 from dataclasses import dataclass
 from pathlib import Path
@@ -13,6 +14,7 @@ import yaml
 from .theory import Chord, parse_chord, parse_pitch
 
 BEATS_PER_BAR = 4
+NOTE_TOLERANCE = 0.05  # 拍；人性化会把音符起点挪动几毫秒，判断段落归属时按谱面位置留出容差
 FX = {"lofi": "lo-fi 质感：磁带抖动、低通、轻微失真、黑胶底噪（0~1）"}
 
 
@@ -81,6 +83,7 @@ class Score:
     swing: float = 0.5  # 0.5 为平直；0.58 左右是 lo-fi 常见的十六分音符摇摆
     swing_unit: int = 16  # 16：十六分音符摇摆；8：八分音符摇摆（shuffle）
     fx: dict | None = None  # 整体效果，如 {"lofi": 0.7}
+    tail: float = 0.0  # 不循环时，乐谱结束后再留几秒余音
 
     @property
     def total_beats(self) -> float:
@@ -91,6 +94,10 @@ class Score:
 
     def section(self, name: str) -> Section:
         return next(s for s in self.sections if s.name == name)
+
+    def section_of(self, beat: float) -> Section:
+        """音符属于哪个段落：按谱面位置算，被人性化提前了几毫秒的音符仍属于它写在的那一段。"""
+        return self.section_at(beat + NOTE_TOLERANCE)
 
     def section_at(self, beat: float) -> Section:
         for s in self.sections:
@@ -146,11 +153,14 @@ def _solve_bpm(meta: dict, sections: list[Section], problems: list[str]) -> floa
     constraints = [(f"sections.{s.name}.at", s.start, s.at) for s in sections if s.at is not None]
     if "length" in meta:
         constraints.append(("meta.length", sections[-1].end, parse_time(meta["length"])))
-    bpm = meta.get("bpm", "auto")
+    bpm = meta.get("bpm", "auto" if constraints else None)
+    if bpm is None:
+        problems.append("缺少 meta.bpm：写一个数字（如 90），或写 auto 并用 meta.length 或段落的 at 约束时间")
+        return 90.0
     if bpm == "auto":
         usable = [c for c in constraints if c[1] > 0 and c[2] > 0]
         if not usable:
-            problems.append("bpm: auto 需要至少一个时间约束（meta.length 或某个段落的 at）")
+            problems.append("meta.bpm 为 auto 时需要至少一个时间约束（meta.length 或某个段落的 at）")
             return 90.0
         _, beats, secs = usable[0]
         bpm = beats * 60 / secs
@@ -158,10 +168,22 @@ def _solve_bpm(meta: dict, sections: list[Section], problems: list[str]) -> floa
     for where, beats, secs in constraints:
         actual = beats * 60 / bpm
         if abs(actual - secs) > 0.01:
-            msg = f"{where} 要求 {fmt_time(secs)}，但在 {bpm:g} BPM 下实际是 {fmt_time(actual)}。"
+            msg = f"{where} 要求 {fmt_time(secs)}，但在 {bpm:g} BPM 下实际是 {fmt_time(actual)}。可以："
+            options = []
             if secs > 0:
-                msg += f"可以把 bpm 改为 {beats * 60 / secs:.2f}（或 auto），或调整它之前的小节数，或删掉这个约束。"
-            problems.append(msg)
+                options.append(f"把 bpm 改为 {beats * 60 / secs:.2f}（或 auto）")
+                # 保持这个速度：需要多少小节
+                span = "总共" if where == "meta.length" else "它之前一共"
+                need = secs * bpm / 60 / BEATS_PER_BAR
+                now = beats / BEATS_PER_BAR
+                if abs(need - round(need)) < 0.02 and round(need) > 0:
+                    options.append(f"保持 {bpm:g} BPM，让{span} {round(need)} 小节（现在是 {now:g}）")
+                else:
+                    lo, hi = math.floor(need), math.ceil(need)
+                    near = "、".join(f"{n} 小节（{fmt_time(n * BEATS_PER_BAR * 60 / bpm)}）" for n in (lo, hi) if n > 0)
+                    options.append(f"保持 {bpm:g} BPM 的话，{span}需要 {need:.2f} 小节，不是整数；最接近的是 {near}")
+            options.append("删掉这个约束")
+            problems.append(msg + "；".join(f"({i + 1}) {o}" for i, o in enumerate(options)))
     return bpm
 
 
@@ -202,7 +224,14 @@ def _parse_melody(text: str, section: Section, where: str, problems: list[str]) 
 
 
 def load(path: str | Path) -> Score:
-    raw = yaml.safe_load(Path(path).read_text(encoding="utf-8")) or {}
+    try:
+        raw = yaml.safe_load(Path(path).read_text(encoding="utf-8")) or {}
+    except yaml.YAMLError as e:
+        raise ScoreError([f"YAML 语法错误: {e}"]) from None
+    from .schema import validate
+
+    if problems := validate(raw):
+        raise ScoreError(problems)
     problems: list[str] = []
     meta = raw.get("meta") or {}
 
@@ -283,6 +312,14 @@ def load(path: str | Path) -> Score:
     if swing_unit not in (8, 16):
         problems.append(f"meta.swing_unit 须为 8 或 16，当前 {swing_unit!r}")
         swing_unit = 16
+    tail = 0.0
+    if "tail" in meta:
+        try:
+            tail = parse_time(meta["tail"])
+        except ValueError as e:
+            problems.append(f"meta.tail: {e}")
+        if meta.get("loop"):
+            problems.append("meta.tail 只用于不循环的曲子（loop: false）；循环时余音会自动叠回开头")
     fx = raw.get("fx") or {}
     for k, v in fx.items():
         if k not in FX:
@@ -304,4 +341,5 @@ def load(path: str | Path) -> Score:
         swing=float(swing),
         swing_unit=swing_unit,
         fx=fx,
+        tail=tail,
     )
