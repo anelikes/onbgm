@@ -33,7 +33,7 @@ jobs:
         run: python -c "from pathlib import Path; from onbgm.fetch import fetch_generaluser; fetch_generaluser(Path('sounds'))"
       - name: 诊断（临时）
         run: |
-          python -X faulthandler -c "import numpy; print('numpy', numpy.__version__); numpy.show_runtime()" || true
+          grep -m1 "model name" /proc/cpuinfo; grep -o -w -E "avx2|avx512f|avx512bw|avx512vl|avx512_vnni|avx_vnni|sha_ni|vaes" /proc/cpuinfo | sort -u | tr '\n' ' '; echo
           for m in soundfile soxr pyloudnorm matplotlib mido jsonschema pedalboard; do python -X faulthandler -c "import $m; print('ok', '$m')" || echo "FAIL $m"; done
           python -X faulthandler -c "import onbgm.cli; print('ok onbgm.cli')" || echo "FAIL onbgm.cli"
           python -X faulthandler -m onbgm.cli doctor || echo "FAIL doctor $?"
