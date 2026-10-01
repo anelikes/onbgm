@@ -112,4 +112,13 @@ onbgm render my_bgm/score.yaml -o my_bgm/out/v1 --soundset gm # 只用 GM 音源
 .venv/bin/python -m pytest      # 需要音频的测试在没装 fluidsynth 或音源时会自动跳过
 ```
 
-当前状态：阶段 1（打地基）。定位、范围决策和后续阶段见 [ROADMAP.md](ROADMAP.md)。
+开发约定、新增音色和采样库的流程见 [CONTRIBUTING.md](CONTRIBUTING.md)。定位、范围决策和后续阶段见 [ROADMAP.md](ROADMAP.md)。
+
+## 协议
+
+代码使用 [MIT](LICENSE) 协议。
+
+音源不在仓库里，由 `onbgm fetch` 从各自作者那里下载，协议见上面的音源表。用它们做出来的音乐：
+- CC0 的音源（VSCO、VCSL、jRhodes、Karoryfer 的贝斯和刷子鼓）没有任何要求；
+- GeneralUser GS、FSS 吉他、AVL 鼓组的作者明确写了：用它们做的音乐可以自由使用，包括商用；
+- Salamander Grand Piano 是 CC-BY 3.0，作者没有专门说明用它做的音乐要不要署名。稳妥起见，发布用到钢琴的作品时注明 "Piano: Salamander Grand Piano by Alexander Holm (CC-BY 3.0)"。
