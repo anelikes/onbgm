@@ -19,7 +19,9 @@ from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass
 from pathlib import Path
 
-GENERALUSER_URL = "https://github.com/mrbumpy409/GeneralUser-GS/raw/main/GeneralUser-GS.sf2"
+# 固定到具体提交：作者更新音色库不会改变已有乐谱的声音
+GENERALUSER_URL = ("https://raw.githubusercontent.com/mrbumpy409/GeneralUser-GS/"
+                   "97049183643d5fc5a9322a69c5b09efb667c6c3a/GeneralUser-GS.sf2")
 SALAMANDER_URL = "https://freepats.zenvoid.org/Piano/SalamanderGrandPiano/SalamanderGrandPiano-SF2-V3+20200602.tar.xz"
 VSCO_REPO = "sgossner/VSCO-2-CE"
 VSCO_PARTS = [

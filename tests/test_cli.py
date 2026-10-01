@@ -124,3 +124,36 @@ def test_timeline_at_inside_tail_is_explained(write_score):
     _, data = run("timeline", str(path), "--at", "4.5", "--at", "7")
     assert data["at"][0]["in_tail"] is True
     assert "加余音到 0:06.00" in data["at"][1]["error"]
+
+
+def test_entry_reports_a_pedalboard_that_crashes_on_this_cpu(monkeypatch, tmp_path, capsys):
+    """回归测试：pedalboard 的 Linux 预编译包在部分 CPU 上一导入就因为非法指令崩溃（spotify/pedalboard#454），
+    进程被直接杀死，agent 只看到一行 Illegal instruction。入口先用子进程试导入，崩溃就给出原因和修复命令。"""
+    import signal
+    import subprocess
+
+    from onbgm import entry
+
+    calls = []
+    monkeypatch.setattr(entry.sys, "platform", "linux")
+    monkeypatch.setattr(entry.platform, "machine", lambda: "x86_64")
+    monkeypatch.setattr(entry, "version", lambda name: "0.9.25")
+    monkeypatch.setattr(entry, "_cpu", lambda: "AMD EPYC 9V74 80-Core Processor")
+    monkeypatch.setenv("ONBGM_CACHE", str(tmp_path))
+    monkeypatch.setattr(entry.subprocess, "run",
+                        lambda *a, **k: calls.append(a) or subprocess.CompletedProcess(a, -signal.SIGILL))
+    monkeypatch.setattr(entry.sys, "argv", ["onbgm", "doctor", "--json"])
+    with pytest.raises(SystemExit) as exit_:
+        entry.main()
+    assert exit_.value.code == 2
+    problem = json.loads(capsys.readouterr().out)["problems"][0]
+    assert problem["code"] == "pedalboard_illegal_instruction" and "USE_PORTABLE_SIMD=1" in problem["fix"]["commands"][1]
+    assert entry.pedalboard_crashes() and len(calls) == 1  # 结果已缓存，不再重复试导入
+
+
+def test_entry_skips_the_probe_outside_linux_x86(monkeypatch):
+    from onbgm import entry
+
+    monkeypatch.setattr(entry.sys, "platform", "darwin")
+    monkeypatch.setattr(entry.subprocess, "run", lambda *a, **k: pytest.fail("不应该试导入"))
+    assert not entry.pedalboard_crashes()

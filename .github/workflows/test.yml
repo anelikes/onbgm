@@ -1,0 +1,51 @@
+name: test
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python: ["3.10", "3.12"]
+    env:
+      ONBGM_SOUNDS: ${{ github.workspace }}/sounds
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python }}
+          cache: pip
+      - name: 安装 FluidSynth
+        run: sudo apt-get update && sudo apt-get install -y --no-install-recommends fluidsynth
+      - name: 安装 onbgm
+        run: pip install -e '.[dev]'
+      # 只下载 GM 音源（31MB）：需要高质量采样的测试会自动跳过，完整音源约 1.2GB，不适合每次 CI 都下载
+      - uses: actions/cache@v4
+        with:
+          path: sounds/GeneralUser-GS.sf2
+          key: generaluser-${{ hashFiles('onbgm/fetch.py') }}
+      - name: 下载 GM 音源
+        run: python -c "from pathlib import Path; from onbgm.fetch import fetch_generaluser; fetch_generaluser(Path('sounds'))"
+      # pedalboard 的 Linux 预编译包按打包机器的 CPU 编译（spotify/pedalboard#454，上游已修复、等待发布），
+      # 分到某些型号的 CPU 时一导入就崩溃（Illegal instruction）。遇到时从修复了这个问题的提交编译，约 4 分钟
+      - name: 检查 pedalboard
+        run: |
+          if ! python -c "import pedalboard" 2>/dev/null; then
+            echo "预编译的 pedalboard 在这台机器的 CPU（$(grep -m1 'model name' /proc/cpuinfo | cut -d: -f2)）上不能用，从源码编译"
+            sudo apt-get install -y --no-install-recommends pkg-config libx11-dev libxrandr-dev libxinerama-dev \
+              libxrender-dev libxcomposite-dev libxcb-xinerama0-dev libxcursor-dev libfreetype6-dev libasound2-dev
+            commit=$(python -c "from onbgm.entry import PORTABLE_COMMIT; print(PORTABLE_COMMIT)")
+            # 子模块是 SSH 地址，用环境变量临时改走 HTTPS
+            GIT_CONFIG_COUNT=1 GIT_CONFIG_KEY_0=url.https://github.com/.insteadOf GIT_CONFIG_VALUE_0=git@github.com: \
+              USE_PORTABLE_SIMD=1 pip install --force-reinstall --no-deps "pedalboard @ git+https://github.com/spotify/pedalboard@$commit"
+          fi
+          python -c "import pedalboard; print('pedalboard', pedalboard.__version__)"
+      - name: onbgm doctor
+        run: onbgm doctor
+      - name: 测试
+        run: pytest -q

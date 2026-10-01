@@ -3,6 +3,14 @@ name = "onbgm"
 version = "0.0.1"
 description = "让 LLM 通过文本乐谱精确控制每个音符来生成 BGM"
 requires-python = ">=3.10"
+license = { text = "MIT" }
+readme = "README.md"
+classifiers = [
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Topic :: Multimedia :: Sound/Audio :: MIDI",
+    "Topic :: Multimedia :: Sound/Audio :: Sound Synthesis",
+]
 dependencies = [
     "mido",
     "pyyaml",
@@ -19,7 +27,7 @@ dependencies = [
 dev = ["pytest"]
 
 [project.scripts]
-onbgm = "onbgm.cli:main"
+onbgm = "onbgm.entry:main"
 
 [build-system]
 requires = ["setuptools>=64"]

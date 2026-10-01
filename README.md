@@ -53,6 +53,14 @@ onbgm render my_bgm/score.yaml -o my_bgm/out/v1 --soundset gm # 只用 GM 音源
 - `stems/`：分轨；
 - `pianoroll.png`：卷帘图。
 
+### 常见问题
+
+**Linux 上一运行就报 `Illegal instruction`，或者 `onbgm` 提示 `pedalboard_illegal_instruction`**
+
+这是音频处理库 pedalboard 的已知问题（[spotify/pedalboard#454](https://github.com/spotify/pedalboard/issues/454)）：它 0.9.25 及以前的 Linux x86 预编译包，是按打包机器的 CPU 编译的，在部分 CPU 上（比如一些 AMD EPYC 服务器）一导入就崩溃。上游已经修复，等待发布新版本。
+
+在这之前，`onbgm` 会在启动时发现这个问题并给出修复命令：从上游修复了这个问题的提交编译 pedalboard，需要编译工具，大约 4 分钟。
+
 ## 示例
 
 | 示例 | 风格 |
@@ -112,4 +120,13 @@ onbgm render my_bgm/score.yaml -o my_bgm/out/v1 --soundset gm # 只用 GM 音源
 .venv/bin/python -m pytest      # 需要音频的测试在没装 fluidsynth 或音源时会自动跳过
 ```
 
-当前状态：阶段 1（打地基）。定位、范围决策和后续阶段见 [ROADMAP.md](ROADMAP.md)。
+开发约定、新增音色和采样库的流程见 [CONTRIBUTING.md](CONTRIBUTING.md)。定位、范围决策和后续阶段见 [ROADMAP.md](ROADMAP.md)。
+
+## 协议
+
+代码使用 [MIT](LICENSE) 协议。
+
+音源不在仓库里，由 `onbgm fetch` 从各自作者那里下载，协议见上面的音源表。用它们做出来的音乐：
+- CC0 的音源（VSCO、VCSL、jRhodes、Karoryfer 的贝斯和刷子鼓）没有任何要求；
+- GeneralUser GS、FSS 吉他、AVL 鼓组的作者明确写了：用它们做的音乐可以自由使用，包括商用；
+- Salamander Grand Piano 是 CC-BY 3.0，作者没有专门说明用它做的音乐要不要署名。稳妥起见，发布用到钢琴的作品时注明 "Piano: Salamander Grand Piano by Alexander Holm (CC-BY 3.0)"。
