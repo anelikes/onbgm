@@ -19,10 +19,10 @@ TEXTURE_FIELDS = {
     "bass-pizz": {"low"},
     "timpani": {"low", "roll_into"},
     "crash": set(),
-    "melody": {"notes", "gate"},
-    "line": {"notes", "gate"},
+    "melody": {"notes", "gate", "articulation"},
+    "line": {"notes", "gate", "articulation"},
     "groove": {"pattern", "laid_back"},
-    "bassline": {"rhythm", "low"},
+    "bassline": {"rhythm", "low", "articulation"},
     "comp": {"rhythm", "range", "roll"},
     "strum": {"pattern", "spread"},
 }
@@ -58,7 +58,7 @@ def score_schema() -> dict:
         "notes": {
             "type": "object",
             "additionalProperties": {"type": "string"},
-            "description": "按段落逐音写旋律：{段落名: \"音符 音符 | 下一小节 …\"}",
+            "description": "按段落逐音写旋律：{段落名: \"音符 音符 | 下一小节 …\"}；音符后加 ' 为断奏、> 为重音",
             "examples": [{"chorus": "G5/4 E5/8 G5/8 r/2 | A5/1"}],
         },
         "pattern": {
@@ -76,6 +76,8 @@ def score_schema() -> dict:
         "roll": {"type": "number", "minimum": 0, "description": "和弦从低到高依次拨开的间隔（拍）"},
         "roll_into": {"type": "string", "description": "在这个段落之前一小节做渐强滚奏"},
         "gate": {"type": "number", "exclusiveMinimum": 0, "maximum": 1.5, "description": "音符实际长度占时值的比例"},
+        "articulation": {"enum": ["normal", "staccato"],
+                         "description": "整个声部默认的演奏法；staccato 为断奏（弦乐会改用跳弓采样）。单个音也可以用 ' 标断奏"},
         "laid_back": {"type": "number", "description": "军鼓/拍手往后拖的拍数"},
         "spread": {"type": "number", "minimum": 0, "description": "扫弦相邻两根弦的时间差（秒）"},
     }

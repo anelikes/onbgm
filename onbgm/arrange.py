@@ -251,16 +251,29 @@ def t_crash(score: Score, track: Track, part: Part, perf: Performer) -> None:
 def t_melody(score: Score, track: Track, part: Part, perf: Performer) -> None:
     """逐音写好的旋律；力度随能量和音高轮廓起伏。"""
     gate = track.options.get("gate", 1.0 if part.sound.sustained else 0.95)
+    default_art = _articulation(track)
     center = sum(n.pitch for n in track.melody) / len(track.melody)
     for n in track.melody:
         e = score.energy_at(n.start)
-        base = 56 + 36 * e + (n.pitch - center) * 0.8
-        part.notes.append(Note(perf.time(n.start, n.pitch, 0.01), n.dur * gate, n.pitch,
-                               perf.vel(base, n.start, n.pitch, spread=3)))
+        base = 56 + 36 * e + (n.pitch - center) * 0.8 + (14 if n.accent else 0)
+        art = n.art or default_art
+        dur = _staccato_len(n.dur) if art == "staccato" else n.dur * gate
+        part.notes.append(Note(perf.time(n.start, n.pitch, 0.01), dur, n.pitch,
+                               perf.vel(base, n.start, n.pitch, spread=3), art=art))
     if part.sound.sustained:
         for name in track.sections:
             s = score.section(name)
             expression(score, part, s.start, s.end)
+
+
+def _articulation(track: Track) -> str:
+    art = track.options.get("articulation", "normal")
+    return "" if art == "normal" else art
+
+
+def _staccato_len(written: float) -> float:
+    """断奏：实际发声取写的时值的一半，最长半拍。有短音采样的乐器会改用短音采样。"""
+    return min(written * 0.5, 0.5)
 
 
 # ---------- 节奏型织体：每小节 8/12/16/24/32 个字符，一个字符一步，| 分小节 ----------
@@ -343,10 +356,12 @@ def t_groove(score: Score, track: Track, part: Part, perf: Performer) -> None:
 def t_bassline(score: Score, track: Track, part: Part, perf: Performer) -> None:
     """节奏型低音：rhythm 里 1/3/5/7/8 是当前和弦的级数，- 延长，. 休止。"""
     lo = track.options.get("low", 28)
+    art = _articulation(track)
     for b, dur, c, span in _events(score, track, "rhythm", "13578-."):
         p = _degree(span.chord, c, lo)
         e = score.energy_at(b)
-        part.notes.append(Note(perf.time(b, p, 0.006), dur * 0.92, p, perf.vel(70 + 35 * e, b, p, spread=4)))
+        length = _staccato_len(dur) if art == "staccato" else dur * 0.92
+        part.notes.append(Note(perf.time(b, p, 0.006), length, p, perf.vel(70 + 35 * e, b, p, spread=4), art=art))
 
 
 def t_comp(score: Score, track: Track, part: Part, perf: Performer) -> None:

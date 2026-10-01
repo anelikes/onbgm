@@ -302,7 +302,7 @@
             "additionalProperties": {
               "type": "string"
             },
-            "description": "按段落逐音写旋律：{段落名: \"音符 音符 | 下一小节 …\"}",
+            "description": "按段落逐音写旋律：{段落名: \"音符 音符 | 下一小节 …\"}；音符后加 ' 为断奏、> 为重音",
             "examples": [
               {
                 "chorus": "G5/4 E5/8 G5/8 r/2 | A5/1"
@@ -405,6 +405,13 @@
             "exclusiveMinimum": 0,
             "maximum": 1.5,
             "description": "音符实际长度占时值的比例"
+          },
+          "articulation": {
+            "enum": [
+              "normal",
+              "staccato"
+            ],
+            "description": "整个声部默认的演奏法；staccato 为断奏（弦乐会改用跳弓采样）。单个音也可以用 ' 标断奏"
           },
           "laid_back": {
             "type": "number",
@@ -575,6 +582,7 @@
             "then": {
               "propertyNames": {
                 "enum": [
+                  "articulation",
                   "by_section",
                   "gain",
                   "gate",
@@ -600,6 +608,7 @@
             "then": {
               "propertyNames": {
                 "enum": [
+                  "articulation",
                   "by_section",
                   "gain",
                   "gate",
@@ -650,6 +659,7 @@
             "then": {
               "propertyNames": {
                 "enum": [
+                  "articulation",
                   "by_section",
                   "gain",
                   "in",

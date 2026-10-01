@@ -76,6 +76,13 @@ def _hq_instruments(root: Path) -> dict[str, Instrument]:
     }
     if insts["timpani"] and insts["timpani-roll"]:
         insts["timpani"].articulations = {"roll": insts["timpani-roll"]}
+    # 断奏改用跳弓（spiccato）采样：长音采样起音慢、释音长，快速短音会糊成一片
+    for legato, folder in [("violins", "Violin Section/Spic"), ("violas", "Viola Section/spic"),
+                           ("celli", "Cello Section/spic"), ("basses", "Solo Contrabass/Spic")]:
+        spic = load_instrument(f"{legato}-spic", s / folder, sustain=False, line_choke=True,
+                               pan=insts[legato].pan if insts[legato] else 0.0)
+        if insts[legato] and spic:
+            insts[legato].articulations = {"staccato": spic}
     return {k: i for k, i in insts.items() if i is not None}
 
 
