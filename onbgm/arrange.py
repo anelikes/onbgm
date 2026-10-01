@@ -48,6 +48,16 @@ SOUNDS: dict[str, Sound] = {
     "guitar-steel": Sound(25, 40, 88, 0.2),
     "electric-bass": Sound(33, 28, 67, 0.08),
     "whistle": Sound(78, 60, 96, 0.3, sustained=True),
+    # 合成器音色：由 onbgm.synth 直接合成，program 只用于导出 MIDI
+    "synth-pluck": Sound(81, 24, 108, 0.25),
+    "synth-pad": Sound(89, 24, 108, 0.35, sustained=True),
+    "supersaw": Sound(90, 24, 108, 0.3, sustained=True),
+    "synth-lead": Sound(81, 36, 108, 0.25, sustained=True),
+    "synth-bass": Sound(38, 21, 72, 0.05),
+    "sub-bass": Sound(38, 21, 60, 0.0, sustained=True),
+    "bass-808": Sound(38, 21, 60, 0.0),
+    "synth-bell": Sound(98, 48, 108, 0.35),
+    "fm-epiano": Sound(5, 28, 103, 0.2),
     # 鼓组：program 是 GM/GS 鼓组号
     "drums": Sound(0, 27, 87, 0.25, drum=True),
     "drums-room": Sound(8, 27, 87, 0.2, drum=True),
@@ -55,6 +65,7 @@ SOUNDS: dict[str, Sound] = {
     "drums-808": Sound(25, 27, 87, 0.15, drum=True),
     "drums-jazz": Sound(32, 27, 87, 0.2, drum=True),
     "drums-brush": Sound(40, 27, 87, 0.2, drum=True),
+    "drums-synth": Sound(25, 27, 87, 0.15, drum=True),  # 合成鼓组
 }
 
 DRUM_KEYS = {
@@ -391,6 +402,25 @@ def t_comp(score: Score, track: Track, part: Part, perf: Performer) -> None:
                                    perf.vel(base, b, p, spread=4, accent=False)))
 
 
+def t_arp(score: Score, track: Track, part: Part, perf: Performer) -> None:
+    """琶音器：rhythm 里每个 x 弹当前和弦的下一个音（X 为重音，- 延长，. 休止），
+    mode 决定顺序：up 上行、down 下行、updown 上下往返；range 是取音的音区。和弦一换就从头开始。"""
+    lo, hi = track.options.get("range", [60, 84])
+    mode = track.options.get("mode", "up")
+    art = _articulation(track)
+    idx, current = 0, None
+    for b, dur, c, span in _events(score, track, "rhythm", "Xx-."):
+        if span is not current:
+            current, idx = span, 0
+            tones = [p for p in range(lo, hi + 1) if p % 12 in span.chord.pcs]
+            order = {"up": tones, "down": tones[::-1], "updown": tones + tones[-2:0:-1]}[mode]
+        p = order[idx % len(order)]
+        idx += 1
+        base = 52 + 40 * score.energy_at(b) + (12 if c == "X" else 0)
+        length = _staccato_len(dur) if art == "staccato" else dur * 0.9
+        part.notes.append(Note(perf.time(b, p, 0.004), length, p, perf.vel(base, b, p, spread=3), art=art))
+
+
 def t_strum(score: Score, track: Track, part: Part, perf: Performer) -> None:
     """吉他扫弦：D 下扫、U 上扫（只扫高音的 4 根弦）、d/u 轻扫、x 闷音切音、. 让弦继续响。
     按法由 guitar_voicing 在真实的标准调弦上搜索；spread 是相邻两根弦的时间差（秒）。"""
@@ -460,6 +490,7 @@ TEXTURES = {
     "groove": t_groove,
     "bassline": t_bassline,
     "comp": t_comp,
+    "arp": t_arp,
     "strum": t_strum,
 }
 

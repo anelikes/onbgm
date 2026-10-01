@@ -263,3 +263,56 @@
   tags: [ending, 收尾, 结束, cadence, 终止, 片尾]
   description: IV–V–I 终止式，3 小节，用于不循环曲子的结尾（C 大调）
   snippet: '"F | G | C"'
+
+- name: tech-pluck-arp
+  kind: arp
+  tags: [tech, 科技, 科技感, 电子, edm, 产品, 现代, 宣传, 琶音, pluck, 合成器]
+  description: 科技感的合成器拨弦琶音：十六分音符按和弦上下往返，自带附点八分延迟
+  snippet: |
+    sound: synth-pluck
+    texture: arp
+    mode: updown
+    range: [60, 84]
+    rhythm: "xxxx xxxx xxxx xxxx"
+
+- name: edm-four-on-the-floor
+  kind: drums
+  tags: [edm, 电子, 舞曲, 科技, tech, 合成器, 四拍, 动感, 产品]
+  description: 合成鼓组的电子舞曲律动：四拍底鼓、二四拍拍手、反拍开镲、十六分音符踩镲
+  snippet: |
+    sound: drums-synth
+    texture: groove
+    pattern:
+      kick:     "x... x... x... x..."
+      clap:     ".... x... .... x..."
+      open-hat: "..x. ..x. ..x. ..x."
+      hat:      "xgxg xgxg xgxg xgxg"
+
+- name: trap-808
+  kind: bassline
+  tags: [trap, 808, hip-hop, 嘻哈, 低音, 电子, 重低音]
+  description: 808 低音：长音带音高下滑，配合稀疏的底鼓
+  snippet: |
+    sound: bass-808
+    texture: bassline
+    rhythm: "1--- ---- --1- ----"
+
+- name: supersaw-stab
+  kind: comp
+  tags: [edm, 电子, 舞曲, 高潮, drop, 合成器, 重击, supersaw]
+  description: 电子舞曲高潮的 supersaw 和弦重击，切分节奏
+  snippet: |
+    sound: supersaw
+    texture: comp
+    range: [55, 76]
+    rhythm: "X..x ..x. ..x. ...."
+
+- name: synth-pad-chords
+  kind: comp
+  tags: [pad, 铺底, 合成器, 科技, 氛围, ambient, 现代, 宽广]
+  description: 合成器铺底，每小节一个长和弦，宽广的立体声
+  snippet: |
+    sound: synth-pad
+    texture: comp
+    range: [48, 72]
+    rhythm: "x--- ---- ---- ----"
