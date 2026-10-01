@@ -48,7 +48,7 @@ def _fluidsynth(score: Score, part: Part, sf2: Path, n: int) -> np.ndarray:
         raise RuntimeError("找不到 fluidsynth，请先安装：brew install fluid-synth（全部用合成器音色的乐谱不需要它）")
     with tempfile.TemporaryDirectory() as tmp:
         mid, wav = Path(tmp) / "part.mid", Path(tmp) / "part.wav"
-        write_midi(mid, score, [part], _tail_sec(score) * score.bpm / 60)
+        write_midi(mid, score, [part], _tail_sec(score) * score.bpm_at(score.total_beats) / 60)
         subprocess.run(
             ["fluidsynth", "-ni", "-q", "-R", "0", "-C", "0", "-g", "0.5", "-r", str(SR),
              "-O", "float", "-T", "wav", "-F", str(wav), str(sf2), str(mid)],

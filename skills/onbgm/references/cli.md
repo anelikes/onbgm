@@ -16,6 +16,7 @@
 | `onbgm example [名字]` | 不带名字时列出示例；带名字时输出完整乐谱 |
 | `onbgm catalog -q "描述"` | 用自然语言搜现成的写法：鼓组、扫弦、低音、和弦伴奏、和弦进行，返回可以直接粘贴的片段 |
 | `onbgm catalog --kind 类别` | 浏览某一类：`drums strum bassline comp arp progression sfx texture sound drum chord example` |
+| `onbgm fit 0:08=drop 0:30=logo --length 0:45 [--bpm 100-130] [--hit 0:03] [--write score.yaml]` | 给视频配乐：根据画面节点算出速度和每段的小节数，必要时给段落设略有偏差的速度，让每个节点都落在小节第一拍；`--write` 直接写出乐谱骨架 |
 | `onbgm check score.yaml` | 校验乐谱，输出时间轴 |
 | `onbgm timeline score.yaml [--at 秒 …]` | 输出每段的起止时间和每小节的和弦；`--at 0:23.4` 查某个时间点在第几小节第几拍 |
 | `onbgm render score.yaml -o 目录 [--soundset gm]` | 渲染 |
@@ -42,6 +43,26 @@
   - `replace_with`：拼错的字段或取值，换成这个；
   - 时间约束冲突时给 `bpm`（满足约束需要的速度），以及 `bars_before` 或 `bars`（保持现有速度时需要的小节数）。
 
+**`fit`**：
+
+```json
+{
+  "plans": [{
+    "bpm": 129.34, "max_deviation_pct": 2.38,
+    "sections": [{"name": "intro", "start_s": 0.0, "end_s": 7.3, "bars": 4, "tempo": 131.51, "deviation_pct": 1.67, "tail_s": 0.0}],
+    "hits": [{"time_s": 3.0, "bar": 2, "beat": 1.0, "on": "downbeat"}],
+    "skeleton": "title: …"
+  }],
+  "suggestion": null,
+  "written": "score.yaml"
+}
+```
+
+- 方案按好坏排序。`tempo` 为 null 表示这一段不用单独变速。
+- `deviation_pct` 是这一段的速度比基准快或慢多少：3% 以内几乎听不出，3–6% 略有感觉，6% 以上明显。
+- `hits[].on` 表示音效点落在哪里：`downbeat`（小节第一拍）、`beat`（拍上）、`eighth`（半拍上）、`off`（不在节奏点上；音效照样精确，只是不在节奏点上）。
+- `suggestion` 不为空时，说明放宽速度范围能得到明显更好的方案。
+
 **`check` 成功**：`{"ok": true, "timeline": {…}, "warnings": [{code, path, message}]}`
 
 **`timeline`**：
@@ -49,7 +70,7 @@
 ```json
 {
   "bpm": 90.0, "bars": 24, "duration_s": 64.0, "seconds_per_bar": 2.6667, "loop": true,
-  "sections": [{"name": "climax", "bars": [13, 20], "start_s": 32.0, "end_s": 53.333, "energy": [1.0, 1.0]}],
+  "sections": [{"name": "climax", "bars": [13, 20], "start_s": 32.0, "end_s": 53.333, "energy": [1.0, 1.0], "bpm": [90.0, 90.0]}],
   "chords": [{"bar": 13, "beat": 1.0, "start_s": 32.0, "chord": "Bb", "section": "climax"}],
   "tracks": [{"name": "lead", "sound": "strings", "texture": "melody", "sections": ["climax"]}],
   "at": [{"time_s": 23.4, "bar": 9, "beat": 4.1, "section": "build", "bar_in_section": 5, "chord": "Gm9", "energy": 0.68}]

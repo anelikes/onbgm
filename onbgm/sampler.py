@@ -244,7 +244,7 @@ def render_part(score: Score, part: Part, route, n: int) -> np.ndarray:
             i = bisect_left(ends, round(t0, 3) - 0.03)
             if i < len(ends) and abs(ends[i] - t0) <= 0.03:  # 紧接着上一个音：当作连奏
                 skip = int(inst.legato_skip * SR * ratio)
-            hold = score.seconds(note.dur)
+            hold = score.duration(note.start, note.dur)
             release = inst.release
             end = round(t0 + hold, 3)
             j = bisect_left(starts, end - 0.03)
@@ -258,7 +258,7 @@ def render_part(score: Score, part: Part, route, n: int) -> np.ndarray:
             cut, fade_s = choke_at[id(note)], 0.12
             if inst.line_choke:
                 # 跳弓这类短音：最多响到谱面写的长度（至少 0.12 秒），旋律线上下一个音出来也立刻收掉
-                limits = [t0 + max(score.seconds(note.dur), 0.12)]
+                limits = [t0 + max(score.duration(note.start, note.dur), 0.12)]
                 if line and next_any[id(note)] is not None:
                     limits.append(next_any[id(note)])
                 if cut is None or min(limits) < cut:

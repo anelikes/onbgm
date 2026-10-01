@@ -424,7 +424,7 @@ def t_arp(score: Score, track: Track, part: Part, perf: Performer) -> None:
 def t_strum(score: Score, track: Track, part: Part, perf: Performer) -> None:
     """吉他扫弦：D 下扫、U 上扫（只扫高音的 4 根弦）、d/u 轻扫、x 闷音切音、. 让弦继续响。
     按法由 guitar_voicing 在真实的标准调弦上搜索；spread 是相邻两根弦的时间差（秒）。"""
-    spread = track.options.get("spread", 0.012) * score.bpm / 60
+    spread_s = track.options.get("spread", 0.012)
     for name in track.sections:
         sec = score.section(name)
         ringing: dict[int, Note] = {}
@@ -455,6 +455,7 @@ def t_strum(score: Score, track: Track, part: Part, perf: Performer) -> None:
                 stop(b, only=[i for i in ringing if i not in hit])
             last_span = span
             base = (70 + 35 * e) * (1.0 if c.isupper() else 0.62) - (0 if down else 8)
+            spread = spread_s * score.bpm_at(b) / 60
             for k, i in enumerate(hit):
                 t = b + k * spread * (1.0 if down else 0.8)
                 if i in ringing:

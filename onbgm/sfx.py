@@ -166,10 +166,13 @@ def render(score, events: list[SfxEvent], n: int) -> tuple[np.ndarray, np.ndarra
     placed = []
     for ev in events:
         root = score.chord_at(min(ev.at, score.total_beats - 1e-6)).chord.root
-        length_s = score.seconds(ev.length) if ev.length else 0.0
+        length_s = 0.0
+        if ev.length:
+            s0, _ = ev.span()
+            length_s = score.duration(s0, ev.length)
         # 随机种子按内容定（类型、时间点、长度），删掉或增加别的音效不会让它变
         audio = synthesize(ev, length_s, root, (round(ev.at, 4), ev.type, round(ev.length, 4)))
-        natural = len(audio) / SR * score.bpm / 60
+        natural = len(audio) / SR * score.bpm_at(ev.at) / 60
         start_beat, end_beat = ev.span(natural)
         target = TARGET_DB + 20 * np.log10(max(ev.level, 1e-3))
         audio = audio * 10 ** ((target - peak_level(audio)) / 20)

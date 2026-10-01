@@ -158,6 +158,13 @@ def score_schema() -> dict:
                         "bars": {"type": "integer", "minimum": 1},
                         "energy": ENERGY,
                         "at": {**TIME, "description": "这一段必须从这个时间开始"},
+                        "tempo": {
+                            "anyOf": [{"type": "number", "exclusiveMinimum": 0},
+                                      {"type": "string", "pattern": r"^\s*(\d+(\.\d+)?)?\s*->\s*\d+(\.\d+)?\s*$"}],
+                            "description": "这一段自己的速度：数字为固定速度；\"120->90\" 为段内渐变（渐慢、渐快）；"
+                                           "\"->70\" 为从上一段的速度渐变到 70。不写就用 meta.bpm",
+                            "x-format": "数字，或 \"起->止\"、\"->止\"",
+                            "examples": [118.5, "96->72", "->60"]},
                     },
                 },
             },

@@ -11,6 +11,8 @@ from pathlib import Path
 
 import yaml
 
+from . import tempo
+from .tempo import TempoMap
 from .theory import Chord, parse_chord, parse_pitch
 
 BEATS_PER_BAR = 4
@@ -50,6 +52,7 @@ class Section:
     energy: tuple[float, float]  # 段首、段尾的能量，0~1
     at: float | None  # 时间约束（秒）
     start_bar: int
+    tempo: tuple[float | None, float] | None = None  # 这一段自己的速度（起, 止）；None 用基准速度
 
     @property
     def start(self) -> float:
@@ -106,13 +109,24 @@ class Score:
     fx: dict | None = None  # 整体效果，如 {"lofi": 0.7}
     tail: float = 0.0  # 不循环时，乐谱结束后再留几秒余音
     sfx: list = field(default_factory=list)  # 音效时间线（onbgm.sfx.SfxEvent）
+    tempo_map: TempoMap | None = None
 
     @property
     def total_beats(self) -> float:
         return self.sections[-1].end
 
     def seconds(self, beat: float) -> float:
-        return beat * 60.0 / self.bpm
+        return self.tempo_map.seconds(beat) if self.tempo_map else beat * 60.0 / self.bpm
+
+    def beat_at(self, seconds: float) -> float:
+        return self.tempo_map.beat_at(seconds) if self.tempo_map else seconds * self.bpm / 60
+
+    def bpm_at(self, beat: float) -> float:
+        return self.tempo_map.bpm_at(beat) if self.tempo_map else self.bpm
+
+    def duration(self, start: float, beats: float) -> float:
+        """从 start 拍开始、长 beats 拍的一段有多少秒（变速时不能直接用 beats × 60 / bpm）。"""
+        return self.seconds(start + beats) - self.seconds(start)
 
     def section(self, name: str) -> Section:
         return next(s for s in self.sections if s.name == name)
@@ -170,8 +184,10 @@ def _parse_energy(v, where: str, problems: list[Problem]) -> tuple[float, float]
     return (a, b)
 
 
-def _solve_bpm(meta: dict, sections: list[Section], problems: list[Problem]) -> float:
-    """根据时间约束确定或校验 BPM。"""
+def _solve_tempo(meta: dict, sections: list[Section], problems: list[Problem]) -> tuple[float, TempoMap]:
+    """确定或校验基准速度，并建出速度图。设了 tempo 的段落用自己的速度，其余段落用基准速度。"""
+    bounds = [(s.start, s.end) for s in sections]
+    specs = [s.tempo for s in sections]
     constraints = [(f"sections.{s.name}.at", s.start, s.at) for s in sections if s.at is not None]
     if "length" in meta:
         constraints.append(("meta.length", sections[-1].end, parse_time(meta["length"])))
@@ -179,39 +195,46 @@ def _solve_bpm(meta: dict, sections: list[Section], problems: list[Problem]) -> 
     if bpm is None:
         problems.append(Problem("missing_bpm", "meta.bpm",
                                 "缺少速度：写一个数字（如 90），或写 auto 并用 meta.length 或段落的 at 约束时间"))
-        return 90.0
-    if bpm == "auto":
+        bpm = 90.0
+    elif bpm == "auto":
         usable = [c for c in constraints if c[1] > 0 and c[2] > 0]
-        if not usable:
+        solved = tempo.solve_base(bounds, specs, usable[0][1], usable[0][2]) if usable else None
+        if solved is None:
             problems.append(Problem("no_time_constraint", "meta.bpm",
-                                    "为 auto 时需要至少一个时间约束（meta.length 或某个段落的 at）"))
-            return 90.0
-        _, beats, secs = usable[0]
-        bpm = beats * 60 / secs
-    bpm = float(bpm)
+                                    "为 auto 时需要至少一个基准速度影响得到的时间约束（meta.length 或某个段落的 at；"
+                                    "如果它之前的段落都设了自己的 tempo，基准速度就影响不到它）"))
+            solved = 90.0
+        bpm = solved
+    base = float(bpm)
+    tmap = tempo.build(bounds, specs, base)
     for where, beats, secs in constraints:
-        actual = beats * 60 / bpm
-        if abs(actual - secs) > 0.01:
-            msg = f"要求 {fmt_time(secs)}，但在 {bpm:g} BPM 下实际是 {fmt_time(actual)}。可以："
-            options, fix = [], {}
-            if secs > 0:
-                fix["bpm"] = round(beats * 60 / secs, 2)
-                options.append(f"把 bpm 改为 {beats * 60 / secs:.2f}（或 auto）")
-                # 保持这个速度：需要多少小节
-                span = "总共" if where == "meta.length" else "它之前一共"
-                need = secs * bpm / 60 / BEATS_PER_BAR
-                now = beats / BEATS_PER_BAR
-                if abs(need - round(need)) < 0.02 and round(need) > 0:
-                    fix["bars" if where == "meta.length" else "bars_before"] = round(need)
-                    options.append(f"保持 {bpm:g} BPM，让{span} {round(need)} 小节（现在是 {now:g}）")
-                else:
-                    lo, hi = math.floor(need), math.ceil(need)
-                    near = "、".join(f"{n} 小节（{fmt_time(n * BEATS_PER_BAR * 60 / bpm)}）" for n in (lo, hi) if n > 0)
-                    options.append(f"保持 {bpm:g} BPM 的话，{span}需要 {need:.2f} 小节，不是整数；最接近的是 {near}")
-            options.append("删掉这个约束")
-            problems.append(Problem("time_constraint_mismatch", where,
-                                    msg + "；".join(f"({i + 1}) {o}" for i, o in enumerate(options)), fix or None))
-    return bpm
+        actual = tmap.seconds(beats)
+        if abs(actual - secs) <= 0.01:
+            continue
+        msg = f"要求 {fmt_time(secs)}，但在 {base:g} BPM 下实际是 {fmt_time(actual)}。可以："
+        options, fix = [], {}
+        need_base = tempo.solve_base(bounds, specs, beats, secs) if secs > 0 else None
+        if need_base is not None:
+            fix["bpm"] = round(need_base, 2)
+            options.append(f"把 bpm 改为 {need_base:.2f}（或 auto）")
+        # 保持基准速度：前面需要多少小节（设了 tempo 的段落时长不变）
+        before = [(s, seg) for s, seg in zip(sections, tmap.segments) if s.end <= beats]
+        fixed_s = sum(seg.seconds_into(seg.end) for s, seg in before if s.tempo is not None)
+        fixed_beats = sum(s.end - s.start for s, _ in before if s.tempo is not None)
+        if secs - fixed_s > 0:
+            span = "总共" if where == "meta.length" else "它之前一共"
+            need = ((secs - fixed_s) * base / 60 + fixed_beats) / BEATS_PER_BAR
+            now = beats / BEATS_PER_BAR
+            if abs(need - round(need)) < 0.02 and round(need) > 0:
+                fix["bars" if where == "meta.length" else "bars_before"] = round(need)
+                options.append(f"保持 {base:g} BPM，让{span} {round(need)} 小节（现在是 {now:g}）")
+            else:
+                options.append(f"保持 {base:g} BPM 的话，{span}需要 {need:.2f} 小节，不是整数")
+        options.append("给它之前的某一段单独设 tempo，略快或略慢一点（onbgm fit 可以算出每段该用多少）")
+        options.append("删掉这个约束")
+        problems.append(Problem("time_constraint_mismatch", where,
+                                msg + "；".join(f"({i + 1}) {o}" for i, o in enumerate(options)), fix or None))
+    return base, tmap
 
 
 _NOTE_RE = re.compile(r"(r|[A-Ga-g][#b]*-?\d)/(1|2|4|8|16)(\.?)([>']*)(~?)")
@@ -255,7 +278,7 @@ def _parse_melody(text: str, section: Section, where: str, problems: list[Proble
     return notes
 
 
-def _parse_sfx(items: list, sections: list[Section], bpm: float, tail: float, problems: list[Problem]) -> list:
+def _parse_sfx(items: list, sections: list[Section], tmap: TempoMap, tail: float, problems: list[Problem]) -> list:
     """音效时间线：at 可以是段落名（该段开头）或时间；按音效类型检查起止是否越界。"""
     from .sfx import SFX_TYPES, SfxEvent
 
@@ -270,7 +293,7 @@ def _parse_sfx(items: list, sections: list[Section], bpm: float, tail: float, pr
             at = names[at_raw].start
         else:
             try:
-                at = parse_time(at_raw) * bpm / 60
+                at = tmap.beat_at(parse_time(at_raw))
             except ValueError:
                 problems.append(Problem("unknown_section", f"{where}.at",
                                         f"{at_raw!r} 既不是段落名也不是时间（段落: {', '.join(names)}；时间写 \"0:12\" 或 12）"))
@@ -279,16 +302,16 @@ def _parse_sfx(items: list, sections: list[Section], bpm: float, tail: float, pr
             problems.append(Problem("field_not_for_sfx", f"{where}.length", f"{kind} 的长度由音效本身决定，不用写 length"))
             continue
         ev = SfxEvent(kind, at, item.get("length", spec.length) or 0.0, item.get("level", 0.8), item.get("duck", 0.0), where)
-        start, end = ev.span(spec.natural * bpm / 60)
+        start, end = ev.span(spec.natural * tmap.bpm_at(at) / 60)
         if start < -1e-6:
             problems.append(Problem("sfx_out_of_range", f"{where}.at",
                                     f"{kind} 长 {ev.length:g} 拍、{'在 at 结束' if spec.anchor == 'end' else '最响处在 at'}，"
-                                    f"起点会早于乐谱开头 {fmt_time(-start * 60 / bpm)}；把 length 缩短到 "
+                                    f"起点会早于乐谱开头 {fmt_time(-tmap.seconds(start))}；把 length 缩短到 "
                                     f"{(ev.at if spec.anchor == 'end' else 2 * ev.at):g} 拍以内，或把 at 往后挪",
                                     {"length": round(ev.at if spec.anchor == "end" else 2 * ev.at, 3)}))
-        elif at > total + tail * bpm / 60 + 1e-6:
+        elif tmap.seconds(at) > tmap.seconds(total) + tail + 1e-6:
             problems.append(Problem("sfx_out_of_range", f"{where}.at",
-                                    f"at 在 {fmt_time(at * 60 / bpm)}，超出了乐谱（到 {fmt_time((total) * 60 / bpm)}）"))
+                                    f"at 在 {fmt_time(tmap.seconds(at))}，超出了乐谱（到 {fmt_time(tmap.seconds(total))}）"))
         else:
             events.append(ev)
     return events
@@ -315,13 +338,19 @@ def load(path: str | Path) -> Score:
             problems.append(Problem("out_of_range", f"sections.{name}.bars", f"须为正整数，当前 {bars!r}"))
             bars = 1
         energy = _parse_energy(s.get("energy", 0.5), f"sections.{name}.energy", problems)
+        section_tempo = None
+        if "tempo" in s:
+            try:
+                section_tempo = tempo.parse_tempo(s["tempo"])
+            except ValueError as e:
+                problems.append(Problem("bad_format", f"sections.{name}.tempo", str(e)))
         at = None
         if "at" in s:
             try:
                 at = parse_time(s["at"])
             except ValueError as e:
                 problems.append(Problem("bad_format", f"sections.{name}.at", str(e)))
-        sections.append(Section(name, bars, energy, at, bar))
+        sections.append(Section(name, bars, energy, at, bar, section_tempo))
         bar += bars
     if not sections:
         raise ScoreError([Problem("no_sections", "sections", "至少需要一个段落")])
@@ -329,7 +358,7 @@ def load(path: str | Path) -> Score:
     for n in {n for n in names if names.count(n) > 1}:
         problems.append(Problem("duplicate_section", "sections", f"段落名 {n} 重复了"))
 
-    bpm = _solve_bpm(meta, sections, problems)
+    bpm, tmap = _solve_tempo(meta, sections, problems)
 
     chords: list[ChordSpan] = []
     harmony = raw.get("harmony") or {}
@@ -393,7 +422,7 @@ def load(path: str | Path) -> Score:
             problems.append(Problem("bad_format", "meta.tail", str(e)))
         if meta.get("loop"):
             problems.append(Problem("tail_with_loop", "meta.tail", "只用于不循环的曲子（loop: false）；循环时余音会自动叠回开头"))
-    sfx_events = _parse_sfx(raw.get("sfx") or [], sections, bpm, tail, problems)
+    sfx_events = _parse_sfx(raw.get("sfx") or [], sections, tmap, tail, problems)
     fx = raw.get("fx") or {}
     for k, v in fx.items():
         if k not in FX:
@@ -417,4 +446,5 @@ def load(path: str | Path) -> Score:
         fx=fx,
         tail=tail,
         sfx=sfx_events,
+        tempo_map=tmap,
     )
