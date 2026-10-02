@@ -19,7 +19,7 @@ Each track below was composed end to end by a Claude agent using onbgm:
 
 Click a piano roll to play the MP3, or open the score that produced it.
 
-| | |
+| Piano roll (click to listen) | Track |
 |---|---|
 | <a href="docs/samples/windows-down-whistle/windows-down-whistle.mp3"><img src="docs/samples/windows-down-whistle/pianoroll.png" width="420"></a> | **Windows Down Whistle** · travel vlog · 2:03<br>Whistled road-trip folk: steel-guitar strums, a skipping whistle hook, three rises and falls up to a final sing-along chorus.<br>[▶ Listen](docs/samples/windows-down-whistle/windows-down-whistle.mp3) · [Score](docs/samples/windows-down-whistle/score.yaml) |
 | <a href="docs/samples/candy-gloss/candy-gloss.mp3"><img src="docs/samples/candy-gloss/pianoroll.png" width="420"></a> | **Candy Gloss** · product launch · 1:30<br>Bubbly future house in Eb: a supersaw hook over a canon-style descending bass, with a kick-less bell interlude before the last chorus.<br>[▶ Listen](docs/samples/candy-gloss/candy-gloss.mp3) · [Score](docs/samples/candy-gloss/score.yaml) |

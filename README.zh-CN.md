@@ -25,7 +25,7 @@ agent ──写/改──▶ 乐谱 YAML ──▶ 严格校验 + 时间轴求�
 
 点卷帘图播放 MP3，或者打开生成它的乐谱。
 
-| | |
+| 卷帘图（点击试听） | 曲目 |
 |---|---|
 | <a href="docs/samples/windows-down-whistle/windows-down-whistle.mp3"><img src="docs/samples/windows-down-whistle/pianoroll.png" width="420"></a> | **摇下车窗吹口哨** · 旅行 vlog · 2:03<br>口哨主奏的公路民谣：钢弦吉他扫弦、口哨的跳跃钩子，三起三落，最后一遍副歌冲到最高点。<br>[▶ 试听](docs/samples/windows-down-whistle/windows-down-whistle.mp3) · [乐谱](docs/samples/windows-down-whistle/score.yaml) |
 | <a href="docs/samples/candy-gloss/candy-gloss.mp3"><img src="docs/samples/candy-gloss/pianoroll.png" width="420"></a> | **糖果色** · 产品发布 · 1:30<br>Eb 大调未来浩室：超级锯齿唱"短-短-长"的钩子，卡农式下行低音，最后一遍副歌前有一段去掉底鼓的合成钟小桥段。<br>[▶ 试听](docs/samples/candy-gloss/candy-gloss.mp3) · [乐谱](docs/samples/candy-gloss/score.yaml) |
