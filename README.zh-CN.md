@@ -165,6 +165,10 @@ onbgm review out/my_bgm_v2 --compare out/my_bgm   # 新旧两版 A/B 对比
 代码使用 [MIT](LICENSE) 协议。
 
 音源不在仓库里，由 `onbgm fetch` 从各自作者那里下载，协议见上面的音源表。用它们做出来的音乐：
-- CC0 的音源（VSCO、VCSL、jRhodes、Karoryfer 的贝斯和刷子鼓）没有任何要求；
+- CC0 的音源（VSCO、VCSL、jRhodes、Karoryfer 的几个音源、FreePats 的尤克里里和手风琴、二胡）没有任何要求；
 - GeneralUser GS、FSS 吉他、AVL 鼓组的作者明确写了：用它们做的音乐可以自由使用，包括商用；
 - Salamander Grand Piano 是 CC-BY 3.0，作者没有专门说明用它做的音乐要不要署名。稳妥起见，发布用到钢琴的作品时注明 "Piano: Salamander Grand Piano by Alexander Holm (CC-BY 3.0)"。
+
+## 联系
+
+[contact@onbgm.com](mailto:contact@onbgm.com)

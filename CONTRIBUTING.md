@@ -2,6 +2,8 @@
 
 onbgm 是给 AI agent 用的配乐工具：agent 写文本乐谱，onbgm 渲染成纯器乐。改动之前请先读 README 的「设计原则」和 [ROADMAP.md](ROADMAP.md)。
 
+安全问题或者不方便公开讨论的事，请发邮件到 [contact@onbgm.com](mailto:contact@onbgm.com)。
+
 ## 环境
 
 ```bash

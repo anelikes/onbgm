@@ -195,3 +195,7 @@ The sound libraries are not part of this repository. `onbgm fetch` downloads the
 - the CC0 libraries (VSCO, VCSL, jRhodes, the Karoryfer libraries, FreePats ukulele and accordion, the erhu) have no requirements;
 - the authors of GeneralUser GS, the FSS guitar and the AVL kits state explicitly that music made with them is free to use, including commercially;
 - Salamander Grand Piano is CC-BY 3.0, and its author says nothing specific about music made with it. To be safe, credit "Piano: Salamander Grand Piano by Alexander Holm (CC-BY 3.0)" when publishing work that uses the piano.
+
+## Contact
+
+[contact@onbgm.com](mailto:contact@onbgm.com)

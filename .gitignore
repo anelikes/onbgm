@@ -10,3 +10,6 @@ sounds/
 experiments/**/out*/
 *.wav
 *.m4a
+
+# Claude Code 的本地状态
+.claude/
