@@ -50,7 +50,7 @@ agent 用的说明在 [`skills/onbgm/`](skills/onbgm/SKILL.md)，按 skill 格�
 
 ```bash
 brew install fluid-synth                  # Debian/Ubuntu: sudo apt install fluidsynth
-uv tool install git+https://github.com/anelikes/onbgm
+uv tool install onbgm                     # 或者 pip install onbgm
 onbgm fetch                               # 下载音源到 ~/.onbgm/sounds（约 1.7GB；可用 ONBGM_SOUNDS 指定位置）
 onbgm doctor                              # 检查环境
 

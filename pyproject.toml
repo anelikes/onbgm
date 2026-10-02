@@ -1,14 +1,24 @@
 [project]
 name = "onbgm"
-version = "0.0.1"
-description = "让 LLM 通过文本乐谱精确控制每个音符来生成 BGM"
+version = "0.1.0"
+description = "Instrumental background music written note by note by AI agents: a text score in, a mixed and mastered track out"
 requires-python = ">=3.10"
-license = { text = "MIT" }
+license = "MIT"
+license-files = ["LICENSE"]
 authors = [{ name = "anelikes", email = "contact@onbgm.com" }]
 readme = "README.md"
+keywords = ["bgm", "music", "ai-agents", "llm", "midi", "sfz", "soundtrack", "music-generation"]
 classifiers = [
-    "License :: OSI Approved :: MIT License",
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "Intended Audience :: End Users/Desktop",
+    "Operating System :: MacOS",
+    "Operating System :: POSIX :: Linux",
     "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
     "Topic :: Multimedia :: Sound/Audio :: MIDI",
     "Topic :: Multimedia :: Sound/Audio :: Sound Synthesis",
 ]
@@ -24,6 +34,12 @@ dependencies = [
     "jsonschema",
 ]
 
+[project.urls]
+Homepage = "https://onbgm.com"
+Repository = "https://github.com/anelikes/onbgm"
+Issues = "https://github.com/anelikes/onbgm/issues"
+Changelog = "https://github.com/anelikes/onbgm/releases"
+
 [project.optional-dependencies]
 dev = ["pytest"]
 
@@ -31,7 +47,7 @@ dev = ["pytest"]
 onbgm = "onbgm.entry:main"
 
 [build-system]
-requires = ["setuptools>=64"]
+requires = ["setuptools>=77"]
 build-backend = "setuptools.build_meta"
 
 [tool.setuptools]

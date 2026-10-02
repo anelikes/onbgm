@@ -1,6 +1,6 @@
 # onbgm
 
-English · [简体中文](README.zh-CN.md) · Website: [onbgm.com](https://onbgm.com) (coming soon)
+English · [简体中文](https://github.com/anelikes/onbgm/blob/main/README.zh-CN.md) · Website: [onbgm.com](https://onbgm.com) (coming soon)
 
 **Instrumental background music, written note by note by AI agents.**
 An agent writes a plain-text score (YAML): sections, chords, melodies, drum patterns. onbgm arranges, performs, mixes and renders it into a finished track.
@@ -21,12 +21,12 @@ Click a piano roll to play the MP3, or open the score that produced it.
 
 | Piano roll (click to listen) | Track |
 |---|---|
-| <a href="docs/samples/windows-down-whistle/windows-down-whistle.mp3"><img src="docs/samples/windows-down-whistle/pianoroll.png" width="420"></a> | **Windows Down Whistle** · travel vlog · 2:03<br>Whistled road-trip folk: steel-guitar strums, a skipping whistle hook, three rises and falls up to a final sing-along chorus.<br>[▶ Listen](docs/samples/windows-down-whistle/windows-down-whistle.mp3) · [Score](docs/samples/windows-down-whistle/score.yaml) |
-| <a href="docs/samples/candy-gloss/candy-gloss.mp3"><img src="docs/samples/candy-gloss/pianoroll.png" width="420"></a> | **Candy Gloss** · product launch · 1:30<br>Bubbly future house in Eb: a supersaw hook over a canon-style descending bass, with a kick-less bell interlude before the last chorus.<br>[▶ Listen](docs/samples/candy-gloss/candy-gloss.mp3) · [Score](docs/samples/candy-gloss/score.yaml) |
-| <a href="docs/samples/island-hopper/island-hopper.mp3"><img src="docs/samples/island-hopper/pianoroll.png" width="420"></a> | **Island Hopper** · game, seamless loop · 0:59<br>Sun-drenched calypso: syncopated marimba, a whistle answering each phrase, a 3+3+2 bass, and a lift into bright secondary dominants.<br>[▶ Listen](docs/samples/island-hopper/island-hopper.mp3) · [Score](docs/samples/island-hopper/score.yaml) |
-| <a href="docs/samples/first-steps-on-the-wide-land/first-steps-on-the-wide-land.mp3"><img src="docs/samples/first-steps-on-the-wide-land/pianoroll.png" width="420"></a> | **First Steps on the Wide Land** · game world map, seamless loop · 2:02<br>Orchestral adventure: a marching stride, a bugle-like violin theme with cello counterpoint, a B-minor shadow, then a full tutti.<br>[▶ Listen](docs/samples/first-steps-on-the-wide-land/first-steps-on-the-wide-land.mp3) · [Score](docs/samples/first-steps-on-the-wide-land/score.yaml) |
-| <a href="docs/samples/pressure-cooker/pressure-cooker.mp3"><img src="docs/samples/pressure-cooker/pianoroll.png" width="420"></a> | **Pressure Cooker** · film, emotional conflict · 1:59<br>A G-minor slow burn: spiccato basses and grinding violins build pressure bar by bar until a full-ensemble eruption, then a lone pedal tone.<br>[▶ Listen](docs/samples/pressure-cooker/pressure-cooker.mp3) · [Score](docs/samples/pressure-cooker/score.yaml) |
-| <a href="docs/samples/night-before-deadline/night-before-deadline.mp3"><img src="docs/samples/night-before-deadline/pianoroll.png" width="420"></a> | **Night Before Deadline** · lo-fi study, seamless loop · 2:29<br>Hard-hitting boom-bap: a driving bass riff, a bouncing piano motif over Rhodes stabs, and a half-time section before the octave-up peak.<br>[▶ Listen](docs/samples/night-before-deadline/night-before-deadline.mp3) · [Score](docs/samples/night-before-deadline/score.yaml) |
+| <a href="https://github.com/anelikes/onbgm/blob/main/docs/samples/windows-down-whistle/windows-down-whistle.mp3"><img src="https://github.com/anelikes/onbgm/raw/main/docs/samples/windows-down-whistle/pianoroll.png" width="420"></a> | **Windows Down Whistle** · travel vlog · 2:03<br>Whistled road-trip folk: steel-guitar strums, a skipping whistle hook, three rises and falls up to a final sing-along chorus.<br>[▶ Listen](https://github.com/anelikes/onbgm/blob/main/docs/samples/windows-down-whistle/windows-down-whistle.mp3) · [Score](https://github.com/anelikes/onbgm/blob/main/docs/samples/windows-down-whistle/score.yaml) |
+| <a href="https://github.com/anelikes/onbgm/blob/main/docs/samples/candy-gloss/candy-gloss.mp3"><img src="https://github.com/anelikes/onbgm/raw/main/docs/samples/candy-gloss/pianoroll.png" width="420"></a> | **Candy Gloss** · product launch · 1:30<br>Bubbly future house in Eb: a supersaw hook over a canon-style descending bass, with a kick-less bell interlude before the last chorus.<br>[▶ Listen](https://github.com/anelikes/onbgm/blob/main/docs/samples/candy-gloss/candy-gloss.mp3) · [Score](https://github.com/anelikes/onbgm/blob/main/docs/samples/candy-gloss/score.yaml) |
+| <a href="https://github.com/anelikes/onbgm/blob/main/docs/samples/island-hopper/island-hopper.mp3"><img src="https://github.com/anelikes/onbgm/raw/main/docs/samples/island-hopper/pianoroll.png" width="420"></a> | **Island Hopper** · game, seamless loop · 0:59<br>Sun-drenched calypso: syncopated marimba, a whistle answering each phrase, a 3+3+2 bass, and a lift into bright secondary dominants.<br>[▶ Listen](https://github.com/anelikes/onbgm/blob/main/docs/samples/island-hopper/island-hopper.mp3) · [Score](https://github.com/anelikes/onbgm/blob/main/docs/samples/island-hopper/score.yaml) |
+| <a href="https://github.com/anelikes/onbgm/blob/main/docs/samples/first-steps-on-the-wide-land/first-steps-on-the-wide-land.mp3"><img src="https://github.com/anelikes/onbgm/raw/main/docs/samples/first-steps-on-the-wide-land/pianoroll.png" width="420"></a> | **First Steps on the Wide Land** · game world map, seamless loop · 2:02<br>Orchestral adventure: a marching stride, a bugle-like violin theme with cello counterpoint, a B-minor shadow, then a full tutti.<br>[▶ Listen](https://github.com/anelikes/onbgm/blob/main/docs/samples/first-steps-on-the-wide-land/first-steps-on-the-wide-land.mp3) · [Score](https://github.com/anelikes/onbgm/blob/main/docs/samples/first-steps-on-the-wide-land/score.yaml) |
+| <a href="https://github.com/anelikes/onbgm/blob/main/docs/samples/pressure-cooker/pressure-cooker.mp3"><img src="https://github.com/anelikes/onbgm/raw/main/docs/samples/pressure-cooker/pianoroll.png" width="420"></a> | **Pressure Cooker** · film, emotional conflict · 1:59<br>A G-minor slow burn: spiccato basses and grinding violins build pressure bar by bar until a full-ensemble eruption, then a lone pedal tone.<br>[▶ Listen](https://github.com/anelikes/onbgm/blob/main/docs/samples/pressure-cooker/pressure-cooker.mp3) · [Score](https://github.com/anelikes/onbgm/blob/main/docs/samples/pressure-cooker/score.yaml) |
+| <a href="https://github.com/anelikes/onbgm/blob/main/docs/samples/night-before-deadline/night-before-deadline.mp3"><img src="https://github.com/anelikes/onbgm/raw/main/docs/samples/night-before-deadline/pianoroll.png" width="420"></a> | **Night Before Deadline** · lo-fi study, seamless loop · 2:29<br>Hard-hitting boom-bap: a driving bass riff, a bouncing piano motif over Rhodes stabs, and a half-time section before the octave-up peak.<br>[▶ Listen](https://github.com/anelikes/onbgm/blob/main/docs/samples/night-before-deadline/night-before-deadline.mp3) · [Score](https://github.com/anelikes/onbgm/blob/main/docs/samples/night-before-deadline/score.yaml) |
 
 The comments at the top of each score are the agent's own composition notes, written in Chinese.
 
@@ -76,13 +76,13 @@ Chords are written per bar. Accompaniment uses *textures*, such as arpeggio, pad
 - seamless loops;
 - a sound-effect timeline (risers, impacts, whooshes) that stays in sync with the music.
 
-The full format is in [`skills/onbgm/references/score-format.md`](skills/onbgm/references/score-format.md), and the JSON Schema is in [`schema/score.schema.json`](schema/score.schema.json).
+The full format is in [`skills/onbgm/references/score-format.md`](https://github.com/anelikes/onbgm/blob/main/skills/onbgm/references/score-format.md), and the JSON Schema is in [`schema/score.schema.json`](https://github.com/anelikes/onbgm/blob/main/schema/score.schema.json).
 
 ## Quick start
 
 ```bash
 brew install fluid-synth                  # Debian/Ubuntu: sudo apt install fluidsynth
-uv tool install git+https://github.com/anelikes/onbgm
+uv tool install onbgm                     # or: pip install onbgm
 onbgm fetch                               # download sound libraries to ~/.onbgm/sounds (~1.7 GB; set ONBGM_SOUNDS to change)
 onbgm doctor                              # check the environment
 
@@ -104,11 +104,11 @@ Output files:
 
 ## For agents
 
-The agent-facing docs are in [`skills/onbgm/`](skills/onbgm/SKILL.md), organized as a skill:
-- [`SKILL.md`](skills/onbgm/SKILL.md): the workflow, how to read the render report, and the rules.
-- [`references/cli.md`](skills/onbgm/references/cli.md): commands, `--json` output and error codes.
-- [`references/score-format.md`](skills/onbgm/references/score-format.md): the complete score format.
-- [`references/arranging.md`](skills/onbgm/references/arranging.md): how to write good BGM, with recipes per style.
+The agent-facing docs are in [`skills/onbgm/`](https://github.com/anelikes/onbgm/blob/main/skills/onbgm/SKILL.md), organized as a skill:
+- [`SKILL.md`](https://github.com/anelikes/onbgm/blob/main/skills/onbgm/SKILL.md): the workflow, how to read the render report, and the rules.
+- [`references/cli.md`](https://github.com/anelikes/onbgm/blob/main/skills/onbgm/references/cli.md): commands, `--json` output and error codes.
+- [`references/score-format.md`](https://github.com/anelikes/onbgm/blob/main/skills/onbgm/references/score-format.md): the complete score format.
+- [`references/arranging.md`](https://github.com/anelikes/onbgm/blob/main/skills/onbgm/references/arranging.md): how to write good BGM, with recipes per style.
 
 The docs are currently in Chinese. Agents read them without trouble; an English translation is planned.
 
@@ -185,11 +185,11 @@ uv venv && uv pip install -e ".[dev]"   # in a source checkout, sounds download 
 .venv/bin/python -m pytest              # audio tests skip themselves without fluidsynth or sounds
 ```
 
-See [CONTRIBUTING.md](CONTRIBUTING.md) for conventions and for adding instruments or sample libraries, and [ROADMAP.md](ROADMAP.md) for scope and plans.
+See [CONTRIBUTING.md](https://github.com/anelikes/onbgm/blob/main/CONTRIBUTING.md) for conventions and for adding instruments or sample libraries, and [ROADMAP.md](https://github.com/anelikes/onbgm/blob/main/ROADMAP.md) for scope and plans.
 
 ## License
 
-The code is [MIT](LICENSE)-licensed.
+The code is [MIT](https://github.com/anelikes/onbgm/blob/main/LICENSE)-licensed.
 
 The sound libraries are not part of this repository. `onbgm fetch` downloads them from their authors, and their licenses are listed in the table above. For music made with them:
 - the CC0 libraries (VSCO, VCSL, jRhodes, the Karoryfer libraries, FreePats ukulele and accordion, the erhu) have no requirements;
