@@ -1,0 +1,178 @@
+# 截止前夜 —— head-nod boom-bap，C 大调，90 BPM，可循环，能量走向 wave（多次起伏）
+# 构思：这首更"硬"一点。贝斯钩子是一条推着走的八分音符 riff：根音连敲（DUM-da）→ 五音 → 根音，
+# 后半小节用半音往上爬（Bb-B-C、F#-G-Ab）顶进下一个和弦；A 段是 I–bVI（Cmaj9 Abmaj9），借来的 bVI 让大调带点阴影。
+# B 段 IV–iii–VI7–ii–V，第二遍结尾用 Db9 三全音替代滑回 C；钢琴主奏用"小三度来回弹"（A–C–A–C~）的动机，
+# 三处 B 段越弹越高，b3 翻到高八度是全曲顶点。c 段换成 vi–vi/5–IV#11–III7#9–vi–II9–iv–V，鼓改半速，钢琴唱长句。
+# 走向：a1 → b1 起 → brk 只剩贝斯、踩镲、边击 → b2 → a2 回落 → c 换色 → b3 最满 → a3 收回，接回开头。
+title: Night Before Deadline
+meta:
+  bpm: 90
+  key: C major
+  loop: true
+  seed: 325991
+  swing: 0.56
+
+fx:
+  lofi: 0.6
+
+sections:
+  - { name: a1,  bars: 8, energy: 0.5 }
+  - { name: b1,  bars: 8, energy: 0.72 }
+  - { name: brk, bars: 4, energy: 0.3 }
+  - { name: b2,  bars: 8, energy: 0.85 }
+  - { name: a2,  bars: 8, energy: 0.5 }
+  - { name: c,   bars: 8, energy: 0.65 }
+  - { name: b3,  bars: 8, energy: 0.92 }
+  - { name: a3,  bars: 4, energy: 0.48 }
+
+harmony:
+  a1:  "Cmaj9 | Abmaj9"
+  b1:  "Fmaj9 | Em7 A7b9 | Dm9 | G13 | Fmaj9 | Em7 A7b9 | Dm9 | Db9"
+  brk: "Cmaj9 | Abmaj9"
+  b2:  "Fmaj9 | Em7 A7b9 | Dm9 | G13 | Fmaj9 | Em7 A7b9 | Dm9 | Db9"
+  a2:  "Cmaj9 | Abmaj9"
+  c:   "Am9 | Am9/G | Fmaj7#11 | E7#9 | Am9 | D9 | Fm6 | G7sus4 G7"
+  b3:  "Fmaj9 | Em7 A7b9 | Dm9 | G13 | Fmaj9 | Em7 A7b9 | Dm9 | Db9"
+  a3:  "Cmaj9 | Abmaj9"
+
+tracks:
+  # 钩子：推着走的八分音符贝斯 riff
+  bass:
+    sound: electric-bass
+    texture: line
+    gain: 5
+    notes:
+      a1: >
+        C2/8> C2/16 r/16 G1/8 C2/8 r/16 Bb1/16 B1/16 C2/16 E2/8 G1/8 | Ab1/8> Ab1/16 r/16 Eb2/8 Ab1/8 r/16 F#1/16 G1/16 Ab1/16 C2/8 B1/8 |
+        C2/8> C2/16 r/16 G1/8 C2/8 r/16 Bb1/16 B1/16 C2/16 E2/8 G1/8 | Ab1/8> Ab1/16 r/16 Eb2/8 Ab1/8 r/16 F#1/16 G1/16 Ab1/16 C2/8 B1/8 |
+        C2/8> C2/16 r/16 G1/8 C2/8 r/16 Bb1/16 B1/16 C2/16 E2/8 G1/8 | Ab1/8> Ab1/16 r/16 Eb2/8 Ab1/8 r/16 F#1/16 G1/16 Ab1/16 C2/8 B1/8 |
+        C2/8> C2/16 r/16 G1/8 C2/8 r/16 Bb1/16 B1/16 C2/16 E2/8 G1/8 | Ab1/8> Ab1/16 r/16 Eb2/8 Ab1/8 r/16 Ab1/16 G1/16 F#1/16 F1/8 E1/8
+      b1: >
+        F1/8> F1/16 r/16 C2/8 F1/8 r/16 D2/16 Eb2/16 E2/16 F2/8 E1/8 | E1/8> E1/16 r/16 B1/8 E2/8 A1/8> A1/16 r/16 E2/8 C#2/8 |
+        D2/8> D2/16 r/16 A1/8 D2/8 r/16 B1/16 C2/16 C#2/16 D2/8 F#1/8 | G1/8> G1/16 r/16 D2/8 G1/8 r/16 F1/16 F#1/16 G1/16 B1/8 E1/8 |
+        F1/8> F1/16 r/16 C2/8 F1/8 r/16 D2/16 Eb2/16 E2/16 F2/8 E1/8 | E1/8> E1/16 r/16 B1/8 E2/8 A1/8> A1/16 r/16 E2/8 C#2/8 |
+        D2/8> D2/16 r/16 A1/8 D2/8 r/16 C2/16 B1/16 Bb1/16 A1/8 Ab1/8 | Db2/8> Db2/16 r/16 Ab1/8 Db2/8 r/16 B1/16 C2/16 Db2/16 F2/8 Db2/8
+      brk: >
+        C2/8> C2/16 r/16 G1/8 C2/8 r/16 Bb1/16 B1/16 C2/16 E2/8 G1/8 | Ab1/8> Ab1/16 r/16 Eb2/8 Ab1/8 r/16 F#1/16 G1/16 Ab1/16 C2/8 B1/8 |
+        C2/8> C2/16 r/16 G1/8 C2/8 r/16 Bb1/16 B1/16 C2/16 E2/8 G1/8 | Ab1/8> Ab1/16 r/16 Eb2/8 Ab1/8 r/16 Ab1/16 G1/16 F#1/16 F1/8 E1/8
+      b2: >
+        F1/8> F1/16 r/16 C2/8 F1/8 r/16 D2/16 Eb2/16 E2/16 F2/8 E1/8 | E1/8> E1/16 r/16 B1/8 E2/8 A1/8> A1/16 r/16 E2/8 C#2/8 |
+        D2/8> D2/16 r/16 A1/8 D2/8 r/16 B1/16 C2/16 C#2/16 D2/8 F#1/8 | G1/8> G1/16 r/16 D2/8 G1/8 r/16 F1/16 F#1/16 G1/16 B1/8 E1/8 |
+        F1/8> F1/16 r/16 C2/8 F1/8 r/16 D2/16 Eb2/16 E2/16 F2/8 E1/8 | E1/8> E1/16 r/16 B1/8 E2/8 A1/8> A1/16 r/16 E2/8 C#2/8 |
+        D2/8> D2/16 r/16 A1/8 D2/8 r/16 C2/16 B1/16 Bb1/16 A1/8 Ab1/8 | Db2/8> Db2/16 r/16 Ab1/8 Db2/8 r/16 B1/16 C2/16 Db2/16 F2/8 Db2/8
+      a2: >
+        C2/8> C2/16 r/16 G1/8 C2/8 r/16 Bb1/16 B1/16 C2/16 E2/8 G1/8 | Ab1/8> Ab1/16 r/16 Eb2/8 Ab1/8 r/16 F#1/16 G1/16 Ab1/16 C2/8 B1/8 |
+        C3/8> C3/16 r/16 G2/8 C3/8 r/16 Bb2/16 B2/16 C3/16 E3/8 G2/8 | Ab2/8> Ab2/16 r/16 Eb3/8 Ab2/8 r/16 F#2/16 G2/16 Ab2/16 C3/8 B1/8 |
+        C2/8> C2/16 r/16 G1/8 C2/8 r/16 Bb1/16 B1/16 C2/16 E2/8 G1/8 | Ab1/8> Ab1/16 r/16 Eb2/8 Ab1/8 r/16 F#1/16 G1/16 Ab1/16 C2/8 B1/8 |
+        C2/8> C2/16 r/16 G1/8 C2/8 r/16 Bb1/16 B1/16 C2/16 E2/8 G1/8 | Ab1/8> Ab1/16 r/16 Eb2/8 Ab1/8 r/16 Ab1/16 G1/16 F#1/16 G1/8 G#1/8
+      c: >
+        A1/4. A1/8 r/8 E2/8 A1/8 G1/8 | G1/4. G1/8 r/8 D2/8 G1/8 F#1/8 | F1/4. F1/8 r/8 C2/8 B1/8 F1/8 | E1/4. E1/8 r/8 B1/8 D2/8 G#1/8 |
+        A1/4. A1/8 r/8 E2/8 A1/8 C2/8 | D2/4. D2/8 r/8 A1/8 F#1/8 E1/8 | F1/4. F1/8 r/8 C2/8 Ab1/8 F#1/8 | G1/4. G1/8 r/8 D2/8 B1/8 E1/8
+      b3: >
+        F1/8> F1/16 r/16 C2/8 F1/8 r/16 D2/16 Eb2/16 E2/16 F2/8 E1/8 | E1/8> E1/16 r/16 B1/8 E2/8 A1/8> A1/16 r/16 E2/8 C#2/8 |
+        D2/8> D2/16 r/16 A1/8 D2/8 r/16 B1/16 C2/16 C#2/16 D2/8 F#1/8 | G1/8> G1/16 r/16 D2/8 G1/8 r/16 F1/16 F#1/16 G1/16 B1/8 E1/8 |
+        F1/8> F1/16 r/16 C2/8 F1/8 r/16 D2/16 Eb2/16 E2/16 F2/8 E1/8 | E1/8> E1/16 r/16 B1/8 E2/8 A1/8> A1/16 r/16 E2/8 C#2/8 |
+        D2/8> D2/16 r/16 A1/8 D2/8 r/16 C2/16 B1/16 Bb1/16 A1/8 Ab1/8 | Db2/8> Db2/16 r/16 Ab1/8 Db2/8 r/16 B1/16 C2/16 Db2/16 F2/8 Db2/8
+      a3: >
+        C2/8> C2/16 r/16 G1/8 C2/8 r/16 Bb1/16 B1/16 C2/16 E2/8 G1/8 | Ab1/8> Ab1/16 r/16 Eb2/8 Ab1/8 r/16 F#1/16 G1/16 Ab1/16 C2/8 B1/8 |
+        C2/8> C2/16 r/16 G1/8 C2/8 r/16 Bb1/16 B1/16 C2/16 E2/8 G1/8 | Ab1/8> Ab1/16 r/16 Eb2/8 Ab1/8 r/16 F#1/16 G1/16 Ab1/16 C2/8 B1/8
+
+  # 电钢琴：带十六分切分的短和弦
+  keys:
+    sound: epiano
+    texture: comp
+    in: [b1, b2, c, b3]
+    range: [50, 67]
+    gain: 2
+    rhythm: "..x. .x.. ..x. .x.."
+    by_section:
+      b2: { rhythm: "..X. .x.. ..X. .x.x" }
+      c:  { rhythm: "x--- --x- ---- ----" }
+      b3: { rhythm: "..X. .x.. ..X. .x.x | ..X. .x.. ..X. x.x." }
+
+  # 钢琴主奏：小三度来回弹的动机
+  piano:
+    sound: piano
+    texture: melody
+    notes:
+      b1: >
+        A5/8 C6/8 r/16 A5/16 C6/8~ C6/8 E6/8 D6/8 C6/8 | B5/4 G5/8 E5/8 Bb5/4 G5/8 C#5/8 |
+        F5/8 A5/8 r/16 F5/16 A5/8~ A5/8 C6/8 B5/8 A5/8 | B5/4 G5/8 E5/8 F5/4 D5/4 |
+        A5/8 C6/8 r/16 A5/16 C6/8~ C6/8 E6/8 G6/8 E6/8 | D6/4 B5/8 G5/8 C#6/4 Bb5/8 G5/8 |
+        F5/8 A5/8 r/16 F5/16 A5/8~ A5/8 C6/8 E6/8 F6/8 | Eb6/4. Db6/8 B5/4 Ab5/4
+      b2: >
+        r/8 A5/8 C6/8 A5/16 C6/16~ C6/4 E6/8 G6/8 | F#6/8 E6/8 D6/8 B5/8 C#6/8 E6/8 G6/8 Bb6/8 |
+        A6/8 F6/8 r/16 D6/16 F6/8~ F6/4 E6/8 C6/8 | B5/4 D6/8 F6/8 E6/4 D6/8 B5/8 |
+        r/8 A5/8 C6/8 A5/16 C6/16~ C6/4 G6/8 A6/8 | G6/8 E6/8 D6/8 B5/8 Bb5/8 C#6/8 E6/8 G6/8 |
+        F6/8 E6/8 r/16 D6/16 C6/8~ C6/4 A5/8 F5/8 | Ab5/4 B5/8 Eb6/8 F6/4 Eb6/4
+      c: >
+        E5/4. G5/8 A5/4 C6/4 | B5/4. A5/8 G5/2 | A5/4. B5/8 C6/4 E6/4 | G6/4 E6/8 D6/8 G#5/2 |
+        E5/4. G5/8 A5/4 C6/4 | F#6/4. E6/8 D6/4 C6/4 | Ab5/4. F5/8 D5/4 C5/4 | C6/4 D6/8 C6/8 B5/2
+      b3: >
+        A5/8 C6/8 r/16 A5/16 C6/8~ C6/8 E6/8 D6/8 C6/8 | B5/4 G5/8 E5/8 Bb5/4 G5/8 C#5/8 |
+        F5/8 A5/8 r/16 F5/16 A5/8~ A5/8 C6/8 B5/8 A5/8 | B5/4 G5/8 E5/8 F5/4 D5/4 |
+        A6/8 C7/8 r/16 A6/16 C7/8~ C7/8 B6/8 A6/8 G6/8 | E6/4 D6/8 B5/8 C#6/4 E6/8 G6/8 |
+        F6/8 A6/8 r/16 F6/16 A6/8~ A6/8 G6/8 F6/8 E6/8 | Eb6/4. Db6/8 B5/4 Ab5/4
+
+  # 合成拨弦：句尾的高音回应
+  pluck:
+    sound: synth-pluck
+    texture: line
+    in: [b1, b2, b3]
+    notes:
+      b1: >
+        r/1 | r/1 | r/1 | r/2. D6/16 F6/16 A6/8 |
+        r/1 | r/1 | r/1 | r/2. Ab6/16 F6/16 Eb6/8
+      b2: >
+        r/1 | r/1 | r/1 | r/2. D6/16 F6/16 A6/8 |
+        r/1 | r/2. E6/16 G6/16 Bb6/8 | r/1 | r/2. Ab6/16 B6/16 Eb7/8
+      b3: >
+        r/1 | r/2. E6/16 G6/16 Bb6/8 | r/1 | r/2. D6/16 F6/16 A6/8 |
+        r/1 | r/1 | r/1 | r/2. Ab6/16 F6/16 Eb6/8
+
+  drums:
+    sound: drums
+    texture: groove
+    laid_back: 0.02
+    pattern:
+      kick:  "X.x. ...x ..X. .... | X.x. ...x ..X. ..x."
+      snare: ".... X... .... X... | .... X... .... X..g"
+      hat:   "x.xg x.xg x.xg x.xg"
+    by_section:
+      b1:
+        pattern:
+          kick:     "X.x. ...x ..X. .x.. | X.x. ...x ..X. ..x."
+          snare:    ".... X..g .... X... | .... X..g .g.. X..."
+          hat:      "xgxg xgxg xgxg xgxg"
+          open-hat: ".... .... .... .... | .... .... .... ..x."
+      brk:
+        pattern:
+          rim: ".... x... .... x... | .... x... .... x... | .... x... .... x... | .... x... .x.x x.xx"
+          hat: "x.x. x.x. x.x. x.x."
+      b2:
+        pattern:
+          crash:    "X... .... .... .... | .... .... .... .... | .... .... .... .... | .... .... .... .... | .... .... .... .... | .... .... .... .... | .... .... .... .... | .... .... .... ...."
+          kick:     "X.x. ...x ..X. .x.. | X.x. ...x ..X. ..x."
+          snare:    ".... X..g .... X... | .... X..g .g.. X..."
+          clap:     ".... x... .... x... "
+          hat:      "xgxg xgxg xgxg xgxg"
+          open-hat: ".... .... .... ..x. | .... .... .... ..x."
+      c:
+        pattern:
+          kick:  "X... .... X... .... | X... ...x ..x. ...."
+          snare: ".... .... X... .... "
+          hat:   "x.x. x.x. x.x. x.x."
+          rim:   ".... x... .... .... | .... x... .... ..x."
+      b3:
+        pattern:
+          crash:    "X... .... .... .... | .... .... .... .... | .... .... .... .... | .... .... .... .... | .... .... .... .... | .... .... .... .... | .... .... .... .... | .... .... .... ...."
+          kick:     "X.x. ...x ..X. .x.. | X.x. ...x ..X. ..x."
+          snare:    ".... X..g .... X... | .... X..g .g.. X..g"
+          clap:     ".... x... .... x... "
+          hat:      "xgxg xgxg xgxg xgxg"
+          open-hat: ".... .... .... ..x. | .... .... .... ..x."
+      a3:
+        pattern:
+          kick:  "X.x. ...x ..X. .... | X.x. ...x ..X. ..x. | X.x. ...x ..X. .... | X.x. ...x ..X. ...."
+          snare: ".... X... .... X... | .... X... .... X..g | .... X... .... X... | .... X... .g.g X.gg"
+          hat:   "x.xg x.xg x.xg x.xg | x.xg x.xg x.xg x.xg | x.xg x.xg x.xg x.xg | x.xg x.xg x.xg x..."

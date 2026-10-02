@@ -1,0 +1,225 @@
+# 积压 —— G 小调，一层层压上去直到爆发，然后只剩低音
+# 低音提琴跳弓八分音符反复同一个音型（G-G-G8-G-Ab-G-F#-G，主音被半音上下夹住），
+# 钢琴在低音区砸不协和的和弦（D/G、Ab/G 压在 G 持续低音上），小提琴在高音区拉长音、两条线半音相磨。
+# 主题（弦乐）：G 上行五度再级进回落，下面是 G-F#-F-E-Eb-D 的半音下行低音；
+# 推进段把动机头逐小节上移（Eb-F-G-Ab-Bb-C-D）；高潮把主题放到最高音区，
+# 最后四小节全体齐奏同一个切分重音型，然后突然只剩 G 的低音长音。
+title: Pressure Cooker
+meta:
+  bpm: 107
+  key: G minor
+  seed: 437208
+  tail: 2
+
+sections:
+  - { name: ignite,   bars: 4, energy: 0.4 }
+  - { name: pressure, bars: 8, energy: 0.5 }
+  - { name: rise,     bars: 8, energy: "0.56->0.68" }
+  - { name: theme,    bars: 8, energy: 0.72 }
+  - { name: escalate, bars: 8, energy: "0.78->0.92" }
+  - { name: climax,   bars: 8, energy: 0.97 }
+  - { name: tutti,    bars: 4, energy: 1.0 }
+  - { name: void,     bars: 4, energy: 0.18 }
+
+harmony:
+  ignite:   "Gm | Gm | Gm | Gm"
+  pressure: "Gm | Eb/G | Cm/G | D/G | Gm | Eb/G | Cm/G | D7/G"
+  rise:     "Eb/G | Eb/G | Cm/G | Cm/G | Ab/G | Ab/G | D/G | D7/G"
+  theme:    "Gm | D/F# | Bb/F | Em7b5 | Ebmaj7 | Cm/Eb | D7sus4 | D7"
+  escalate: "Eb | F | Gm | Ab | Bb | Cm | D7sus4 | D7"
+  climax:   "Gm | D/F# | Bb/F | Em7b5 | Ebmaj7 | Cm/Eb | D7sus4 | D7b9"
+  tutti:    "Eb | Ab | Eb | D7b9"
+  void:     "Gm | Gm | Gm | Gm"
+
+tracks:
+  # 低音提琴跳弓：同一个音型反复，G 被 Ab 和 F# 夹住
+  ost:
+    sound: contrabass
+    texture: line
+    articulation: staccato
+    gain: 7
+    in: [ignite, pressure, rise]
+    notes:
+      ignite:   "G2/8> G2/8 G3/8 G2/8 Ab2/8 G2/8 F#2/8 G2/8"
+      pressure: "G2/8> G2/8 G3/8 G2/8 Ab2/8 G2/8 F#2/8 G2/8"
+      rise:     "G2/8> G2/8 G3/8 G2/8 Ab2/8 G2/8 F#2/8 G2/8"
+
+  # 大提琴：先在反拍上咬 D-Eb，铺垫段改成高八度重叠低音提琴的音型
+  ost_cello:
+    sound: cello
+    texture: line
+    articulation: staccato
+    in: [pressure, rise]
+    notes:
+      pressure: "r/8 D3/8 r/8 D3/8 r/8 Eb3/8 r/8 D3/8"
+      rise:     "G3/8> G3/8 G4/8 G3/8 Ab3/8 G3/8 F#3/8 G3/8"
+
+  # 主题之后：低音提琴八分音符跟着和弦走，大提琴在反拍上补
+  drive:
+    sound: contrabass
+    texture: bassline
+    articulation: staccato
+    low: 31
+    gain: 3
+    in: [theme, escalate, climax, tutti]
+    rhythm: "1.1. 1.8. 1.1. 1.8."
+    by_section:
+      tutti: { rhythm: "1..1 ..1. ..1. 1... | 1..1 ..1. ..1. 1... | 1..1 ..1. ..1. 1... | 1..1 ..1- ---- --.." }
+
+  cdrive:
+    sound: cello
+    texture: bassline
+    articulation: staccato
+    low: 43
+    gain: 2
+    in: [theme, escalate, climax]
+    rhythm: "..5. ..1. ..5. ..1."
+
+  # 钢琴低音区：不协和的柱式和弦，从每小节一下逐步加密到八分音符砸击
+  pianolow:
+    sound: piano
+    texture: comp
+    range: [31, 52]
+    in: [ignite, pressure, rise, theme, escalate, climax, tutti]
+    rhythm: "X--- ---- ---- ----"
+    by_section:
+      ignite:   { rhythm: "X--- ---- ---- ---- | .... .... .... ...." }
+      rise:     { rhythm: "X--- ---- X--- ----" }
+      theme:    { rhythm: "X... X... X... X..." }
+      escalate: { rhythm: "X.X. X.X. X.X. X.X." }
+      climax:   { rhythm: "X.X. X.X. X.X. XXXX" }
+      tutti:    { rhythm: "X..X ..X. ..X. X... | X..X ..X. ..X. X... | X..X ..X. ..X. X... | X..X ..X- ---- --.." }
+
+  # 齐奏段的中音区和弦
+  pianohit:
+    sound: piano
+    texture: comp
+    range: [48, 72]
+    in: [tutti]
+    rhythm: "X..X ..X. ..X. X... | X..X ..X. ..X. X... | X..X ..X. ..X. X... | X..X ..X- ---- --.."
+
+  sub:
+    sound: sub-bass
+    texture: bass-sustain
+    low: 31
+    in: [pressure, rise, theme, escalate, climax, tutti, void]
+
+  # 小提琴高音区两条长音线：一条守住 D6，另一条在它上下半音磨
+  vln_a:
+    sound: strings
+    texture: line
+    in: [rise]
+    notes:
+      rise: "D6/1 | D6/1 | D6/1 | D6/1 | D6/1 | D6/1 | D6/1 | D6/1"
+  vln_b:
+    sound: strings
+    texture: line
+    in: [rise]
+    notes:
+      rise: "Eb6/1 | D6/2 Eb6/2 | C#6/1 | D6/1 | Eb6/1 | E6/2 Eb6/2 | D6/1 | C#6/2 D6/2"
+
+  # 主奏：弦乐
+  lead:
+    sound: strings
+    texture: melody
+    notes:
+      theme: >
+        G5/4> D6/4. C6/8 Bb5/4 | A5/8 Bb5/8 C6/8 A5/8 F#5/2 |
+        Bb5/4> F6/4. Eb6/8 D6/4 | Bb5/8 C6/8 D6/8 Bb5/8 G5/2 |
+        G5/4> Eb6/4. D6/8 C6/4 | Bb5/8 C6/8 D6/8 C6/8 G5/2 |
+        A5/4 G5/4 A5/4 C6/4 | F#5/4. G5/8 A5/2
+      escalate: >
+        Eb5/4> Bb5/4. G5/8 Bb5/4 | F5/4> C6/4. A5/8 C6/4 |
+        G5/4> D6/4. Bb5/8 D6/4 | Ab5/4> Eb6/4. C6/8 Eb6/4 |
+        Bb5/4> F6/4. D6/8 F6/4 | C6/4> G6/4. Eb6/8 G6/4 |
+        A6/2> G6/4 D6/4 | F#6/4 E6/8 F#6/8 A6/2>
+      climax: >
+        D6/4> G6/4.> F6/8 D6/4 | A5/8 Bb5/8 C6/8 D6/8 F#6/2> |
+        F6/4> Bb6/4.> A6/8 F6/4 | G6/8 F6/8 E6/8 D6/8 Bb5/2 |
+        Bb6/2> G6/4 Eb6/4 | D6/8 Eb6/8 F6/8 Eb6/8 C6/2 |
+        D6/4> G6/4 A6/4 C7/4> | C7/4> A6/4> F#6/4> Eb6/4>
+      tutti: >
+        G6/8.'> G6/8.'> G6/4'> F6/8'> Eb6/4'> | Ab6/8.'> Ab6/8.'> Ab6/4'> G6/8'> Eb6/4'> |
+        Bb6/8.'> Bb6/8.'> Bb6/4'> Ab6/8'> G6/4'> | A6/8.'> A6/8.'> F#6/2> r/8
+
+  # 高潮：弦乐低八度重叠主旋律
+  dbl:
+    sound: strings
+    texture: line
+    in: [climax]
+    notes:
+      climax: >
+        D5/4 G5/4. F5/8 D5/4 | A4/8 Bb4/8 C5/8 D5/8 F#5/2 |
+        F5/4 Bb5/4. A5/8 F5/4 | G5/8 F5/8 E5/8 D5/8 Bb4/2 |
+        Bb5/2 G5/4 Eb5/4 | D5/8 Eb5/8 F5/8 Eb5/8 C5/2 |
+        D5/4 G5/4 A5/4 C6/4 | C6/4 A5/4 F#5/4 Eb5/4
+
+  # 齐奏：大提琴和定音鼓跟着同一个切分重音型
+  cello_hits:
+    sound: cello
+    texture: line
+    in: [tutti]
+    notes:
+      tutti: >
+        Eb3/8.'> Eb3/8.'> Eb3/4'> Eb3/8'> Eb3/4'> | Ab2/8.'> Ab2/8.'> Ab2/4'> Ab2/8'> Ab2/4'> |
+        Eb3/8.'> Eb3/8.'> Eb3/4'> Eb3/8'> Eb3/4'> | D3/8.'> D3/8.'> D3/2> r/8
+
+  timp_hits:
+    sound: timpani
+    texture: line
+    in: [tutti]
+    notes:
+      tutti: >
+        Eb2/8.> Eb2/8.> Eb2/4> Eb2/8> Eb2/4> | Ab2/8.> Ab2/8.> Ab2/4> Ab2/8> Ab2/4> |
+        Eb2/8.> Eb2/8.> Eb2/4> Eb2/8> Eb2/4> | D2/8.> D2/8.> D2/2> r/8
+
+  timp:
+    sound: timpani
+    texture: timpani
+    gain: 6
+    in: [rise, theme, escalate, climax]
+    roll_into: climax
+
+  drums:
+    sound: drums-room
+    texture: groove
+    gain: -3
+    in: [rise, theme, escalate, climax, tutti]
+    pattern:
+      kick: "X... .... X... ...."
+    by_section:
+      theme:
+        pattern:
+          kick:    "X... .... X.X. ...."
+          tom-low: ".... X... .... X..."
+      escalate:
+        pattern:
+          kick:    "X.X. X... X.X. X..."
+          tom-low: ".... X... .... X..."
+          tom-mid: ".... .... .... ..x. | .... .... .... ..x. | .... .... .... ..x. | .... .... .... ..x. | .... .... .... ..x. | .... .... .... ..x. | .... .... .... ..x. | x.x. x.x. xxxx XXXX"
+      climax:
+        pattern:
+          kick:    "X.X. X.X. X.X. X.X."
+          snare:   ".... X... .... X..."
+          tom-low: "..X. ..X. ..X. ..X."
+          crash:   "X... .... .... .... | .... .... .... .... | .... .... .... .... | .... .... .... .... | X... .... .... .... | .... .... .... .... | .... .... .... .... | .... .... .... ...."
+      tutti:
+        pattern:
+          kick:    "X..X ..X. ..X. X... | X..X ..X. ..X. X... | X..X ..X. ..X. X... | X..X ..X. .... ...."
+          snare:   "X..X ..X. ..X. X... | X..X ..X. ..X. X... | X..X ..X. ..X. X... | X..X ..X. .... ...."
+          tom-low: "X..X ..X. ..X. X... | X..X ..X. ..X. X... | X..X ..X. ..X. X... | X..X ..X. .... ...."
+          crash:   "X... .... .... .... | .... .... .... .... | X... .... .... .... | X... .... .... ...."
+
+  # 余波：只剩 G 的低音长音
+  pedal:
+    sound: contrabass
+    texture: line
+    in: [void]
+    gain: 4
+    notes:
+      void: "G1/1~ | G1/1~ | G1/1~ | G1/1"
+
+sfx:
+  - { type: riser, at: climax, length: 8, level: 0.6 }
+  - { type: impact, at: climax, duck: 3, level: 0.7 }
+  - { type: sub-drop, at: void, level: 0.7 }

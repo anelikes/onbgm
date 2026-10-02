@@ -42,7 +42,7 @@ brew install fluid-synth            # Debian/Ubuntu: sudo apt install fluidsynth
    - 力度层交界处的音量是否连续；
    - 实际音高是否和映射一致（有的贝斯库按记谱音高映射，比实际发声高一个八度）。
 5. **对比试听**：用示例乐谱渲染新旧两版做 A/B 对比，并检查声部平衡和限幅器的报告。
-6. **文档**：在 README 的音源表和 `skills/onbgm/references/score-format.md` 的音色表里写上它。
+6. **文档**：在 README（英文 `README.md` 和中文 `README.zh-CN.md` 两份）的音源表和 `skills/onbgm/references/score-format.md` 的音色表里写上它。
 
 ## 可用性测试
 
@@ -52,4 +52,4 @@ brew install fluid-synth            # Debian/Ubuntu: sudo apt install fluidsynth
 
 - 测试全部通过，CI 是绿的；
 - 新功能和修复都带测试；
-- 用户能感知的变化，同时更新 `skills/onbgm/` 和 README。
+- 用户能感知的变化，同时更新 `skills/onbgm/` 和两份 README（英文和中文）。
