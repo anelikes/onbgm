@@ -1,0 +1,201 @@
+# 初踏大地 —— D 大调，102 BPM，52 小节（约 122 秒）无缝循环，两次高潮（第二次更强）
+# 核心动机：小提琴"四分—（休止）—八分上行—四分"的号角式呼喊（D-A-D-E-F#），下一小节落在长音上，
+#   第三小节在属和弦上原样模进一级（E-C#-E-F#-G），像一步一步走上山坡。
+# 和声：开头四小节踩着主音 D 的持续低音（I–IV/I–V/I–I），再走 vi–IV–V/V（E7/G#）–V，有"出发"的开阔感；
+#   shadow 段转到关系小调 B 小调，后半低音 B-A-G-F# 级进下行；rise 段低音半音上行 G-A#-B-C#-D 推进高潮。
+# 曲式：intro（定音鼓+军鼓预备）→ theme（小提琴中音区陈述）→ theme2（第一次高潮：圆号加厚句尾、大提琴对位、军鼓进行曲）
+#   → shadow（B 小调，大提琴接过旋律，小提琴高处长音）→ rise（动机模进爬升 + 军鼓滚奏）
+#   → anthem（第二次高潮：小提琴高八度全奏，铜管句尾强奏）→ homeward（动机碎片回落，A7 接回开头）。
+title: First Steps on the Wide Land
+meta:
+  bpm: 102
+  key: D major
+  loop: true
+  seed: 561172
+
+sections:
+  - { name: intro,    bars: 4,  energy: 0.35 }
+  - { name: theme,    bars: 8,  energy: 0.55 }
+  - { name: theme2,   bars: 8,  energy: 0.78 }
+  - { name: shadow,   bars: 8,  energy: 0.45 }
+  - { name: rise,     bars: 4,  energy: "0.55->0.85" }
+  - { name: anthem,   bars: 12, energy: 1.0 }
+  - { name: homeward, bars: 8,  energy: "0.55->0.4" }
+
+harmony:
+  intro:    "D | G/D | D | Asus4 A"
+  theme:    "D | G/D | A/D | D | Bm | G | E7/G# | Asus4 A"
+  theme2:   "D | G/D | A/D | Bm | G | D/F# | Em7 A7 | D"
+  shadow:   "Bm | Gmaj7 | Em7 | F#7 | Bm | Bm/A | Gmaj7 | F#7"
+  rise:     "G | A/G | F#7/A# | Bm A/C#"
+  anthem:   "D | G/D | A/D | D | Bm | G | E7/G# | Asus4 A | Bm | G | Em7 | Asus4 A7"
+  homeward: "D | G/D | D | A/C# | Bm | G | Em7 | Asus4 A7"
+
+tracks:
+  violins:
+    sound: strings
+    texture: melody
+    notes:
+      theme: >
+        D5/4 r/8 A4/8 D5/8 E5/8 F#5/4 | G5/2 B5/4 A5/8 G5/8 |
+        E5/4 r/8 C#5/8 E5/8 F#5/8 G5/4 | F#5/2. r/4 |
+        D5/4 r/8 B4/8 D5/8 F#5/8 B5/4 | B5/4. A5/8 G5/4 D5/4 |
+        E5/4. F#5/8 G#5/4 B5/4 | A5/2 G5/4 E5/4
+      theme2: >
+        F#5/4 r/8 D5/8 F#5/8 G5/8 A5/4 | B5/2 A5/4 G5/4 |
+        A5/4 r/8 E5/8 A5/8 G5/8 E5/4 | F#5/2 D5/4 B4/4 |
+        G4/4 r/8 B4/8 D5/8 G5/8 B5/4 | A5/4. G5/8 F#5/4 D5/4 |
+        G5/4 F#5/8 E5/8 A4/4 C#5/4 | D5/2. r/4
+      rise: >
+        D5/4 r/8 B4/8 D5/8 E5/8 G5/4 | E5/4 r/8 C#5/8 E5/8 F#5/8 A5/4 |
+        F#5/4 r/8 C#5/8 F#5/8 A#5/8 C#6/4 | B5/2 A5/4 C#6/4
+      anthem: >
+        D6/4 r/8 A5/8 D6/8 E6/8 F#6/4 | G6/2 B6/4 A6/8 G6/8 |
+        E6/4 r/8 C#6/8 E6/8 F#6/8 G6/4 | F#6/2. r/4 |
+        D6/4 r/8 B5/8 D6/8 F#6/8 B6/4 | B6/4. A6/8 G6/4 D6/4 |
+        E6/4. F#6/8 G#6/4 B6/4 | A6/2 G6/4 E6/4 |
+        F#6/4. E6/8 D6/4 B5/4 | G6/4. F#6/8 E6/4 D6/4 |
+        E6/4. F#6/8 G6/4 B6/4 | A6/2. r/4
+      homeward: >
+        D5/4 r/8 A4/8 D5/8 E5/8 F#5/4 | G5/2. r/4 |
+        F#5/4 r/8 D5/8 F#5/8 E5/8 D5/4 | E5/2. r/4 |
+        D5/4 r/8 B4/8 D5/8 C#5/8 B4/4 | D5/2 B4/4 G4/4 |
+        B4/4. E5/8 D5/2 | D5/2 C#5/2
+
+  # B 小调段：大提琴接过旋律
+  cello_tune:
+    sound: cello
+    texture: melody
+    notes:
+      shadow: >
+        B3/4 r/8 F#3/8 B3/8 C#4/8 D4/4 | F#4/2 E4/4 D4/4 |
+        E4/4 r/8 B3/8 E4/8 F#4/8 G4/4 | F#4/4. E4/8 C#4/2 |
+        D4/4 r/8 B3/8 D4/8 F#4/8 B4/4 | A4/4. G4/8 F#4/4 D4/4 |
+        G4/4. A4/8 B4/4 D5/4 | C#5/2 A#4/4 r/4
+
+  # 大提琴对位：和小提琴反向进行
+  cello_counter:
+    sound: cello
+    texture: line
+    notes:
+      theme2: >
+        A3/2 F#3/2 | G3/2 B3/2 | C#4/2 E4/2 | D4/2 F#3/2 |
+        G3/2 D4/2 | A3/2 F#3/2 | G3/4 E3/4 A3/4 G3/4 | F#3/2. r/4
+      anthem: >
+        F#3/4 A3/4 D4/4 F#4/4 | G4/2 D4/2 | C#4/4 E4/4 A4/4 G4/4 | F#4/2 A4/2 |
+        B3/4 D4/4 F#4/4 D4/4 | G3/4 B3/4 D4/4 G4/4 | G#3/4 B3/4 D4/4 E4/4 | D4/2 C#4/2 |
+        D4/2 F#4/2 | G4/2 B3/2 | E4/2 G4/2 | A3/2 C#4/2
+
+  # 弦乐跳弓：前半八分音符，高潮段十六分音符
+  spiccato:
+    sound: strings
+    texture: arp
+    articulation: staccato
+    mode: updown
+    range: [55, 69]
+    rhythm: "x.x. x.x. x.x. x.x."
+    in: [theme, homeward]
+
+  spiccato_drive:
+    sound: strings
+    texture: arp
+    articulation: staccato
+    mode: updown
+    range: [57, 72]
+    rhythm: "xxxx xxxx xxxx xxxx"
+    in: [theme2, rise, anthem]
+
+  pad:
+    sound: strings
+    texture: pad
+    range: [50, 66]
+    in: [intro, theme, theme2, rise, anthem, homeward]
+
+  pad_high:
+    sound: strings
+    texture: pad
+    range: [66, 81]
+    in: [shadow]
+
+  # 圆号只在乐句收尾加厚
+  horns:
+    sound: horn
+    texture: comp
+    range: [50, 65]
+    rhythm: ".... .... .... .... | .... .... .... .... | .... .... .... .... | x--- ---- ---- ...."
+    in: [theme, theme2, shadow, anthem]
+
+  # 铜管：高潮段句尾强奏
+  brass:
+    sound: brass
+    texture: comp
+    range: [55, 70]
+    rhythm: ".... .... .... .... | .... .... .... .... | .... .... x--- .... | X--- ---- X-.. X..."
+    in: [anthem]
+
+  contrabass:
+    sound: contrabass
+    texture: bassline
+    low: 33
+    rhythm: "1-.. 5-.. 1-.. 5-.."
+    by_section:
+      intro:    { rhythm: "1--- ---- 1--- ----" }
+      theme2:   { rhythm: "1.1. 5.5. 1.1. 5.5." }
+      shadow:   { rhythm: "1--- ---- 1--- 5---" }
+      rise:     { rhythm: "1.1. 1.1. 1.1. 1.1." }
+      anthem:   { rhythm: "1.1. 5.5. 1.1. 5.5." }
+
+  timpani_intro:
+    sound: timpani
+    texture: line
+    notes:
+      intro: >
+        D2/4. D2/8 D2/4 A2/4 | D2/4. D2/8 D2/4 A2/4 |
+        D2/4. D2/8 D2/4 A2/4 | A2/8 A2/8 A2/8 A2/8 A2/4 A2/4
+
+  timpani:
+    sound: timpani
+    texture: timpani
+    in: [theme2, rise, anthem]
+    roll_into: anthem
+
+  drums:
+    sound: drums-room
+    texture: groove
+    pattern:
+      kick:  "x... .... x... ...."
+      snare: "g..g g.g. g..g g.g."
+    by_section:
+      intro:
+        pattern:
+          kick:  "x... .... .... .... | x... .... .... .... | x... .... .... .... | x... .... x... ...."
+          snare: ".... .... .... .... | .... .... .... .... | .... .... .... .... | gggggggggggggggg gggggggggggggggx"
+      theme2:
+        pattern:
+          kick:  "x... ..x. x... ...."
+          snare: "x..x x.x. x..x x.xx | x..x x.x. x..x x.xx | x..x x.x. x..x x.xx | x..x x.x. xxxx xxxx | x..x x.x. x..x x.xx | x..x x.x. x..x x.xx | x..x x.x. x..x x.xx | x... .... .... ...."
+      shadow:
+        pattern:
+          kick:    "x... .... .... ...."
+          tom-low: ".... .... g... ...."
+      rise:
+        pattern:
+          kick:  "x... ..x. x... ..x. | x... ..x. x... ..x. | x... x... x... x... | x... x... x... x..."
+          snare: "x..x x.x. x..x x.xx | x..x x.x. x..x x.xx | gggggggggggggggg gggggggggggggggg | xxxxxxxxxxxxxxxx xxxxxxxxxxxxxxxx"
+      anthem:
+        pattern:
+          kick:  "x... ..x. x... ..x."
+          snare: "X..x x.x. X..x x.xx | X..x x.x. X..x x.xx | X..x x.x. X..x x.xx | X..x x.x. xxxx xxxx"
+          hat:   "x.x. x.x. x.x. x.x."
+      homeward:
+        pattern:
+          kick:  "x... .... x... ...."
+          snare: "g... g... g... g... | g... g... g... g... | g... g... g... g... | g... g... g... g... | g... g... g... g... | g... g... g... g... | g... g... g... g... | g... g... gggg gggg"
+
+  cymbal:
+    sound: drums
+    texture: crash
+    in: [theme2, anthem]
+
+sfx:
+  - { type: reverse-cymbal, at: anthem, level: 0.45 }

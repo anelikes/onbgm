@@ -1,0 +1,209 @@
+# 明亮未来浩室 · Eb 大调 125 BPM · 46 小节约 90 秒 · 不循环 · 能量平稳（plateau）
+# 构思："糖果色"——超级锯齿唱一个能跟着喊的长音钩子："短-短-长、停、短短短"，和声用卡农式的下行低音
+# （I–V6–vi–iii–IV–I6–ii–V），旋律逆着低音往上走；主歌换合成拨弦弹十六分音符的"跳跳"短句，和声换成 vi–ii–V–I 五度圈；
+# 去掉底鼓的小桥段由合成钟慢慢唱；桥段走 iii–VI7–ii–V（E 还原音带来一点俏皮的副属和弦颜色），最后一遍钩子收在主和弦上。
+title: Candy Gloss
+meta:
+  bpm: 125
+  key: Eb major
+  seed: 32412
+  tail: 1.5
+
+sections:
+  - { name: intro,  bars: 2, energy: 0.55 }
+  - { name: hook,   bars: 8, energy: 0.72 }
+  - { name: verse,  bars: 8, energy: 0.68 }
+  - { name: hook2,  bars: 8, energy: 0.76 }
+  - { name: pause,  bars: 4, energy: 0.5 }
+  - { name: bridge, bars: 8, energy: 0.8 }
+  - { name: finale, bars: 8, energy: "0.8->0.72" }
+
+harmony:
+  intro:  "Abmaj7 | Bb7sus4 Bb"
+  hook:   "Eb | Bb/D | Cm7 | Gm7 | Abmaj7 | Eb/G | Fm7 | Bb7sus4 Bb"
+  verse:  "Cm7 | Fm7 | Bb | Eb | Cm7 | Fm7 | Ab | Bb7sus4 Bb"
+  hook2:  "Eb | Bb/D | Cm7 | Gm7 | Abmaj7 | Eb/G | Fm7 | Bb7sus4 Bb"
+  pause:  "Abmaj7 | Abmaj7 | Fm7 | Bb7sus4"
+  bridge: "Gm7 | C7 | Fm7 | Bb7 | Gm7 | C7 | Abmaj7 | Bb7sus4 Bb"
+  finale: "Eb | Bb/D | Cm7 | Gm7 | Abmaj7 | Eb/G | Fm7 Bb7 | Eb"
+
+tracks:
+  # 主奏：超级锯齿长音钩子
+  lead:
+    sound: supersaw
+    texture: melody
+    in: [hook, hook2, bridge, finale]
+    notes:
+      hook: >-
+        G5/8 Bb5/8 Eb6/4 r/8 Eb6/8 F6/8 G6/8 |
+        F6/4. D6/8 Bb5/4 r/4 |
+        G5/8 C6/8 Eb6/4 r/8 Eb6/8 F6/8 G6/8 |
+        Bb6/4. G6/8 D6/4 r/4 |
+        C6/8 Eb6/8 Ab6/4 r/8 G6/8 Ab6/8 Bb6/8 |
+        Bb6/4. G6/8 Eb6/4 r/4 |
+        Ab6/8 G6/8 F6/8 Eb6/8 C6/4 Eb6/4 |
+        Eb6/4 F6/4 D6/4 r/4
+      hook2: >-
+        G5/8 Bb5/8 Eb6/4 r/8 Eb6/8 F6/8 G6/8 |
+        F6/4. D6/8 Bb5/4 r/4 |
+        G5/8 C6/8 Eb6/4 r/8 Eb6/8 F6/8 G6/8 |
+        Bb6/4. G6/8 D6/4 r/4 |
+        C6/8 Eb6/8 Ab6/4 r/8 G6/8 Ab6/8 Bb6/8 |
+        C7/4. Bb6/8 G6/4 r/4 |
+        Ab6/8 G6/8 F6/8 Eb6/8 C6/4 F6/4 |
+        Eb6/4 F6/4 D6/4 r/4
+      bridge: >-
+        D6/8 F6/8 r/8 G6/8 r/8 Bb6/8 r/4 |
+        Bb6/4 G6/8 E6/4. r/4 |
+        C6/8 Eb6/8 r/8 F6/8 r/8 Ab6/8 r/4 |
+        Ab6/4 F6/8 D6/4. r/4 |
+        D6/8 F6/8 r/8 G6/8 r/8 Bb6/8 D7/4 |
+        C7/4 Bb6/8 G6/8 E6/4 G6/4 |
+        Ab6/4. C7/8 Eb7/4 C7/4 |
+        Bb6/2 Ab6/4 D6/4
+      finale: >-
+        G5/8 Bb5/8 Eb6/4 r/8 Eb6/8 F6/8 G6/8 |
+        F6/4. D6/8 Bb5/4 r/4 |
+        G5/8 C6/8 Eb6/4 r/8 Eb6/8 F6/8 G6/8 |
+        Bb6/4. G6/8 D6/4 r/4 |
+        C6/8 Eb6/8 Ab6/4 r/8 G6/8 Ab6/8 Bb6/8 |
+        C7/4. Bb6/8 G6/4 r/4 |
+        Ab6/8 G6/8 F6/8 Eb6/8 D6/4 F6/4 |
+        Eb6/1
+
+  # 主歌主奏：合成拨弦十六分音符短句
+  pluck_lead:
+    sound: synth-pluck
+    texture: melody
+    in: [verse]
+    notes:
+      verse: >-
+        Eb6/16 G6/16 r/8 Eb6/16 G6/16 r/8 C7/8 Bb6/8 G6/8 r/8 |
+        Ab6/16 C7/16 r/8 Ab6/16 C7/16 r/8 Eb7/8 C7/8 Ab6/8 r/8 |
+        F6/16 Bb6/16 r/8 F6/16 Bb6/16 r/8 D7/8 C7/8 Bb6/8 F6/8 |
+        G6/4 Eb6/8 G6/8 Bb6/4 r/4 |
+        Eb6/16 G6/16 r/8 Eb6/16 G6/16 r/8 C7/8 Bb6/8 G6/8 r/8 |
+        Ab6/16 C7/16 r/8 Ab6/16 C7/16 r/8 F7/8 Eb7/8 C7/8 r/8 |
+        Eb7/8 C7/8 Ab6/8 C7/8 Eb7/8 F7/8 Eb7/8 C7/8 |
+        Bb6/4 Ab6/4 D7/4 r/4
+
+  # 小桥段：合成钟慢慢唱
+  bell:
+    sound: synth-bell
+    texture: melody
+    in: [pause]
+    notes:
+      pause: >-
+        C7/4. Bb6/8 G6/2 |
+        Ab6/4 Bb6/4 C7/2 |
+        Ab6/4. G6/8 F6/2 |
+        Eb6/2 r/2
+
+  # 合成拨弦：切分短和弦
+  stab:
+    sound: synth-pluck
+    texture: comp
+    in: [intro, hook, hook2, bridge, finale]
+    range: [55, 72]
+    rhythm: "x.x. .x.. x.x. .x.x"
+    by_section:
+      intro:  {rhythm: "x.x. .x.. x.x. .x.x | x.x. .x.. x... x..."}
+      bridge: {rhythm: ".x.x .x.. .x.x .x.."}
+      finale: {rhythm: "x.x. .x.. x.x. .x.x | x.x. .x.. x.x. .x.x | x.x. .x.. x.x. .x.x | x.x. .x.. x.x. .x.x | x.x. .x.. x.x. .x.x | x.x. .x.. x.x. .x.x | x.x. .x.. x.x. .x.x | x--- ---- ---- ----"}
+
+  # 主歌：超级锯齿长一点的切分和弦
+  saw_chords:
+    sound: supersaw
+    texture: comp
+    in: [verse]
+    range: [53, 70]
+    rhythm: "x--. ..x- ..x. ...."
+
+  # 小桥段：超级锯齿长和弦
+  pad:
+    sound: supersaw
+    texture: comp
+    in: [pause]
+    range: [51, 70]
+    rhythm: "x--- ---- ---- ----"
+
+  # 桥段：拨弦下行琶音
+  arp:
+    sound: synth-pluck
+    texture: arp
+    in: [bridge]
+    mode: down
+    range: [62, 81]
+    rhythm: "xxxx xxxx xxxx xxxx"
+
+  # 弹跳贝斯
+  bass:
+    sound: synth-bass
+    texture: bassline
+    in: [hook, verse, hook2, bridge, finale]
+    low: 36
+    rhythm: "..1. .18. ..1. .181"
+    by_section:
+      verse:  {rhythm: ".1.. .1.8 .1.. .158"}
+      finale: {rhythm: "..1. .18. ..1. .181 | ..1. .18. ..1. .181 | ..1. .18. ..1. .181 | ..1. .18. ..1. .181 | ..1. .18. ..1. .181 | ..1. .18. ..1. .181 | ..1. .18. ..1. .181 | 1--- ---- ---- ----"}
+
+  drums:
+    sound: drums-synth
+    texture: groove
+    pattern:
+      kick:     "x... x... x... x..."
+      clap:     ".... x... .... x..."
+      hat:      "x.x. x.x. x.x. x.x."
+      open-hat: "..x. ..x. ..x. ..x."
+      crash:    "X... .... .... .... | .... .... .... .... | .... .... .... .... | .... .... .... .... | .... .... .... .... | .... .... .... .... | .... .... .... .... | .... .... .... ...."
+      snare:    ".... .... .... .... | .... .... .... .... | .... .... .... .... | .... .... .... .... | .... .... .... .... | .... .... .... .... | .... .... .... .... | .... .... ..x. x.xx"
+    by_section:
+      intro:
+        pattern:
+          kick:  "x... x... x... x... | x... x... x... ...."
+          hat:   "x.x. x.x. x.x. x.x."
+          snare: ".... .... .... .... | .... .... x.x. xxxx"
+      verse:
+        pattern:
+          kick:     "x... x... x... x..."
+          clap:     ".... x... .... x..."
+          rim:      "..x. ...x ..x. ...x"
+          hat:      "xgxg xgxg xgxg xgxg"
+          open-hat: "..x. ..x. ..x. ..x."
+      hook2:
+        pattern:
+          kick:       "x... x... x... x..."
+          clap:       ".... x... .... x..."
+          hat:        "x.x. x.x. x.x. x.x."
+          open-hat:   "..x. ..x. ..x. ..x."
+          tambourine: "xgxg xgxg xgxg xgxg"
+          crash:      "X... .... .... .... | .... .... .... .... | .... .... .... .... | .... .... .... .... | X... .... .... .... | .... .... .... .... | .... .... .... .... | .... .... .... ...."
+          snare:      ".... .... .... .... | .... .... .... .... | .... .... .... .... | .... .... .... .... | .... .... .... .... | .... .... .... .... | .... .... .... .... | x.x. x.x. xxxx xxxx"
+      pause:
+        pattern:
+          hat:   "..x. ..x. ..x. ..x."
+          clap:  ".... g... .... g..."
+          snare: ".... .... .... .... | .... .... .... .... | .... .... .... .... | x.x. x.x. xxxx XXXX"
+      bridge:
+        pattern:
+          kick:     "x... x... x... x..."
+          clap:     ".... x... .... x..."
+          ride:     "x.x. x.x. x.x. x.x."
+          open-hat: "..x. ..x. ..x. ..x."
+          crash:    "X... .... .... .... | .... .... .... .... | .... .... .... .... | .... .... .... .... | .... .... .... .... | .... .... .... .... | .... .... .... .... | .... .... .... ...."
+          snare:    ".... .... .... .... | .... .... .... .... | .... .... .... .... | .... .... .... .... | .... .... .... .... | .... .... .... .... | .... .... .... .... | .... .... xxxx XXXX"
+      finale:
+        pattern:
+          kick:       "x... x... x... x... | x... x... x... x... | x... x... x... x... | x... x... x... x... | x... x... x... x... | x... x... x... x... | x... x... x... x... | X... .... .... ...."
+          clap:       ".... x... .... x... | .... x... .... x... | .... x... .... x... | .... x... .... x... | .... x... .... x... | .... x... .... x... | .... x... .... x... | X... .... .... ...."
+          hat:        "x.x. x.x. x.x. x.x. | x.x. x.x. x.x. x.x. | x.x. x.x. x.x. x.x. | x.x. x.x. x.x. x.x. | x.x. x.x. x.x. x.x. | x.x. x.x. x.x. x.x. | x.x. x.x. x.x. x.x. | .... .... .... ...."
+          open-hat:   "..x. ..x. ..x. ..x. | ..x. ..x. ..x. ..x. | ..x. ..x. ..x. ..x. | ..x. ..x. ..x. ..x. | ..x. ..x. ..x. ..x. | ..x. ..x. ..x. ..x. | ..x. ..x. ..x. ..x. | .... .... .... ...."
+          tambourine: "xgxg xgxg xgxg xgxg | xgxg xgxg xgxg xgxg | xgxg xgxg xgxg xgxg | xgxg xgxg xgxg xgxg | xgxg xgxg xgxg xgxg | xgxg xgxg xgxg xgxg | xgxg xgxg xgxg xgxg | .... .... .... ...."
+          snare:      ".... .... .... .... | .... .... .... .... | .... .... .... .... | .... .... .... .... | .... .... .... .... | .... .... .... .... | .... .... x.x. xxxx | .... .... .... ...."
+          crash:      "X... .... .... .... | .... .... .... .... | .... .... .... .... | .... .... .... .... | X... .... .... .... | .... .... .... .... | .... .... .... .... | X... .... .... ...."
+
+sfx:
+  - { type: whoosh, at: verse, level: 0.4 }
+  - { type: reverse-cymbal, at: hook2, length: 4, level: 0.45 }
+  - { type: riser, at: bridge, length: 8, level: 0.5 }
+  - { type: impact, at: finale, level: 0.4, duck: 2 }

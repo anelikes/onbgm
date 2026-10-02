@@ -1,0 +1,180 @@
+# 摇下车窗吹口哨 —— 口哨主奏的欢快公路民谣，Ab 大调，107 BPM，多次起伏（wave）
+# 构思：开头的吉他和弦是带混合利底亚色彩的 I–bVII–IV–I（Ab | Gb | Db | Ab），像摇下车窗时的那股得意劲。
+# 口哨动机是"两个八分音符跳上去 + 四分音符 + 回落"的哼唱句（Eb–Ab–C–Bb–Ab–Eb），第三小节在 IV 上整句模进。
+# 副歌换成 IV–I/3–ii–V（Db | Ab/C | Bbm7 | Eb），口哨改成"四分、四分、附点四分"的大合唱式长句，钟琴高八度跟唱。
+# 能量三起三落：副歌之后各接一个收窄的间奏（只剩吉他、边击和口哨碎片），
+# 第二个间奏是半速的 iii–vi–ii–V（Cm7 | Fm7 | Bbm7 | Eb），把最后一遍副歌托到全曲最高点，
+# 结尾用混合利底亚的 bVII–I（Gb | Ab）收住。
+title: Windows Down Whistle
+meta:
+  bpm: 107
+  key: Ab major
+  seed: 827924
+  tail: 2
+
+sections:
+  - { name: intro,   bars: 4, energy: 0.35 }
+  - { name: verse,   bars: 8, energy: 0.5 }
+  - { name: chorus,  bars: 8, energy: 0.85 }
+  - { name: break,   bars: 4, energy: 0.42 }
+  - { name: verse2,  bars: 8, energy: 0.56 }
+  - { name: chorus2, bars: 8, energy: 0.88 }
+  - { name: bridge,  bars: 4, energy: "0.45->0.6" }
+  - { name: chorus3, bars: 8, energy: 0.96 }
+  - { name: ending,  bars: 2, energy: "0.7->0.45", tempo: "->92" }
+
+harmony:
+  intro:   "Ab | Gb | Db | Ab"
+  verse:   "Ab | Gb | Db | Ab | Fm7 | Db | Bbm7 | Eb"
+  chorus:  "Db | Ab/C | Bbm7 | Eb | Db | Ab/C | Bbm7 Eb | Ab"
+  break:   "Fm7 | Ebsus4 | Db | Eb"
+  verse2:  "Ab | Gb | Db | Ab | Fm7 | Db | Bbm7 | Eb"
+  chorus2: "Db | Ab/C | Bbm7 | Eb | Db | Ab/C | Bbm7 Eb | Ab"
+  bridge:  "Cm7 | Fm7 | Bbm7 | Eb"
+  chorus3: "Db | Ab/C | Bbm7 | Eb | Db | Ab/C | Bbm7 Eb | Ab"
+  ending:  "Gb | Ab"
+
+tracks:
+  strum:              # 节奏吉他：主歌是二、四拍闷音切音的弹跳扫弦，副歌扫满十六分音符
+    sound: guitar-steel
+    texture: strum
+    pattern: "D... x.U. D.U. x.U."
+    by_section:
+      chorus:  { pattern: "D.DU xUDU D.DU xUDU" }
+      chorus2: { pattern: "D.DU xUDU D.DU xUDU" }
+      chorus3: { pattern: "D.DU xUDU D.DU xUDU" }
+      break:   { pattern: "D... ..U. D... x.U." }
+      bridge:  { pattern: "D... .... D... .... | D... .... D... .... | D... .... D... .... | D... ..U. D.U. D.U." }
+      ending:  { pattern: "D.DU xUDU D.DU xUDU | D... .... .... ...." }
+
+  bass:               # 指弹贝斯：主歌是乡村味的"根—五"二拍子，副歌改成八分音符推进
+    sound: electric-bass
+    texture: bassline
+    in: [verse, chorus, break, verse2, chorus2, bridge, chorus3, ending]
+    rhythm: "1--- 5--- 1--- 5---"
+    by_section:
+      chorus:  { rhythm: "1-1- 5-1- 1-1- 5-8-" }
+      chorus2: { rhythm: "1-1- 5-1- 1-1- 5-8-" }
+      chorus3: { rhythm: "1-1- 5-1- 1-1- 5-8-" }
+      break:   { rhythm: "1--- ---- 1--- ----" }
+      bridge:  { rhythm: "1--- ---- 5--- ----" }
+      ending:  { rhythm: "1-1- 5-1- 1-1- 5-8- | 1--- ---- ---- ----" }
+
+  drums:              # 房间鼓组：主歌只有边击，副歌四拍底鼓加军鼓、铃鼓；间奏收窄；每段最后一小节过门
+    sound: drums-room
+    texture: groove
+    in: [verse, chorus, break, verse2, chorus2, bridge, chorus3, ending]
+    pattern:
+      kick: "x... .... x... ...."
+      rim:  ".... x... .... x..."
+    by_section:
+      verse:
+        pattern:
+          kick:  "x... .... x... ...."
+          rim:   ".... x... .... x... | .... x... .... x... | .... x... .... x... | .... x... .... x... | .... x... .... x... | .... x... .... x... | .... x... .... x... | .... x... .... ...."
+          snare: ".... .... .... .... | .... .... .... .... | .... .... .... .... | .... .... .... .... | .... .... .... .... | .... .... .... .... | .... .... .... .... | .... .... x.x. xxxx"
+      verse2:
+        pattern:
+          kick:   "x... .... x... ...."
+          rim:    ".... x... .... x... | .... x... .... x... | .... x... .... x... | .... x... .... x... | .... x... .... x... | .... x... .... x... | .... x... .... x... | .... x... .... ...."
+          shaker: "gxgx gxgx gxgx gxgx | gxgx gxgx gxgx gxgx | gxgx gxgx gxgx gxgx | gxgx gxgx gxgx gxgx | gxgx gxgx gxgx gxgx | gxgx gxgx gxgx gxgx | gxgx gxgx gxgx gxgx | gxgx gxgx .... ...."
+          snare:  ".... .... .... .... | .... .... .... .... | .... .... .... .... | .... .... .... .... | .... .... .... .... | .... .... .... .... | .... .... .... .... | .... .... x.x. xxxx"
+      chorus: &chorus_drums
+        pattern:
+          crash:      "X... .... .... .... | .... .... .... .... | .... .... .... .... | .... .... .... .... | .... .... .... .... | .... .... .... .... | .... .... .... .... | .... .... .... ...."
+          kick:       "x... x... x... x... | x... x... x... x... | x... x... x... x... | x... x... x... x... | x... x... x... x... | x... x... x... x... | x... x... x... x... | x... x... .... ...."
+          snare:      ".... x... .... x... | .... x... .... x... | .... x... .... x... | .... x... .... x... | .... x... .... x... | .... x... .... x... | .... x... .... x... | .... x... x... ...."
+          hat:        "x.x. x.x. x.x. x.x. | x.x. x.x. x.x. x.x. | x.x. x.x. x.x. x.x. | x.x. x.x. x.x. x.x. | x.x. x.x. x.x. x.x. | x.x. x.x. x.x. x.x. | x.x. x.x. x.x. x.x. | x.x. x.x. .... ...."
+          tambourine: ".... x... .... x... | .... x... .... x... | .... x... .... x... | .... x... .... x... | .... x... .... x... | .... x... .... x... | .... x... .... x... | .... x... .... ...."
+          tom-high:   ".... .... .... .... | .... .... .... .... | .... .... .... .... | .... .... .... .... | .... .... .... .... | .... .... .... .... | .... .... .... .... | .... .... ..xx ...."
+          tom-mid:    ".... .... .... .... | .... .... .... .... | .... .... .... .... | .... .... .... .... | .... .... .... .... | .... .... .... .... | .... .... .... .... | .... .... .... xx.."
+          tom-low:    ".... .... .... .... | .... .... .... .... | .... .... .... .... | .... .... .... .... | .... .... .... .... | .... .... .... .... | .... .... .... .... | .... .... .... ..xx"
+      chorus2: *chorus_drums
+      break:
+        pattern:
+          kick:  "x... .... .... .... | x... .... .... .... | x... .... .... .... | x... .... x... ...."
+          rim:   ".... x... .... x... | .... x... .... x... | .... x... .... x... | .... x... .... ...."
+          snare: ".... .... .... .... | .... .... .... .... | .... .... .... .... | .... .... g.g. xxxx"
+      bridge:
+        pattern:
+          kick:     "x... .... .... .... | x... .... .... .... | x... .... .... .... | x... .... x... ...."
+          snare:    ".... .... x... .... | .... .... x... .... | .... .... x... .... | .... .... xx.x xxxx"
+          ride:     "x.x. x.x. x.x. x.x. | x.x. x.x. x.x. x.x. | x.x. x.x. x.x. x.x. | x.x. x.x. .... ...."
+          tom-low:  ".... .... .... .... | .... .... .... .... | .... .... .... .... | .... .... ..x. x.xX"
+      chorus3:
+        pattern:
+          crash:      "X... .... .... .... | .... .... .... .... | .... .... .... .... | .... .... .... .... | x... .... .... .... | .... .... .... .... | .... .... .... .... | .... .... .... ...."
+          kick:       "x... x... x... x... | x... x... x... x... | x... x... x... x... | x... x... x... x... | x... x... x... x... | x... x... x... x... | x... x... x... x... | x... x... x.x. x.x."
+          snare:      ".... x... .... x... | .... x... .... x... | .... x... .... x... | .... x... .... x... | .... x... .... x... | .... x... .... x... | .... x... .... x... | .... x... x.x. xxxx"
+          hat:        "x... x... x... x... | x... x... x... x... | x... x... x... x... | x... x... x... x... | x... x... x... x... | x... x... x... x... | x... x... x... x... | x... x... .... ...."
+          open-hat:   "..x. ..x. ..x. ..x. | ..x. ..x. ..x. ..x. | ..x. ..x. ..x. ..x. | ..x. ..x. ..x. ..x. | ..x. ..x. ..x. ..x. | ..x. ..x. ..x. ..x. | ..x. ..x. ..x. ..x. | ..x. ..x. .... ...."
+          tambourine: "xxxx xxxx xxxx xxxx | xxxx xxxx xxxx xxxx | xxxx xxxx xxxx xxxx | xxxx xxxx xxxx xxxx | xxxx xxxx xxxx xxxx | xxxx xxxx xxxx xxxx | xxxx xxxx xxxx xxxx | xxxx xxxx .... ...."
+      ending:
+        pattern:
+          kick:  "x... x... x... x... | X... .... .... ...."
+          snare: ".... x... .... x... | .... .... .... ...."
+          crash: ".... .... .... .... | X... .... .... ...."
+
+  whistle:            # 主奏：口哨
+    sound: whistle
+    texture: melody
+    notes:
+      verse: >-
+        Eb5/8 Ab5/8 C6/4 Bb5/8 Ab5/8 Eb5/4 | Db5/8 Eb5/8 Gb5/4. Eb5/8 Db5/4 |
+        F5/8 Ab5/8 Db6/4 C6/8 Ab5/8 F5/4 | Eb5/2 r/4 Eb5/8 F5/8 |
+        Ab5/4. G5/8 Ab5/8 C6/8 Eb6/4 | Db6/4. C6/8 Ab5/2 |
+        Bb5/8 Ab5/8 F5/8 Db5/8 F5/4 Ab5/4 | G5/2. r/4
+      chorus: &chorus_tune >-
+        F5/4 Ab5/4 Db6/4. C6/8 | C6/4 Ab5/4 Eb5/2 |
+        Db6/4 Bb5/4 F5/4. Ab5/8 | G5/4 Bb5/4 Eb6/2 |
+        F5/4 Ab5/4 Db6/4. Eb6/8 | Eb6/4 C6/4 Ab5/2 |
+        Db6/4 Bb5/4 G5/4 Bb5/4 | Ab5/2. r/4
+      break: >-
+        r/2 Eb5/8 Ab5/8 C6/4 | Bb5/2 r/2 |
+        r/2 F5/8 Ab5/8 Db6/4 | C6/4 Bb5/4 G5/4 Eb5/4
+      verse2: >-
+        Eb5/8 Ab5/8 C6/4 Bb5/8 Ab5/8 Eb5/4 | Db5/8 Eb5/8 Gb5/4. Eb5/8 Db5/4 |
+        F5/8 Ab5/8 Db6/4 C6/8 Ab5/8 F5/4 | Eb5/2 r/4 Eb5/8 F5/8 |
+        Ab5/4. G5/8 Ab5/8 C6/8 F6/4 | F6/4. Eb6/8 Db6/2 |
+        Bb5/8 Db6/8 F6/8 Db6/8 Bb5/4 Ab5/4 | G5/2. r/4
+      chorus2: *chorus_tune
+      bridge: >-
+        G5/2 Eb5/2 | Ab5/2 C6/2 | Db6/2 F5/2 | G5/2 Bb5/4 C6/4
+      chorus3: >-
+        F5/4 Ab5/4 Db6/4. C6/8 | C6/4 Ab5/4 Eb5/2 |
+        Db6/4 Bb5/4 F5/4. Ab5/8 | G5/4 Bb5/4 Eb6/2 |
+        F5/4 Ab5/4 Db6/4. Eb6/8 | Eb6/4 C6/4 Ab5/2 |
+        Db6/4 F6/4 Eb6/4 G6/4 | Ab6/2. r/4
+      ending: >-
+        Bb5/4 Db6/4 Bb5/4 Gb5/4 | Ab5/1
+
+  glock:              # 钟琴：副歌在高八度跟着口哨唱
+    sound: glockenspiel
+    texture: melody
+    gain: -7
+    notes:
+      chorus2: &glock_tune >-
+        F6/4 Ab6/4 Db7/4. C7/8 | C7/4 Ab6/4 Eb6/2 |
+        Db7/4 Bb6/4 F6/4. Ab6/8 | G6/4 Bb6/4 Eb7/2 |
+        F6/4 Ab6/4 Db7/4. Eb7/8 | Eb7/4 C7/4 Ab6/2 |
+        Db7/4 Bb6/4 G6/4 Bb6/4 | Ab6/2. r/4
+      chorus3: >-
+        F6/4 Ab6/4 Db7/4. C7/8 | C7/4 Ab6/4 Eb6/2 |
+        Db7/4 Bb6/4 F6/4. Ab6/8 | G6/4 Bb6/4 Eb7/2 |
+        F6/4 Ab6/4 Db7/4. Eb7/8 | Eb7/4 C7/4 Ab6/2 |
+        Db7/4 F7/4 Eb7/4 G7/4 | Ab7/2. r/4
+      ending: >-
+        Bb6/4 Db7/4 Bb6/4 Gb6/4 | Ab6/1
+
+  piano:              # 钢琴：副歌的八分音符和弦，重音落在反拍上
+    sound: piano
+    texture: comp
+    in: [chorus, chorus2, bridge, chorus3, ending]
+    range: [55, 71]
+    rhythm: "x.X. x.X. x.X. x.X."
+    by_section:
+      bridge: { rhythm: "x--- ---- x--- ----" }
+      ending: { rhythm: "x.X. x.X. x.X. x.X. | x--- ---- ---- ----" }
+
+sfx:
+  - { type: reverse-cymbal, at: chorus3, length: 4, level: 0.45 }

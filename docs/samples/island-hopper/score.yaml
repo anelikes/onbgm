@@ -1,0 +1,141 @@
+# 跳岛快船 —— Eb 大调，106 BPM，26 小节无缝循环，wave（两轮起伏）
+# 风格：卡利普索（calypso）。底鼓踩 1、2 拍后半、3、4 拍后半，沙锤十六分音符铺满，吉他"咚—嚓"切音扫弦，
+#   贝斯走 3+3+2 的切分；口哨只在乐句结尾答一句。
+# 核心动机（马林巴）：G–Bb 在第一拍后十六分音符上抢拍、再跳上 Eb 的长音，像小船一下下跃过浪头；
+#   每两小节按和弦往上或往下模进，b 段整句提高八度、换成副属和弦（G7、Eb7、C7）让画面更亮。
+# 和声：a 段 I–IV–V7–I 的卡利普索终止，第二句从 vi 进入；dip 段 IV–I6–ii–V；
+#   b 段 I–III7–vi–I7–IV–V7–I VI7–ii V7，一连串副属和弦把明亮推到顶点。
+# 能量：intro 0.45 → a 0.75 → dip 0.4（只剩吉他、贝斯和鼓边）→ b 0.92（弦乐、颤音琴、吊镲）→ down 0.45 接回开头。
+title: Island Hopper
+meta:
+  bpm: 106
+  key: Eb major
+  loop: true
+  seed: 661094
+
+sections:
+  - { name: intro, bars: 2, energy: 0.45 }
+  - { name: a,     bars: 8, energy: 0.75 }
+  - { name: dip,   bars: 4, energy: 0.4 }
+  - { name: b,     bars: 8, energy: 0.92 }
+  - { name: down,  bars: 4, energy: 0.45 }
+
+harmony:
+  intro: "Eb | Bb7"
+  a:     "Eb | Ab | Bb7 | Eb | Cm | Ab | Bb7 | Eb"
+  dip:   "Ab | Eb/G | Fm7 | Bb7"
+  b:     "Eb | G7 | Cm | Eb7 | Ab | Bb7 | Eb C7 | Fm7 Bb7"
+  down:  "Eb | Ab | Eb | Bb7"
+
+tracks:
+  # 主奏：马林巴，抢拍的切分旋律
+  marimba:
+    sound: marimba
+    texture: melody
+    notes:
+      a: >
+        G5/8. Bb5/16~ Bb5/8 G5/8 Eb6/4 C6/8 Bb5/8 | C6/8. Ab5/16~ Ab5/4 r/8 C6/8 Eb6/8 C6/8 |
+        D6/8. Bb5/16~ Bb5/8 F5/8 Ab5/4 G5/8 F5/8 | Eb5/4 r/2. |
+        G5/8. C6/16~ C6/8 G5/8 Eb6/4 D6/8 C6/8 | Eb6/8. C6/16~ C6/4 r/8 Ab5/8 C6/8 Eb6/8 |
+        F6/8. D6/16~ D6/8 Bb5/8 Ab5/8 G5/8 F5/8 D5/8 | Eb5/4 r/2.
+      dip: >
+        C6/8. Ab5/16~ Ab5/4 r/2 | Bb5/8. G5/16~ G5/4 r/2 |
+        Ab5/8. F5/16~ F5/4 r/4 C5/8 Eb5/8 | D5/2 r/2
+      b: >
+        Bb5/8. Eb6/16~ Eb6/8 Bb5/8 G6/4 F6/8 Eb6/8 | D6/8. B5/16~ B5/8 G5/8 F6/4 D6/8 B5/8 |
+        C6/8. Eb6/16~ Eb6/8 G6/8 C6/4 r/4 | Db6/8. Bb5/16~ Bb5/8 G5/8 Eb6/8 Db6/8 Bb5/8 G5/8 |
+        C6/8. Eb6/16~ Eb6/8 C6/8 Ab6/4 G6/8 F6/8 | F6/8. D6/16~ D6/8 Bb5/8 Ab5/4 F5/8 D5/8 |
+        Eb6/8. Bb5/16~ Bb5/8 G5/8 E6/8. C6/16~ C6/8 Bb5/8 | Ab5/4 F5/4 D5/4 r/4
+      down: >
+        G5/8. Bb5/16~ Bb5/8 G5/8 Eb5/2 | C5/8. Ab4/16~ Ab4/4 r/2 |
+        G4/8. Bb4/16~ Bb4/8 G4/8 Eb5/4 r/4 | r/1
+
+  # 口哨：只在乐句结尾答一句
+  whistle:
+    sound: whistle
+    texture: melody
+    gain: -4
+    notes:
+      a: >
+        r/1 | r/1 | r/1 | r/4 G5/8 Bb5/8 C6/8 Bb5/8 G5/4 |
+        r/1 | r/1 | r/1 | r/4 Bb5/8 G5/8 Eb6/4. r/8
+      dip: "r/1 | r/1 | r/1 | r/2 F5/8 G5/8 Ab5/8 Bb5/8"
+      b: "r/1 | r/1 | r/1 | r/1 | r/1 | r/1 | r/1 | r/2. F6/8 D6/8"
+      down: "r/1 | r/1 | r/1 | r/4 F5/8 G5/8 Ab5/8 F5/8 D5/4"
+
+  # 钢弦吉他：二、四拍闷音切音，b 段扫满
+  guitar:
+    sound: guitar-steel
+    texture: strum
+    pattern: "D... x.U. ..U. x.U."
+    by_section:
+      intro: { pattern: "D... x.U. D... x.U." }
+      dip:   { pattern: "D... ..U. .... ..U." }
+      b:     { pattern: "D... D.U. ..U. D.U." }
+      down:  { pattern: "D... ..U. D... ..U." }
+
+  # 颤音琴：b 段补明亮的和声
+  vibes:
+    sound: vibraphone
+    texture: comp
+    range: [58, 74]
+    rhythm: "x--- --x- ---- x---"
+    in: [b]
+
+  strings:
+    sound: strings
+    texture: pad
+    range: [55, 74]
+    in: [b]
+
+  # 3+3+2 切分低音
+  bass:
+    sound: electric-bass
+    texture: bassline
+    low: 31
+    rhythm: "1-.5 -.8. 1-.3 -.5."
+    by_section:
+      dip:  { rhythm: "1--- --5. 1--- ...." }
+      b:    { rhythm: "1-.5 -.8. 1-.5 -38." }
+      down: { rhythm: "1--- --5. 1--- --5." }
+
+  drums:
+    sound: drums
+    texture: groove
+    pattern:
+      kick:       "x... ..x. x... ..x."
+      rim:        ".... x... .... x..."
+      shaker:     "gxgx gxgx gxgx gxgx"
+      tambourine: "..x. ..x. ..x. ..x."
+    by_section:
+      intro:
+        pattern:
+          kick:   "x... ..x. x... ..x."
+          rim:    ".... x... .... x..."
+          shaker: "gxgx gxgx gxgx gxgx"
+      dip:
+        pattern:
+          kick:   "x... .... x... ...."
+          rim:    ".... x... .... x..."
+          shaker: "g.g. g.g. g.g. g.g."
+      b:
+        pattern:
+          kick:       "x... ..x. x... ..x."
+          clap:       ".... x... .... x..."
+          rim:        "..x. ..x. ..x. ..x."
+          shaker:     "gxgx gxgx gxgx gxgx"
+          tambourine: "..x. ..x. ..x. ..x."
+          open-hat:   ".... .... .... .... | .... .... .... .... | .... .... .... .... | .... .... .... ..x."
+      down:
+        pattern:
+          kick:   "x... .... x... ...."
+          rim:    ".... x... .... x..."
+          shaker: "gxgx gxgx gxgx gxgx"
+
+  cymbal:
+    sound: drums
+    texture: crash
+    in: [a, b]
+
+sfx:
+  - { type: riser, at: b, length: 4, level: 0.5 }
