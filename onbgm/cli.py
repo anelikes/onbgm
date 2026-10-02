@@ -320,8 +320,18 @@ def cmd_fetch(args) -> None:
     fetch_all(SOUNDS_DIR)
 
 
+def _version() -> str:
+    from importlib.metadata import PackageNotFoundError, version
+
+    try:
+        return version("onbgm")
+    except PackageNotFoundError:  # 直接从源码目录运行、没有安装
+        return "unknown"
+
+
 def main() -> None:
     ap = argparse.ArgumentParser(prog="onbgm", description="给 agent 用的纯器乐 BGM 引擎：文本乐谱 → 音频")
+    ap.add_argument("--version", action="version", version=f"onbgm {_version()}")
     sub = ap.add_subparsers(dest="cmd", required=True)
 
     def add(name, fn, help_):

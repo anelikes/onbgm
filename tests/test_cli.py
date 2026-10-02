@@ -163,3 +163,10 @@ def test_review_explains_directories_without_player_data(tmp_path):
     run = subprocess.run([sys.executable, "-m", "onbgm.cli", "review", str(tmp_path), "--json"], capture_output=True, text=True)
     assert run.returncode == 2
     assert json.loads(run.stdout)["problems"][0]["code"] == "no_player_data"
+
+
+def test_version():
+    from importlib.metadata import version
+
+    proc = subprocess.run([sys.executable, "-m", "onbgm", "--version"], capture_output=True, text=True)
+    assert proc.returncode == 0 and proc.stdout.strip() == f"onbgm {version('onbgm')}"
