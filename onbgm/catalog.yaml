@@ -288,6 +288,38 @@
       open-hat: "..x. ..x. ..x. ..x."
       hat:      "xgxg xgxg xgxg xgxg"
 
+- name: chip-arp
+  kind: arp
+  tags: [8-bit, 8bit, chiptune, 芯片, 像素, 复古游戏, retro, 红白机, 琶音, 游戏]
+  description: 8-bit 芯片风的快速琶音：12.5% 脉冲波十六分音符往上跑，代替整和弦（红白机同时只能发几个音）
+  snippet: |
+    sound: chip-pulse
+    texture: arp
+    mode: up
+    range: [60, 79]
+    rhythm: "xxxx xxxx xxxx xxxx"
+
+- name: chip-octave-bass
+  kind: bassline
+  tags: [8-bit, 8bit, chiptune, 芯片, 像素, 复古游戏, retro, 红白机, 低音, 游戏]
+  description: 8-bit 芯片风的低音：三角波八分音符根音和高八度来回跳
+  snippet: |
+    sound: chip-bass
+    texture: bassline
+    rhythm: "1.8. 1.8. 1.8. 5.8."
+
+- name: chip-groove
+  kind: drums
+  tags: [8-bit, 8bit, chiptune, 芯片, 像素, 复古游戏, retro, 红白机, 游戏, 鼓]
+  description: 8-bit 芯片鼓组的基本律动：底鼓一、三拍带一个弱拍补位，军鼓二、四拍，八分音符踩镲
+  snippet: |
+    sound: drums-chip
+    texture: groove
+    pattern:
+      kick:  "x... .... x.x. ...."
+      snare: ".... x... .... x..."
+      hat:   "x.x. x.x. x.x. x.x."
+
 - name: trap-808
   kind: bassline
   tags: [trap, 808, hip-hop, 嘻哈, 低音, 电子, 重低音]

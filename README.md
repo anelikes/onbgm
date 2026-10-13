@@ -150,7 +150,7 @@ Comments are saved to `review.json`. Each one includes the time, bar, beat, sect
 | [AliExpress Erhu](https://github.com/sfzinstruments/aliexpress-erhu), sfzinstruments | CC0 | Erhu |
 | [Emilyguitar](https://github.com/sfzinstruments/karoryfer.emilyguitar), Karoryfer Samples | CC0 | Electric guitar (clean and distorted) |
 | [FreePats Ukulele](https://github.com/freepats/ukulele1), [Button Accordion HN](https://github.com/freepats/button-accordion-HN) | CC0 | Ukulele, accordion |
-| Built-in synth (`onbgm/synth.py`) | — | Synth plucks, pads, supersaw, leads, basses, 808, FM bell and e-piano, synth drums; no download needed |
+| Built-in synth (`onbgm/synth.py`) | — | Synth plucks, pads, supersaw, leads, basses, 808, FM bell and e-piano, synth drums, and 8-bit chip sounds (NES-style pulse, triangle and noise drums); no download needed |
 
 Samples are played by the built-in sampler (`onbgm/sampler.py`), which reads SFZ directly and uses soxr for high-quality pitch shifting. On top of what the libraries define, it calibrates a few things:
 - **Onsets.** It compensates sample pre-roll so attacks land on the beat.

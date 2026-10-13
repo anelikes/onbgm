@@ -67,6 +67,7 @@ BGM 的任务是托住画面，而不是抢戏。好的 BGM 段落清楚、起�
 | 片头 / 不循环 | `vlog_intro` | `bpm: auto` + `length` + `at`；收尾段落用长音和吊镲收住 |
 | 紧张 / 追逐 | 无完整示例 | 140–170 BPM，小调；弦乐用 `strings` 的 `line` 写十六分音符音型，加 `articulation: staccato`（会用跳弓采样）；大提琴的快速节奏型同样标断奏；定音鼓另开 `line` 写 3+3+2 之类的切分；升级前用 `roll_into` 和 `crash` |
 | 科技 / 现代 / 产品宣传 | `product_video` | 110–125 BPM，大调；`drums-synth` 四拍底鼓加十六分音符踩镲；`synth-bass` 或 `sub-bass`；`synth-pluck` 的 `arp` 琶音（`mode: updown`）；`synth-pad` 铺底；高潮用 `supersaw` 重击、`bass-808` 下滑。`onbgm catalog -q "科技 琶音"` 有现成片段 |
+| 8-bit 芯片 / 像素游戏 | 无完整示例 | 120–170 BPM，常用循环；只用芯片音色和 `drums-chip`，模仿红白机"同时只有几个声道"：`chip-lead` 唱旋律，`chip-pulse` 写十六分音符的快速琶音代替整和弦，`chip-bass` 写八度跳动的低音，`chip-square` 写副旋律或和声；声部少、几乎不加混响。`onbgm catalog -q 8-bit` 有现成片段 |
 | 华尔兹 / 圆舞曲 | 无完整示例 | `meta.meter: "3/4"`，120–180 BPM；"嘭—嚓—嚓"：低音每小节第一拍一个根音（隔小节换五音），`comp` 写 `". x x"` 在第二、三拍弹短和弦，`drums-brush` 底鼓在第一拍、刷子在二三拍；旋律多用附点二分音符和三个四分音符。`onbgm catalog -q 华尔兹` 有现成片段 |
 | 6/8 摇曳 / 凯尔特 / 摇篮曲 | 无完整示例 | `meta.meter: "6/8"`，bpm 按四分音符计（附点四分 = 60 写 90）；两个大拍的律动：底鼓第一个大拍、军鼓第二个大拍，踩镲或吉他打满六个八分音符（`"D.uDuu"`）；旋律多用"四分 + 八分"的长短节奏 |
 | 安静的钢琴独奏 | 无完整示例 | 60–75 BPM；`arpeggio` 铺底，`piano` 写 `melody`；最后一两小节拆出一个 `comp` 声部弹柱式和弦，让节奏自然放慢 |

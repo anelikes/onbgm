@@ -258,7 +258,16 @@ sfx:
 | `synth-bell` | FM 钟声，适合高音区的旋律或点缀 |
 | `fm-epiano` | FM 电钢琴（DX7 风格） |
 
-鼓组：`drums`（标准）、`drums-room`、`drums-jazz`、`drums-brush`（刷子）、`drums-808`、`drums-electronic`、`drums-synth`（合成鼓组，电子风格首选）。
+8-bit 芯片音色（同样由引擎直接合成）：模仿红白机的声道，声音干、窄，不加失谐和滤波，音量按帧一格一格地变：
+
+| 音色 | 用途 |
+|---|---|
+| `chip-lead` | 主旋律：25% 脉冲波，长音带延迟颤音 |
+| `chip-square` | 第二声道：50% 方波，声音空、圆，写和声、副旋律或和弦伴奏 |
+| `chip-pulse` | 12.5% 脉冲波，最细最亮、衰减快，适合快速琶音、回声和高音点缀 |
+| `chip-bass` | 红白机的阶梯三角波低音，不衰减，按住多长响多长 |
+
+鼓组：`drums`（标准）、`drums-room`、`drums-jazz`、`drums-brush`（刷子）、`drums-808`、`drums-electronic`、`drums-synth`（合成鼓组，电子风格首选）、`drums-chip`（8-bit 芯片鼓组：底鼓和嗵鼓是三角波往下滑，军鼓和镲是噪声）。
 - `drums` 和 `drums-room` 用高质量采样的标准鼓组，`drums-jazz` 用高质量采样的爵士鼓组（底鼓小、声音更松），`drums-brush` 用高质量采样的刷子鼓组。
 - 这两套标准、爵士鼓组没有 conga：用到 `conga-high` / `conga-low` 的轨道会整套退回 GM 鼓组。
 - 刷子鼓组只有底鼓、军鼓、`rim`（刷子扫鼓边）、三种踩镲、`crash`、`ride` 和三个嗵鼓；用到其他鼓（`clap`、`ride-bell`、`tambourine`、`shaker` 等）的轨道整套退回 GM。

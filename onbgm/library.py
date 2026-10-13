@@ -67,6 +67,12 @@ MIX = {
     "synth-bell": Mix(0.1, 0.8, [HighpassFilter(200)], delay_beats=0.75, delay_feedback=0.3, delay_mix=0.2),
     "fm-epiano": Mix(0.0, 0.7, [HighpassFilter(60)]),
     "drums-synth": Mix(0.0, 1.0, [HighpassFilter(25)]),
+    # 芯片音色：红白机输出端有高通和 14 kHz 左右的低通；两个伴奏声道稍微左右分开，免得和主旋律挤在一起
+    "chip-lead": Mix(0.0, 0.0, [HighpassFilter(90), LowpassFilter(14000)]),
+    "chip-square": Mix(-0.15, 0.0, [HighpassFilter(90), LowpassFilter(14000)]),
+    "chip-pulse": Mix(0.15, 0.0, [HighpassFilter(90), LowpassFilter(14000)]),
+    "chip-bass": Mix(0.0, 0.0, [HighpassFilter(30), LowpassFilter(14000)]),
+    "drums-chip": Mix(0.0, 0.0, [HighpassFilter(30), LowpassFilter(14000)]),
 }
 
 
@@ -238,8 +244,8 @@ def resolve(sound: str, soundset: str, pitches: set[int] = frozenset(), root: Pa
 
     if sound in synth.PRESETS:
         return synth.PRESETS[sound]
-    if sound == synth.KIT.name:
-        return synth.KIT
+    if sound in synth.KITS:
+        return synth.KITS[sound]
     if soundset == "hq" and sound in HQ:
         spec = HQ[sound]
         if isinstance(spec, SF2):

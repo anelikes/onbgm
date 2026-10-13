@@ -18,6 +18,7 @@ KINDS = ["drums", "strum", "bassline", "comp", "arp", "progression", "sfx", "tex
 def items() -> list[dict]:
     from .arrange import DRUM_KEYS, SOUNDS, TEXTURES
     from .library import HQ
+    from .synth import PRESETS
     from .schema import COMMON_TRACK_FIELDS, TEXTURE_FIELDS
     from .theory import QUALITIES, pitch_name
 
@@ -32,7 +33,7 @@ def items() -> list[dict]:
         if s.drum:
             out.append({"name": name, "kind": "sound", "tags": ["鼓组", "drums", "kit"], "description": "鼓组音色"})
             continue
-        quality = "高质量采样" if name in HQ else "GM"
+        quality = "内置合成器" if name in PRESETS else "高质量采样" if name in HQ else "GM"
         out.append({"name": name, "kind": "sound", "tags": ["音色", "sound"],
                     "description": f"音域 {pitch_name(s.lo)}–{pitch_name(s.hi)}，{'持续音' if s.sustained else '衰减音'}，{quality}"})
     for name in DRUM_KEYS:
