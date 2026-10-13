@@ -65,6 +65,11 @@ SOUNDS: dict[str, Sound] = {
     "bass-808": Sound(38, 21, 60, 0.0),
     "synth-bell": Sound(98, 48, 108, 0.35),
     "fm-epiano": Sound(5, 28, 103, 0.2),
+    # 8-bit 芯片音色：模仿红白机的脉冲波和三角波声道，声音干，几乎不加混响。音域按红白机能发的音
+    "chip-lead": Sound(80, 33, 108, 0.06, sustained=True),
+    "chip-square": Sound(80, 33, 108, 0.06),
+    "chip-pulse": Sound(80, 33, 108, 0.06),
+    "chip-bass": Sound(38, 21, 96, 0.0, sustained=True),
     # 鼓组：program 是 GM/GS 鼓组号
     "drums": Sound(0, 27, 87, 0.25, drum=True),
     "drums-room": Sound(8, 27, 87, 0.2, drum=True),
@@ -73,6 +78,7 @@ SOUNDS: dict[str, Sound] = {
     "drums-jazz": Sound(32, 27, 87, 0.2, drum=True),
     "drums-brush": Sound(40, 27, 87, 0.2, drum=True),
     "drums-synth": Sound(25, 27, 87, 0.15, drum=True),  # 合成鼓组
+    "drums-chip": Sound(25, 27, 87, 0.05, drum=True),  # 8-bit 芯片鼓组（噪声和三角波声道）
 }
 
 DRUM_KEYS = {

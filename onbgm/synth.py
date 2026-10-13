@@ -5,6 +5,8 @@
 - 包络：音量 ADSR、滤波器包络、音高包络（808 的下滑）、颤音。
 - 滤波：Moog 风格的四阶低通（pedalboard 的 LadderFilter），截止频率按 5.8ms 一块随包络变化。
 - 合成鼓组：底鼓、军鼓、拍手、踩镲等都由正弦扫频和滤波噪声合成，模板缓存后复用。
+- 8-bit 芯片音色：模仿红白机的声道。不同占空比的脉冲波、4 位阶梯三角波、移位寄存器噪声鼓，
+  音量按帧（1/60 秒）分 15 级变化。
 
 所有随机量（初始相位、噪声）都由音符位置决定，同一份乐谱永远渲染出同样的结果。
 """
@@ -15,6 +17,7 @@ from dataclasses import dataclass, field
 from functools import lru_cache
 
 import numpy as np
+import soxr
 from pedalboard import HighpassFilter, LadderFilter, LowpassFilter, Pedalboard
 
 from .arrange import Part
@@ -42,15 +45,38 @@ def _polyblep(t: np.ndarray, dt: np.ndarray) -> np.ndarray:
     return out
 
 
-def oscillator(wave: str, freq: np.ndarray, phase0: float, t: np.ndarray, fm: tuple | None = None) -> np.ndarray:
+# 红白机三角波声道：32 步、16 级的阶梯波，比平滑三角波多一层"嗡嗡"的颗粒感
+TABLES = {"nes-triangle": tuple(range(15, -1, -1)) + tuple(range(16))}
+
+
+@lru_cache(maxsize=None)
+def _table(name: str, harmonics: int) -> np.ndarray:
+    """一个周期的波表，只保留前 harmonics 个谐波：高音时去掉超过奈奎斯特频率的谐波，避免混叠。"""
+    steps = np.asarray(TABLES[name], float)
+    wave = np.repeat(steps / steps.max() * 2 - 1, 4096 // len(steps))
+    spec = np.fft.rfft(wave - wave.mean())
+    spec[harmonics + 1:] = 0
+    return np.fft.irfft(spec, len(wave))
+
+
+def oscillator(wave: str, freq: np.ndarray, phase0: float, t: np.ndarray, fm: tuple | None = None,
+               duty: float = 0.5) -> np.ndarray:
     dt = freq / SR
     phase = (phase0 + np.cumsum(dt)) % 1.0
     if wave == "sine":
         return np.sin(2 * np.pi * phase)
     if wave == "saw":
         return 2 * phase - 1 - _polyblep(phase, dt)
-    if wave == "square":
-        return np.where(phase < 0.5, 1.0, -1.0) + _polyblep(phase, dt) - _polyblep((phase + 0.5) % 1.0, dt)
+    if wave == "square":  # duty 是高电平占一个周期的比例；不是 0.5 时就是脉冲波，减掉直流分量
+        return (np.where(phase < duty, 1.0, -1.0) + _polyblep(phase, dt) - _polyblep((phase + 1 - duty) % 1.0, dt)
+                - (2 * duty - 1))
+    if wave in TABLES:
+        harmonics = 2 ** int(np.log2(max(1.0, 20000 / float(freq.max()))))
+        table = _table(wave, min(harmonics, 2047))
+        x = phase * len(table)
+        i = x.astype(int) % len(table)
+        frac = x - np.floor(x)
+        return table[i] * (1 - frac) + table[(i + 1) % len(table)] * frac
     if wave == "triangle":
         return 2 * np.abs(2 * phase - 1) - 1
     if wave == "fm":
@@ -70,6 +96,7 @@ class Osc:
     level: float = 1.0
     semitones: float = 0.0
     fm: tuple = ()
+    duty: float = 0.5  # 方波的占空比：0.125 / 0.25 是红白机脉冲波的细、亮音色
 
 
 @dataclass(frozen=True)
@@ -95,6 +122,7 @@ class Preset:
     vibrato: tuple[float, float, float] = (0.0, 0.0, 0.0)  # (频率 Hz, 深度音分, 延迟秒)
     drive: float = 0.0  # 饱和：0 为不失真
     gain: float = 1.0
+    steps: int = 0  # >0 时音量包络每帧（1/60 秒）更新一次、量化成这么多级，模仿芯片的 4 位音量
 
 
 def _envelope(n: int, hold: float, p: Preset) -> np.ndarray:
@@ -105,6 +133,9 @@ def _envelope(n: int, hold: float, p: Preset) -> np.ndarray:
     at_release = float(np.interp(hold, t, env)) if hold < t[-1] else float(env[-1])
     release = at_release * np.exp(-np.maximum(t - hold, 0) * 6.9 / max(p.release, 1e-3))
     env = np.where(t < hold, env, release)
+    if p.steps:  # 起音保持平滑，避免咔哒；之后按帧取值、量化
+        frame = np.maximum(np.floor(t * 60) / 60, a)
+        env = np.where(t < a, env, np.round(np.interp(frame, t, env) * p.steps) / p.steps)
     tail = min(n, int(0.005 * SR))
     env[-tail:] *= np.linspace(1, 0, tail)  # 最后 5ms 归零，避免咔哒
     return env
@@ -131,7 +162,7 @@ def render_note(p: Preset, pitch: int, vel: int, hold: float, seed) -> np.ndarra
         sig = np.zeros(n)
         for o in p.oscs:
             freq = base * 2 ** ((o.semitones + cents / 100) / 12) * bend
-            sig += o.level * oscillator(o.wave, freq, rng.random(), t, o.fm or None)
+            sig += o.level * oscillator(o.wave, freq, rng.random(), t, o.fm or None, o.duty)
         theta = (pan + 1) * np.pi / 4
         left += sig * np.cos(theta)
         right += sig * np.sin(theta)
@@ -192,6 +223,17 @@ PRESETS: dict[str, Preset] = {p.name: p for p in [
     # FM 电钢琴（DX7 风格）：温暖的基音加起音瞬间的"叮"
     Preset("fm-epiano", (Osc("fm", fm=((1.0, 1.8, 0.4, 1.2), (14.0, 0.8, 0.0, 0.08))),), attack=0.002,
            decay=2.5, sustain=0.0, release=0.4, gain=0.9),
+    # 8-bit 芯片音色：单个振荡器，不失谐、不滤波，音量按帧分级变化，收音很快
+    # 主旋律：25% 脉冲波，起音后略降到 70%，长音带延迟颤音
+    Preset("chip-lead", (Osc("square", duty=0.25),), attack=0.002, decay=0.3, sustain=0.7, release=0.04,
+           vibrato=(6.0, 22, 0.3), steps=15),
+    # 伴奏、和声、副旋律：50% 方波，声音空、圆
+    Preset("chip-square", (Osc("square"),), attack=0.002, decay=0.35, sustain=0.55, release=0.03, steps=15),
+    # 快速琶音和回声：12.5% 脉冲波，最细最亮，衰减得快
+    Preset("chip-pulse", (Osc("square", duty=0.125),), attack=0.002, decay=0.2, sustain=0.4, release=0.03,
+           steps=15),
+    # 低音：红白机的阶梯三角波。这个声道没有音量控制，所以不衰减
+    Preset("chip-bass", (Osc("nes-triangle"),), attack=0.003, decay=1.0, sustain=1.0, release=0.02),
 ]}
 
 
@@ -212,10 +254,7 @@ def _metal(t: np.ndarray, rng) -> np.ndarray:
     return sum(np.sign(np.sin(2 * np.pi * f * t + rng.random() * 6.28)) for f in (205.3, 304.4, 369.6, 522.7, 540.0, 800.0)) / 6
 
 
-@lru_cache(maxsize=None)
-def drum_hit(kind: str, variant: int) -> np.ndarray:
-    """一下鼓的模板（单声道），按种类和轮替编号缓存。"""
-    rng = _rng("drum", kind, variant)
+def _synth_hit(kind: str, rng) -> np.ndarray:
     dur = {"kick": 0.6, "snare": 0.35, "clap": 0.45, "hat": 0.12, "pedal-hat": 0.1, "open-hat": 0.6, "rim": 0.08,
            "tom": 0.5, "crash": 2.5, "ride": 1.6, "shaker": 0.12, "tambourine": 0.25, "cowbell": 0.35, "conga": 0.4}[kind]
     t = np.arange(int(dur * SR)) / SR
@@ -251,6 +290,103 @@ def drum_hit(kind: str, variant: int) -> np.ndarray:
         x = _band(np.sign(np.sin(2 * np.pi * 540 * t)) + np.sign(np.sin(2 * np.pi * 800 * t)), 400, 6000) * np.exp(-t / 0.1)
     else:  # conga
         x = _sweep(200, 260, 0.04, t) * np.exp(-t / 0.12)
+    return x
+
+
+# ---------- 8-bit 芯片鼓组 ----------
+# 和 FamiTracker 里做鼓的方法一样：每一帧（1/60 秒）写一个音量（0~15）和音高，
+# 底鼓、嗵鼓用三角波声道往下滑，军鼓、镲用噪声声道
+
+FRAME = SR / 60
+NES_CPU = 1789773  # 红白机 CPU 频率（Hz），噪声声道的移位寄存器按它分频后步进
+NOISE_PERIODS = (4, 8, 16, 32, 64, 96, 128, 160, 202, 254, 380, 508, 762, 1016, 2034, 4068)  # 档位 0 最亮，15 最闷
+
+
+@lru_cache(maxsize=None)
+def _lfsr(short: bool) -> np.ndarray:
+    """噪声声道的 15 位移位寄存器。长模式 32767 步才重复，是白噪声；短模式几十步就重复，听起来是带音高的金属声。"""
+    reg, tap, out = 1, 6 if short else 1, np.empty(32767, np.float32)
+    for i in range(len(out)):
+        out[i] = -1.0 if reg & 1 else 1.0
+        reg = (reg >> 1) | (((reg ^ (reg >> tap)) & 1) << 14)
+    return out
+
+
+def _seq(values, n: int, rate: float = SR) -> np.ndarray:
+    """按帧写的序列展开到每个采样；序列走完后保持最后一个值。"""
+    i = np.minimum((np.arange(n) * 60 / rate).astype(int), len(values) - 1)
+    return np.asarray(values, float)[i]
+
+
+def _chip_noise(vols, periods, short: bool = False, offset: int = 0) -> np.ndarray:
+    n, up = round(len(vols) * FRAME), 4
+    clock = NES_CPU / _seq([NOISE_PERIODS[p] for p in periods], n * up, SR * up)
+    pos = offset + np.cumsum(clock / (SR * up))
+    x = soxr.resample(_lfsr(short)[pos.astype(np.int64) % 32767], SR * up, SR)  # 在 4 倍采样率下步进再降采样，避免混叠
+    return np.pad(x, (0, max(0, n - len(x))))[:n] * _seq(vols, n) / 15
+
+
+def _chip_tri(freqs, phase0: float = 0.0) -> np.ndarray:
+    """三角波声道没有音量控制：按住就是满音量，帧数走完就停。"""
+    n = round(len(freqs) * FRAME)
+    return oscillator("nes-triangle", _seq(freqs, n), phase0, np.arange(n) / SR)
+
+
+def _chip_pulse(freq: float, vols, duty: float, phase0: float = 0.0) -> np.ndarray:
+    n = round(len(vols) * FRAME)
+    return oscillator("square", np.full(n, freq), phase0, np.arange(n) / SR, duty=duty) * _seq(vols, n) / 15
+
+
+def _decay(start: int, frames: int, tau: float) -> list[int]:
+    return [round(start * np.exp(-i / tau)) for i in range(frames)] + [0]
+
+
+def _chip_hit(kind: str, rng) -> np.ndarray:
+    off, ph = int(rng.integers(32767)), rng.random()
+    if kind == "kick":
+        layers = [_chip_tri([392, 220, 147, 110, 87, 73, 62, 55], ph), 0.6 * _chip_noise([15, 6, 0], [9], offset=off)]
+    elif kind == "snare":
+        layers = [0.8 * _chip_tri([294, 220, 165], ph),
+                  _chip_noise([15, 13, 11, 9, 7, 6, 5, 4, 3, 2, 1, 1, 0], [3, 4, 5], offset=off)]
+    elif kind == "clap":  # 音量一高一低，像几只手先后拍下
+        layers = [_chip_noise([15, 2, 14, 2, 13, 10, 8, 6, 5, 4, 3, 2, 1, 0], [5], offset=off)]
+    elif kind in ("hat", "pedal-hat", "open-hat"):
+        vols = {"hat": [11, 6, 3, 1, 0], "pedal-hat": [6, 3, 1, 0], "open-hat": _decay(12, 18, 7)}[kind]
+        layers = [_chip_noise(vols, [1 if kind == "pedal-hat" else 0], offset=off)]
+    elif kind == "rim":
+        layers = [_chip_noise([13, 5, 0], [2], short=True, offset=off)]
+    elif kind == "tom":
+        layers = [_chip_tri([196, 175, 156, 147, 139, 131, 123, 117, 110, 104, 98], ph),
+                  0.5 * _chip_noise([8, 3, 0], [8], offset=off)]
+    elif kind == "crash":
+        layers = [_chip_noise(_decay(15, 100, 25), [3, 2, 1], offset=off)]
+    elif kind == "ride":
+        layers = [0.6 * _chip_noise(_decay(12, 50, 15), [1], short=True, offset=off),
+                  0.4 * _chip_noise(_decay(8, 30, 10), [0], offset=off)]
+    elif kind == "tambourine":
+        layers = [_chip_noise([10, 8, 9, 6, 7, 4, 5, 3, 2, 1, 0], [0], offset=off),
+                  0.5 * _chip_noise([6, 4, 3, 2, 1, 0], [0], short=True, offset=off)]
+    elif kind == "shaker":
+        layers = [_chip_noise([4, 9, 5, 2, 0], [1], offset=off)]
+    elif kind == "cowbell":
+        vols = [12, 9, 7, 5, 4, 3, 2, 1, 0]
+        layers = [_chip_pulse(540, vols, 0.25, ph), _chip_pulse(800, vols, 0.25, 1 - ph)]
+    else:  # conga
+        layers = [_chip_tri([330, 294, 277, 262, 262, 262], ph)]
+    x = np.zeros(max(len(a) for a in layers))
+    for a in layers:
+        x[:len(a)] += a
+    return x
+
+
+@lru_cache(maxsize=None)
+def drum_hit(kind: str, variant: int, kit: str = "drums-synth") -> np.ndarray:
+    """一下鼓的模板（单声道），按鼓组、种类和轮替编号缓存。"""
+    if kit == "drums-chip":
+        x = _chip_hit(kind, _rng("drum", kit, kind, variant))
+    else:
+        x = _synth_hit(kind, _rng("drum", kind, variant))
+    t = np.arange(len(x)) / SR
     x = x * np.minimum(1, t / 0.0005)  # 0.5ms 起音，避免咔哒
     x[-min(len(x), 220):] *= np.linspace(1, 0, min(len(x), 220))
     return (x / (np.abs(x).max() + 1e-9) * 0.8).astype(np.float32)
@@ -271,6 +407,7 @@ class Kit:
 
 
 KIT = Kit()
+KITS = {k.name: k for k in [KIT, Kit("drums-chip", {})]}  # 芯片鼓组是单声道，每件鼓都在中间
 
 
 # ---------- 渲染一个声部 ----------
@@ -287,7 +424,7 @@ def render_part(score: Score, part: Part, impl, n: int) -> np.ndarray:
             if kind is None:
                 continue
             rr[note.pitch] = rr.get(note.pitch, -1) + 1
-            hit = drum_hit(kind, rr[note.pitch] % 4)
+            hit = drum_hit(kind, rr[note.pitch] % 4, impl.name)
             if note.pitch in TOM_PITCH:
                 idx = np.arange(0, len(hit) - 1, TOM_PITCH[note.pitch])
                 hit = np.interp(idx, np.arange(len(hit)), hit).astype(np.float32)

@@ -125,7 +125,7 @@ onbgm review out/my_bgm_v2 --compare out/my_bgm   # 新旧两版 A/B 对比
 | [AliExpress Erhu](https://github.com/sfzinstruments/aliexpress-erhu)，sfzinstruments | CC0 | 二胡 |
 | [Emilyguitar](https://github.com/sfzinstruments/karoryfer.emilyguitar)，Karoryfer Samples | CC0 | 电吉他（干净音色和失真音色） |
 | [FreePats Ukulele](https://github.com/freepats/ukulele1)、[Button Accordion HN](https://github.com/freepats/button-accordion-HN) | CC0 | 尤克里里、手风琴 |
-| 内置合成器（`onbgm/synth.py`） | — | 合成器音色（pluck、pad、supersaw、lead、bass、808、FM 钟声和电钢琴）和合成鼓组，不需要下载 |
+| 内置合成器（`onbgm/synth.py`） | — | 合成器音色（pluck、pad、supersaw、lead、bass、808、FM 钟声和电钢琴）、合成鼓组，以及 8-bit 芯片音色（红白机式的脉冲波、三角波和噪声鼓组），不需要下载 |
 
 采样由内置采样器（`onbgm/sampler.py`）直接读取，用 soxr 做高质量重采样来变调。
 - VSCO：加载时裁掉开头的静音，对齐各采样的响度，用频谱检测每个采样的真实音高。
