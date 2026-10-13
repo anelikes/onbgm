@@ -1,6 +1,6 @@
 # onbgm
 
-English · [简体中文](https://github.com/anelikes/onbgm/blob/main/README.zh-CN.md) · Website: [onbgm.com](https://onbgm.com) (coming soon)
+English · [简体中文](https://github.com/anelikes/onbgm/blob/main/README.zh-CN.md) · Website: [onbgm.com](https://onbgm.com) 
 
 **Instrumental background music, written note by note by AI agents.**
 An agent writes a plain-text score (YAML): sections, chords, melodies, drum patterns. onbgm arranges, performs, mixes and renders it into a finished track.
