@@ -1,6 +1,6 @@
 [project]
 name = "onbgm"
-version = "0.1.0"
+version = "0.1.1"
 description = "Instrumental background music written note by note by AI agents: a text score in, a mixed and mastered track out"
 requires-python = ">=3.10"
 license = "MIT"
