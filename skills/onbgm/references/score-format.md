@@ -172,6 +172,34 @@ notes:
 | `timpani` | 定音鼓重拍；能量 ≥ 0.8 时第三拍再敲一下。要别的节奏，就另开一个 `sound: timpani` 的 `line` 声部逐音写 | `low`（默认 38），`roll_into: 段落名`（在该段前一小节做渐强滚奏） |
 | `crash` | 在 `in` 列出的每个段落开头敲一下吊镲 | — |
 
+## vocal（人声，可选，实验性）
+
+`onbgm render` 不看这一段，照样输出纯器乐。`onbgm sing` 把其中一条旋律、和弦和歌词交给 YuE2 模型，唱成一首带人声的完整歌曲，伴奏由模型自己编。
+
+```yaml
+vocal:
+  track: whistle          # 唱哪条旋律：tracks 里用 notes 逐音写的声部
+  transpose: -12          # 口哨、长笛这类高音旋律交给人声时降一个八度
+  style: "English, upbeat road-trip folk pop, acoustic guitar, bass, drums, bright warm female lead vocal, 107 BPM"
+  lyrics:
+    verse: |
+      Roll the window down and let the morning in
+      Highway humming like a song
+    chorus: |
+      Whistle out into the blue
+      Every road is calling you
+  tags: { drop: Chorus }  # 段落名猜不出角色时才写
+  seed: 831001
+```
+
+- 有歌词的段落，人声唱 `track` 在这一段的旋律；没写歌词、但 `track` 有旋律的段落（前奏、间奏），这条旋律交给乐器；`track` 在某段没有旋律、却写了歌词，会报错。
+- 歌词一行一句。实测时每句正好落在两小节里；音节数和旋律的音数接近时唱得最稳，差太多 `check` 会警告。
+- 段落在歌里的角色（歌词标签）按段落名猜：`verse2` → Verse，`break` → Interlude，`ending` → Outro。猜不出的写在 `tags` 里，可用 `Intro` `Verse` `Pre-Chorus` `Chorus` `Bridge` `Interlude` `Outro`。
+- `style` 用英文写最稳：语言、曲风、乐器、人声音色、速度。中文歌写 `Mandarin Chinese, …`。官方只确认了中文和英文。
+- 导出的 ABC 只有一个速度：段落速度、渐慢渐快不会传过去（会警告）。`meta.key` 要写成 `Ab major`、`F# minor` 这样。
+- YuE2 照谱上的和弦和小节唱，但不保证一个音一个音地唱准；改了谱或歌词只能整首重新生成，不能只改一处。同一份谱换 `seed` 会唱出另一版。
+- YuE2 的权重是 CC BY-NC 4.0，另有个人创作者许可（个人可以拿输出变现，公司商用要另外谈），和 onbgm 本身的 MIT 不同。
+
 ## sfx（音效时间线）
 
 和音乐共用一个时钟的合成音效。只做需要和音乐对齐的乐器性、合成类音效，不做拟音和环境音（脚步、开门、雨声这类）。

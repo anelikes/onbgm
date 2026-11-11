@@ -22,6 +22,8 @@
 | `onbgm render score.yaml -o 目录 [--soundset gm] [--draft]` | 渲染。`--draft` 只输出报告和卷帘图、不写音频文件，反复修改时用它更快 |
 | `onbgm review out/版本 [--compare out/旧版本] [--port N] [--no-open]` | 启动审听页面（只监听本机）：钢琴卷帘、A/B 无缝切换、在时间轴上写意见。会一直运行，请在后台运行；`--json` 时第一行输出 `{"url": …, "review_file": …}` |
 | `onbgm review out/版本 --list` | 不启动页面，列出用户已经写的意见 |
+| `onbgm abc score.yaml [-o 目录] [--seed N]` | 导出人声谱：按乐谱的 `vocal` 段写出 YuE2 用的 ABC 谱（`song.abc`）、分段歌词（`lyrics.txt`）和风格（`style.txt`），不跑模型。不带 `-o` 时直接打印 |
+| `onbgm sing score.yaml -o 目录 [--seed N] [--engine 目录] [--model 8bit]` | 演唱（实验性）：把 `vocal` 段交给本机的 YuE2，唱成带人声的整首歌。本机每首约 10 分钟，请在后台运行；生成过程打印在标准错误 |
 | `onbgm schema` | 输出乐谱格式的 JSON Schema |
 | `onbgm fetch` | 下载音源 |
 
@@ -69,6 +71,27 @@
 - `suggestion` 不为空时，说明放宽速度范围能得到明显更好的方案。
 
 **`check` 成功**：`{"ok": true, "timeline": {…}, "warnings": [{code, path, message}]}`
+
+**`abc`**：`{"ok": true, "abc": "X:1…", "lyrics": "[Verse]…", "style": "…", "seed": 831001, "sections": [...], "warnings": [...], "files": {…}}`（`files` 只在带 `-o` 时有）
+
+**`sing`**：
+
+```json
+{
+  "ok": true,
+  "files": {"abc": "out/v1/song.abc", "lyrics": "out/v1/lyrics.txt", "style": "out/v1/style.txt",
+            "audio": "out/v1/song.wav", "preview": "out/v1/song.mp3", "latents": "out/v1/song.latents.npy"},
+  "duration_s": 121.1, "lufs": -14.2, "generate_s": 616, "lock_wait_s": 0, "total_s": 618, "seed": 831001,
+  "engine": "/Users/me/.cache/onbgm/yue2-mlx/8bit",
+  "sections": [{"section": "verse", "tag": "Verse", "bars": 8, "voice": "vocal", "notes": 35,
+                "lines": 4, "syllables": 38, "range": [61, 80]}],
+  "warnings": []
+}
+```
+
+- `sections[].voice`：`vocal` 是人声唱这一段的旋律，`ins` 是这一段没有歌词、旋律交给乐器，`null` 是这一段没有旋律。
+- `syllables` 是按歌词估的音节数（汉字一字一个，英文按元音估），和 `notes` 差太多会有警告。
+- `duration_s` 是 YuE2 实际唱出来的长度。它照着谱的小节和速度唱，通常和乐谱时长差不多，但不保证精确。
 
 **`timeline`**：
 
@@ -124,6 +147,8 @@
 - `ONBGM_SOUNDS`：音源目录。
 - `ONBGM_CACHE`：缓存目录（默认 `~/.cache/onbgm`）。
 - `ONBGM_MAX_RENDERS`：最多同时进行几个渲染，多出来的排队。批量生成、很多 agent 同时渲染时设置，避免把机器占满。
+- `ONBGM_YUE2`：`onbgm sing` 用的 YuE2 引擎目录（默认 `~/.cache/onbgm/yue2-mlx`），里面要有 `generate.py` 和 `8bit`（或 `4bit`、`bf16`）模型目录，有 `.venv` 就用它的 Python。
+- `ONBGM_LOCK_FILE`：`onbgm sing` 跑模型前先对这个文件加独占锁，和机器上别的重任务排队，不并行。
 
 ## 错误码
 
@@ -136,5 +161,6 @@
 | 音效 | `sfx_out_of_range`（起点早于开头或超出结尾，`fix.length` 给出能放下的最大长度） `field_not_for_sfx` |
 | 声部和织体 | `missing_texture` `field_not_for_texture` `not_overridable` `missing_pattern` `unknown_drum` `pattern_bar_count` `pattern_step_count` `pattern_bad_char` |
 | 渲染时的警告 | `note_out_of_range` `automix_outlier` `heavy_limiting` |
+| 人声（`check`、`abc`、`sing`） | `no_vocal` `unknown_track` `not_a_melody` `no_melody_here` `unknown_tag` `bad_key` `engine_failed`；警告：`tempo_ignored` `too_many_syllables` `too_few_syllables` `out_of_vocal_range`（`fix.transpose` 给出能落进人声音域的移调） |
 | 环境和文件 | `missing_dependency` `file_not_found` `file_exists` `pedalboard_illegal_instruction`（见 README 常见问题） |
 | 审听 | `no_player_data`（目录不是 render 的输出，或者是旧版本渲染的，重新渲染即可） `port_unavailable` |
