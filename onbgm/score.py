@@ -121,6 +121,7 @@ class Score:
     sfx: list = field(default_factory=list)  # 音效时间线（onbgm.sfx.SfxEvent）
     tempo_map: TempoMap | None = None
     meter: str = "4/4"
+    vocal: dict | None = None  # 人声（onbgm sing 用，render 不用）：track、style、lyrics……见 onbgm.vocal
 
     @property
     def beats_per_bar(self) -> float:
@@ -504,4 +505,5 @@ def from_dict(raw: dict, default_title: str = "untitled") -> Score:
         sfx=sfx_events,
         tempo_map=tmap,
         meter=meter,
+        vocal=raw.get("vocal"),
     )

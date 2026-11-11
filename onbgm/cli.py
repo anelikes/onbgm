@@ -77,6 +77,13 @@ def _load(path: str, as_json: bool):
 
 def cmd_check(args) -> None:
     score, parts, warnings = _load(args.score, args.json)
+    if score.vocal:
+        from .vocal import plan
+
+        vp, problems = plan(score)
+        if problems:
+            _fail(problems, args.json)
+        warnings = warnings + vp.warnings
     text = timeline(score) + "".join(f"\n  ⚠ {w}" for w in warnings)
     _emit({"ok": True, "timeline": timeline_data(score), "warnings": [w.to_dict() for w in warnings]}, args.json, text)
 
@@ -143,6 +150,66 @@ def cmd_render(args) -> None:
     lines += [f"整体响度: {loud['integrated_lufs']:.1f} LUFS，时长 {data['duration_s']:.3f} 秒", "",
               loudness_report(score, result.main), balance_report(score, result.stems, parts, loudest), "",
               f"输出: {out}/"] + [f"  {k:<9} {Path(v).name}" for k, v in files.items()]
+    _emit(data, args.json, "\n".join(lines))
+
+
+def _vocal_plan(args):
+    from .vocal import plan
+
+    score, _, _ = _load(args.score, args.json)
+    vp, problems = plan(score)
+    if problems:
+        _fail(problems, args.json)
+    if args.seed is not None:
+        vp.seed = args.seed
+    return vp
+
+
+def _vocal_lines(vp) -> list[str]:
+    lines = ["段落:"]
+    for r in vp.sections:
+        who = {"vocal": "人声", "ins": "乐器", None: "—"}[r["voice"]]
+        extra = f"  {r['lines']} 句，约 {r['syllables']} 个音节 / {r['notes']} 个音" if r["voice"] == "vocal" else ""
+        lines.append(f"  {r['section']:<10} {'[' + r['tag'] + ']':<12} {r['bars']:>2} 小节  旋律给{who}{extra}")
+    return lines + [f"⚠ {w}" for w in vp.warnings]
+
+
+def cmd_abc(args) -> None:
+    from .vocal import write_inputs
+
+    vp = _vocal_plan(args)
+    data = {"ok": True, "abc": vp.abc, "lyrics": vp.lyrics, "style": vp.style, "seed": vp.seed,
+            "sections": vp.sections, "warnings": [w.to_dict() for w in vp.warnings]}
+    if args.out:
+        data["files"] = {k: str(v) for k, v in write_inputs(vp, Path(args.out)).items()}
+        text = "\n".join(_vocal_lines(vp) + ["", f"输出: {args.out}/"] +
+                         [f"  {k:<7} {Path(v).name}" for k, v in data["files"].items()])
+    else:
+        text = vp.abc.rstrip() + "\n\n" + vp.lyrics.rstrip() + "\n\n" + "\n".join(_vocal_lines(vp))
+    _emit(data, args.json, text)
+
+
+def cmd_sing(args) -> None:
+    from .vocal import find_engine, sing
+
+    vp = _vocal_plan(args)
+    out = Path(args.out or Path("out") / (Path(args.score).stem + "-vocal"))
+    try:
+        engine = find_engine(args.engine, args.model)
+    except RuntimeError as e:
+        _fail([Problem("missing_dependency", "", str(e))], args.json, code=2)
+    print("\n".join(_vocal_lines(vp)) + f"\nYuE2 生成中（本机每首约 10 分钟）… 模型 {engine.model}", file=sys.stderr, flush=True)
+    quiet = args.json
+    try:
+        result = sing(vp, out, engine, log=lambda line: None if quiet and "tokens, " in line
+                      else print(f"  {line}", file=sys.stderr, flush=True))
+    except RuntimeError as e:
+        _fail([Problem("engine_failed", "", str(e))], args.json, code=2)
+    data = {"ok": True, **result, "seed": vp.seed, "sections": vp.sections,
+            "warnings": [w.to_dict() for w in vp.warnings]}
+    lines = [f"完成：{result['duration_s']:.1f} 秒，{result['lufs']:.1f} LUFS，生成用了 {result['generate_s']} 秒"
+             + (f"（排队等锁 {result['lock_wait_s']} 秒）" if result["lock_wait_s"] else ""), f"输出: {out}/"]
+    lines += [f"  {k:<8} {Path(v).name}" for k, v in result["files"].items()]
     _emit(data, args.json, "\n".join(lines))
 
 
@@ -271,13 +338,20 @@ def doctor_checks() -> list[dict]:
     for lib in SAMPLE_LIBS:
         add(f"hq_{lib.name}", lib_path(lib, SOUNDS_DIR).exists(), f"{lib.title}：{lib.used_for}",
             "运行 onbgm fetch（缺少时这件乐器退回 GM）", required=False)
+    from .vocal import ENGINE_FIX, default_engine, find_engine
+
+    try:
+        engine = find_engine()
+        add("yue2", True, f"onbgm sing 的人声引擎：{engine.model}", "", required=False)
+    except (RuntimeError, OSError):
+        add("yue2", False, f"onbgm sing 的人声引擎：{default_engine()} 里没有", ENGINE_FIX, required=False)
     return checks
 
 
 def cmd_doctor(args) -> None:
     checks = doctor_checks()
     ready = all(c["ok"] for c in checks if c["required"])
-    hq = all(c["ok"] for c in checks)
+    hq = all(c["ok"] for c in checks if c["name"] != "yue2")
     lines = [f"{'✓' if c['ok'] else '✗'} {c['name']:<36} {c['detail']}" + (f"\n    → {c['fix']}" if c["fix"] else "")
              for c in checks]
     lines.append("\n" + ("可以渲染，高质量音源齐全" if hq else "可以渲染，但缺少部分高质量音源，相应乐器会退回 GM" if ready
@@ -330,7 +404,7 @@ def _version() -> str:
 
 
 def main() -> None:
-    ap = argparse.ArgumentParser(prog="onbgm", description="给 agent 用的纯器乐 BGM 引擎：文本乐谱 → 音频")
+    ap = argparse.ArgumentParser(prog="onbgm", description="给 agent 用的 BGM 引擎：文本乐谱 → 音频（纯器乐；加 vocal 段可以用 YuE2 唱成带人声的歌）")
     ap.add_argument("--version", action="version", version=f"onbgm {_version()}")
     sub = ap.add_subparsers(dest="cmd", required=True)
 
@@ -369,6 +443,16 @@ def main() -> None:
     p.add_argument("dir", nargs="?", default=".")
     p.add_argument("--example", help="用某个示例作为起点")
     p.add_argument("--force", action="store_true", help="覆盖已有的 score.yaml")
+    p = add("abc", cmd_abc, "导出人声谱：按乐谱的 vocal 段写出 YuE2 用的 ABC 谱、分段歌词和风格（不跑模型）")
+    p.add_argument("score")
+    p.add_argument("-o", "--out", help="写到这个目录（song.abc、lyrics.txt、style.txt）；不写就直接打印")
+    p.add_argument("--seed", type=int, help="覆盖 vocal.seed")
+    p = add("sing", cmd_sing, "演唱：把 vocal 段交给本机的 YuE2，唱成带人声的整首歌（每首约 10 分钟）")
+    p.add_argument("score")
+    p.add_argument("-o", "--out", help="输出目录（默认 out/<乐谱名>-vocal）")
+    p.add_argument("--seed", type=int, help="覆盖 vocal.seed；同一份谱换个种子会唱出另一版")
+    p.add_argument("--engine", help="YuE2 引擎目录（默认环境变量 ONBGM_YUE2，或 ~/.cache/onbgm/yue2-mlx）")
+    p.add_argument("--model", help="用引擎目录里哪个量化版本（默认 8bit，没有就 4bit、bf16）")
     add("doctor", cmd_doctor, "检查环境和音源是否就绪")
     add("schema", cmd_schema, "输出乐谱格式的 JSON Schema")
     add("fetch", cmd_fetch, "下载音源")

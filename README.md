@@ -9,7 +9,7 @@ Unlike prompt-to-audio models, the music is text you can read and diff:
 - **Exact timing.** Tempo, section boundaries, "the climax lands at 0:42" and loop points are exact, not approximate.
 - **Local edits.** Say "bring the climax in 4 bars earlier" in a chat; the agent edits those 4 bars, and everything else stays identical, note for note.
 - **Reproducible.** The same score always renders to the same audio.
-- **No vocals, by design.** onbgm is for BGM: videos, games, podcasts, apps.
+- **Instrumental by design.** onbgm is for BGM: videos, games, podcasts, apps. An optional, experimental `onbgm sing` hands one melody, the chords and your lyrics to the [YuE2](https://github.com/multimodal-art-projection/YuE) model, which sings them as a full song with its own backing (Apple Silicon, local; YuE2 weights are CC BY-NC 4.0 with a separate personal-creator license).
 
 ## Listen
 

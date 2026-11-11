@@ -11,6 +11,7 @@ from functools import lru_cache
 from jsonschema import Draft202012Validator
 
 from .score import Problem
+from .vocal import TAGS
 
 # 各织体除公共字段外能用的字段；by_section 里能覆盖的字段
 COMMON_TRACK_FIELDS = {"sound", "texture", "in", "gain", "by_section"}
@@ -177,6 +178,32 @@ def score_schema() -> dict:
                 "examples": [{"verse": "G | D/F# | Em | C"}],
             },
             "tracks": {"type": "object", "additionalProperties": track},
+            "vocal": {
+                "type": "object",
+                "description": "人声（可选）。onbgm render 不用它，照样输出纯器乐；onbgm sing 把 track 的旋律、和弦和歌词交给 "
+                               "YuE2 唱成带人声的整首歌",
+                "additionalProperties": False,
+                "required": ["track", "style", "lyrics"],
+                "properties": {
+                    "track": {"type": "string", "description": "唱哪条旋律：tracks 里用 notes 逐音写的那个声部"},
+                    "style": {"type": "string",
+                              "description": "风格描述（英文最稳）：语言、曲风、乐器、人声音色、速度",
+                              "examples": ["English, upbeat folk pop, acoustic guitar, bass, drums, bright warm female "
+                                           "lead vocal, 107 BPM"]},
+                    "lyrics": {"type": "object", "additionalProperties": {"type": "string"},
+                               "description": "{段落名: 歌词}，一行一句。有歌词的段落人声唱 track 的旋律；"
+                                              "没写歌词、但 track 有旋律的段落，这条旋律交给乐器",
+                               "examples": [{"verse": "Roll the window down\nHighway humming like a song"}]},
+                    "transpose": {"type": "integer", "minimum": -24, "maximum": 24,
+                                  "description": "人声比 track 高或低几个半音；口哨、长笛这类高音旋律常用 -12"},
+                    "tags": {"type": "object",
+                             "additionalProperties": {"enum": TAGS},
+                             "description": "{段落名: 歌词标签}。默认按段落名猜（verse2→Verse，break→Interlude，"
+                                            "ending→Outro），猜不出的段落要写",
+                             "examples": [{"drop": "Chorus"}]},
+                    "seed": {"type": "integer", "description": "YuE2 的随机种子；同一份谱换个种子会唱出另一版"},
+                },
+            },
             "sfx": {
                 "type": "array",
                 "description": "音效时间线：和音乐共用一个时钟的合成音效",
